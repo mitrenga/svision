@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+
+if [ -z "$1" ]
+  then
+    echo "Syntax:"
+    echo "  make-data-fonts fontFile.ch8"
+fi
+
+echo -n "$(cat $1 | basenc --base16 | tr -d '\r\n')" > $1.hex.txt

@@ -1,0 +1,9 @@
+#!/usr/bin/bash
+
+if [ -z "$1" ]
+  then
+    echo "Syntax:"
+    echo "  convert-bin-txt fontFile.bin.txt"
+fi
+
+( echo 'obase=16;ibase=2'; sed -Ee 's/[01]{4}/;\0/g' $1 ) | bc | xxd -r -p > $1.ch8

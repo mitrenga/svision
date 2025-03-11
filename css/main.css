@@ -1,0 +1,27 @@
+html,
+body {
+  padding: 0;
+  margin: 0;
+  position: fixed;
+  background-color: #000000;
+  overflow: hidden;
+  display: inline;
+  width: 100vw;
+  height: var(--app-height);
+}
+
+.canvasApp {
+  position: fixed;
+  background-color: #cfcfcf;
+  left: 0px;
+  top: 0px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-spacing: 0;
+  display: inline;
+  width: 100vw;
+  height: var(--app-height);
+  font-size: 100%;
+  -webkit-user-select: none;
+}

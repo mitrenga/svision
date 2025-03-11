@@ -1,0 +1,65 @@
+html,
+body {
+  font-family: Helvetica;
+}
+
+h2 {
+  margin-top: 2em;
+}
+
+.version-item-label {
+  min-width: 4em;
+  display: inline-block;
+}
+
+.item-label {
+  min-width: 10em;
+  display: inline-block;
+}
+
+.error {
+  color: #f80b0b;
+  min-width: 4em;
+  display: inline-block;
+  font-weight: bold;
+}
+
+.ok {
+  color: #20d920;
+  font-weight: bold;
+  min-width: 4em;
+  display: inline-block;
+}
+
+.enable {
+  font-style: normal;
+}
+
+.disable {
+  color: rgba(129, 129, 148, 0.8);
+  font-style: italic;
+}
+
+.canvas {
+  width: 300px;
+  height: 200px;
+  background-color: #cccccc;
+}
+
+.time-info {
+  float: left;
+}
+
+.time-info ul {
+  margin-top: 0;
+}
+
+.clear {
+  clear: both;
+}
+
+.no-marker {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}

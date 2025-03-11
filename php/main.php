@@ -1,0 +1,47 @@
+<?php
+
+  $webProtocol = 'http';
+  $wsProtocol = 'ws';
+  $wsPort = 8888;
+  $wsPage = 'wss-rg';
+
+  if ((isset($_SERVER['HTTPS'])) && ($_SERVER['HTTPS'] == 'on')) {
+    $webProtocol = 'https';
+    $wsProtocol = 'wss';
+  }
+  $srvName = $_SERVER['SERVER_NAME'];
+  if (strlen($srvName) == 0) {
+    $srvName = $_SERVER['SERVER_ADDR'];
+  }
+  $tmpURL = $webProtocol.'://'.$srvName.$_SERVER['PHP_SELF'];
+  if ($tmpURL[strlen ($tmpURL)-1] == '/')
+    $tmpURL = substr($tmpURL, 0, -1);
+  $webURL = substr($tmpURL, 0, -strlen('index.php'));
+  $wsURL = $wsProtocol.'://'.$srvName.':'.$wsPort.'/'.$wsPage;
+
+  if (substr($_SERVER['QUERY_STRING'], -5) === '.data') {
+    require_once 'dataPage.php';
+    $page = new DataPage();
+  }
+  elseif ($_SERVER['QUERY_STRING'] === 'config') {
+    require_once 'configPage.php';
+    $page = new ConfigPage();
+  }
+  elseif ($_SERVER['QUERY_STRING'] === 'manifest.webmanifest') {
+    require_once 'manifestPage.php';
+    $page = new ManifestPage();
+  }
+  elseif (!isset ($_COOKIE['libImportMethod']) || substr($_COOKIE['libImportMethod'], 0, 5) === 'false') {
+    require_once 'autoConfigPage.php';
+    $page = new autoConfigPage();
+  }
+  elseif ($_COOKIE['libImportMethod'] !== 'await-import' && $_COOKIE['libImportMethod'] !== 'import-from') {
+    require_once 'forwardToConfigPage.php';
+    $page = new ForwardToConfigPage();
+  } else {
+    require_once 'appPage.php';
+    $page = new AppPage();
+  }
+  $page->init($webURL, $wsURL);
+  $page->createPage();
+  $page->showPage();
