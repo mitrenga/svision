@@ -15,7 +15,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
     $this->data[] = '    <title>Configuration</title>';
-    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/rg-lib/css/config.css?ver='.$scriptsVersion.'">';
+    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$scriptsVersion.'">';
     $this->data[] = '  </head>';
 
 	  $this->data[] = '';
@@ -85,7 +85,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '        }';
     $this->data[] = '        setTimeout(checkClassSyntax, 250);';
     $this->data[] = '      </script>';
-    $this->data[] = '      <script src="app/rg-lib/js/config/checkClassSyntax.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '      <script src="app/svision/js/config/checkClassSyntax.js?ver='.$scriptsVersion.'"></script>';
     $this->data[] = '';
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">await import support:</span>")';
@@ -105,7 +105,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '        }';
     $this->data[] = '        setTimeout(checkAwaitImport, 250);';
     $this->data[] = '      </script>';
-    $this->data[] = '      <script type="module" src="app/rg-lib/js/config/checkAwaitImport.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '      <script type="module" src="app/svision/js/config/checkAwaitImport.js?ver='.$scriptsVersion.'"></script>';
     $this->data[] = '';
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">import from support:</span>")';
@@ -125,7 +125,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '        }';
     $this->data[] = '        setTimeout(checkImportFrom, 250);';
     $this->data[] = '      </script>';
-    $this->data[] = '      <script type="module" src="app/rg-lib/js/config/checkImportFrom.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '      <script type="module" src="app/svision/js/config/checkImportFrom.js?ver='.$scriptsVersion.'"></script>';
     $this->data[] = '    </ul>';
   	$this->data[] = '';
     if ($_COOKIE['libImportMethod'] != 'await-import') {
@@ -139,10 +139,10 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '    <canvas class="canvas" id="canvas"></canvas>';
     $this->data[] = '    <script> var canvasRunning = false; </script>';
     if ($_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '    <script type="module" src="app/rg-lib/js/config/checkCanvas-ai.js?ver='.$scriptVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-ai.js?ver='.$scriptVersion.'"></script>';
     }
     if ($_COOKIE['libImportMethod'] == 'import-from') {
-      $this->data[] = '    <script type="module" src="app/rg-lib/js/config/checkCanvas-if.js?ver='.$scriptVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-if.js?ver='.$scriptVersion.'"></script>';
     }
     $this->data[] = '    <script>';
     $this->data[] = '      function checkCanvas() {';
@@ -196,7 +196,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '            document.getElementById("server-time").innerHTML = "<li><b><span class=\"error\">ERROR: "+this.status+"</span></b></li>";';
     $this->data[] = '          }';
     $this->data[] = '        };';
-    $this->data[] = '        xhttp.open("GET", "app/rg-lib/php/serverTime.php", true);';
+    $this->data[] = '        xhttp.open("GET", "app/svision/php/serverTime.php", true);';
     $this->data[] = '        xhttp.send();';
     $this->data[] = '        var newTimeStr = "<li>date: "+new Date().toLocaleDateString("en-US", {weekday: "long", month: "short", day: "numeric", year: "numeric"})+"</li>";';
     $this->data[] = '        newTimeStr += "<li>time: "+new Date().toLocaleTimeString("en-US", {hour12: false, hour: "numeric", minute: "numeric", second: "numeric"})+"</li>";';

@@ -15,7 +15,7 @@ class AutoConfigPage extends AbstractPage {
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
     $this->data[] = '    <title>Configuration</title>';
-    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/rg-lib/css/config.css?ver='.$scriptsVersion.'">';
+    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$scriptsVersion.'">';
     $this->data[] = '  </head>';
 
 	  $this->data[] = '';
@@ -23,7 +23,7 @@ class AutoConfigPage extends AbstractPage {
     $this->data[] = '  <body>';
     $this->data[] = '    <script>var srcVersion = "'.$scriptsVersion.'"</script>';
     if ($_COOKIE['libImportMethod'] === 'false-await-import') {
-      $this->data[] = '    <script type="module" src="app/rg-lib/js/config/autoCfgImportFrom.js?ver='.$scriptsVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgImportFrom.js?ver='.$scriptsVersion.'"></script>';
       $this->data[] = '';
       $this->data[] = '    <script>';
       $this->data[] = '      function checkImportFrom() {';
@@ -33,7 +33,7 @@ class AutoConfigPage extends AbstractPage {
       $this->data[] = '      setTimeout(checkImportFrom, 250);';
       $this->data[] = '    </script>';
     } else {
-      $this->data[] = '    <script type="module" src="app/rg-lib/js/config/autoCfgAwaitImport.js?ver='.$scriptsVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgAwaitImport.js?ver='.$scriptsVersion.'"></script>';
       $this->data[] = '';
       $this->data[] = '    <script>';
       $this->data[] = '      function checkAwaitImport() {';

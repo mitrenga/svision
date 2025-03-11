@@ -26,7 +26,7 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <meta name="theme-color" content="#000000">';
     $this->data[] = '    <link rel="manifest" href="'.$this->webURL.'manifest.webmanifest">';
     $this->data[] = '    <meta http-equiv="X-UA-Compatible" content="IE=Edge; IE=11;" />';
-    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/rg-lib/css/main.css?ver='.$scriptsVersion.'">';
+    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$scriptsVersion.'">';
     $this->data[] = '  </head>';
     $this->data[] = '  <body id="bodyApp">';
     $this->data[] = '    <script>var wsURL = "'.$this->wsURL.'";</script>';
@@ -38,11 +38,11 @@ class AppPage extends AbstractPage {
 
     if ($_COOKIE['libImportMethod'] == 'import-from') {
       $this->makeJSFiles4ImportFrom('app', 'js', '/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/rg-lib/js/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/rg-lib/js/layout/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/rg-lib/js/platform/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/rg-lib/js/platform/zxSpectrum/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/rg-lib/js/platform/html/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/layout/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/zxSpectrum/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/html/');
 
       $this->data[] = '    <script type="module" src="js/main.js?ver='.$scriptsVersion.'"></script>';
     }
