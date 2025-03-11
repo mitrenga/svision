@@ -9,19 +9,19 @@ class ConfigPage extends AbstractPage {
   } // init
   
   public function createPage() {
-    $scriptsVersion = md5(time());
+    $srcVersion = md5(time());
 
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
     $this->data[] = '    <title>Configuration</title>';
-    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$scriptsVersion.'">';
+    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
 
 	  $this->data[] = '';
 
     $this->data[] = '  <body>';
-    $this->data[] = '    <script>var srcVersion = "'.$scriptsVersion.'";</script>';
+    $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
 
     $this->data[] = '    <h1>Configuration</h1>';
     $this->data[] = '    <h2>Browser</h2>';
@@ -80,12 +80,12 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '          var elClassSyntax = document.getElementById("class-syntax");';
     $this->data[] = '          if (elClassSyntax.innerText != "OK") {';
     $this->data[] = '            elClassSyntax.innerText = "FALSE";';
-    $this->data[] = '            elClassSyntax.className = "error";';
+    $this->data[] = '            elClassSyntax.classList.add("error");';
     $this->data[] = '          }';
     $this->data[] = '        }';
     $this->data[] = '        setTimeout(checkClassSyntax, 250);';
     $this->data[] = '      </script>';
-    $this->data[] = '      <script src="app/svision/js/config/checkClassSyntax.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '      <script src="app/svision/js/config/checkClassSyntax.js?ver='.$srcVersion.'"></script>';
     $this->data[] = '';
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">await import support:</span>")';
@@ -100,12 +100,12 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '          var elAwaitImport = document.getElementById("await-import");';
     $this->data[] = '          if (elAwaitImport.innerText != "OK") {';
     $this->data[] = '            elAwaitImport.innerText = "FALSE";';
-    $this->data[] = '            elAwaitImport.className = "error";';
+    $this->data[] = '            elAwaitImport.classList.add("error");';
     $this->data[] = '          }';
     $this->data[] = '        }';
     $this->data[] = '        setTimeout(checkAwaitImport, 250);';
     $this->data[] = '      </script>';
-    $this->data[] = '      <script type="module" src="app/svision/js/config/checkAwaitImport.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '      <script type="module" src="app/svision/js/config/checkAwaitImport.js?ver='.$srcVersion.'"></script>';
     $this->data[] = '';
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">import from support:</span>")';
@@ -120,12 +120,12 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '          var elImportFrom = document.getElementById("import-from");';
     $this->data[] = '          if (elImportFrom.innerText != "OK") {';
     $this->data[] = '            elImportFrom.innerText = "FALSE";';
-    $this->data[] = '            elImportFrom.className = "error";';
+    $this->data[] = '            elImportFrom.classList.add("error");';
     $this->data[] = '          }';
     $this->data[] = '        }';
     $this->data[] = '        setTimeout(checkImportFrom, 250);';
     $this->data[] = '      </script>';
-    $this->data[] = '      <script type="module" src="app/svision/js/config/checkImportFrom.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '      <script type="module" src="app/svision/js/config/checkImportFrom.js?ver='.$srcVersion.'"></script>';
     $this->data[] = '    </ul>';
   	$this->data[] = '';
     if ($_COOKIE['libImportMethod'] != 'await-import') {
@@ -136,26 +136,18 @@ class ConfigPage extends AbstractPage {
     }
   	$this->data[] = '';
     $this->data[] = '    <h2>Platform: <span id="platform"></span></h2>';
-    $this->data[] = '    <canvas class="canvas" id="canvas"></canvas>';
+    $this->data[] = '    <div class="parentCanvas" id="parentCanvas"></div>';
     $this->data[] = '    <script> var canvasRunning = false; </script>';
     if ($_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-ai.js?ver='.$scriptVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-ai.js?ver='.$srcVersion.'"></script>';
     }
     if ($_COOKIE['libImportMethod'] == 'import-from') {
-      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-if.js?ver='.$scriptVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-if.js?ver='.$srcVersion.'"></script>';
     }
     $this->data[] = '    <script>';
     $this->data[] = '      function checkCanvas() {';
     $this->data[] = '        if (window.canvasRunning == false) {';
-    $this->data[] = '          var elementObj = document.getElementById("canvas");';
-    $this->data[] = '          var ctx = elementObj.getContext("2d");';
-    $this->data[] = '          elementObj.width = 300;';
-    $this->data[] = '          elementObj.height = 200;';
-    $this->data[] = '          ctx.fillStyle = "#f80b0b";';
-    $this->data[] = '          ctx.fillRect(0, elementObj.height-43, elementObj.width, 43);';
-    $this->data[] = '          ctx.font = "16px Helvetica";';
-    $this->data[] = '          ctx.fillStyle = "#ffffff";';
-    $this->data[] = '          ctx.fillText("ERROR: platform not running", 5, elementObj.height-15);';
+    $this->data[] = '          document.getElementById("parentCanvas").innerText = "ERROR: canvas not running";';
     $this->data[] = '        }';
     $this->data[] = '      }';
     $this->data[] = '      setTimeout(checkCanvas, 250);';

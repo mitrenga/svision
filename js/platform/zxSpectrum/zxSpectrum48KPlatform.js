@@ -48,6 +48,7 @@ export class ZXSpectrum48KPlatform extends AbstractPlatform {
     app.element.classList.add('canvasApp');
     app.parentElement.appendChild(app.element);
     app.stack['ctx'] = app.element.getContext('2d');
+    app.stack['containerType'] = 'canvas2D';
   } // initCanvasElement
 
   defaultLayout(app) {

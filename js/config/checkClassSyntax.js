@@ -10,5 +10,5 @@ var config_libClassSyntax = new Config_LibClassSyntax();
 
 if (config_libClassSyntax.libLoaded === true) {
   document.getElementById('class-syntax').innerText = 'OK';
-  document.getElementById('class-syntax').className = 'ok';
+  document.getElementById('class-syntax').classList.add('ok');
 }

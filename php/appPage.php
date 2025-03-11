@@ -10,7 +10,7 @@ class AppPage extends AbstractPage {
 
   
   public function createPage() {
-    $scriptsVersion = md5(time());
+    $srcVersion = md5(time());
 
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
@@ -26,14 +26,14 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <meta name="theme-color" content="#000000">';
     $this->data[] = '    <link rel="manifest" href="'.$this->webURL.'manifest.webmanifest">';
     $this->data[] = '    <meta http-equiv="X-UA-Compatible" content="IE=Edge; IE=11;" />';
-    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$scriptsVersion.'">';
+    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
     $this->data[] = '  <body id="bodyApp">';
     $this->data[] = '    <script>var wsURL = "'.$this->wsURL.'";</script>';
-    $this->data[] = '    <script>var srcVersion = "'.$scriptsVersion.'";</script>';
+    $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
     
     if ($_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '    <script type="module" src="app/main.js?ver='.$scriptsVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
     }
 
     if ($_COOKIE['libImportMethod'] == 'import-from') {
@@ -44,7 +44,7 @@ class AppPage extends AbstractPage {
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/zxSpectrum/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/html/');
 
-      $this->data[] = '    <script type="module" src="js/main.js?ver='.$scriptsVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
     }
     
     $this->data[] = '  </body>';

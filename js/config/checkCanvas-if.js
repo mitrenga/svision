@@ -1,4 +1,4 @@
-import Canvas from './libCanvas-if.js';
+import Canvas from './libCanvas.js';
 import appPlatform from '../../../../js/appPlatform.js';
 
 var canvas = new Canvas(appPlatform);
