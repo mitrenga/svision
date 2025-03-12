@@ -18,7 +18,6 @@ class Label {
         this.elementFPS.id = 'labelFPS';
         this.elementFPS.classList.add('labelFPS');
         parentElement.appendChild(this.elementFPS);
-        console.log(this.fpsPosX);
     } // constuctor
 
     loopAnimate(canvasWidth, canvasHeight) {
@@ -164,6 +163,7 @@ export class Canvas {
     } // loopCanvas2D
 
     loop() {
+        window.canvasRunning = true;
         this.countFrames++;
         switch (this.stack['containerType']) {
             case 'html':
@@ -182,7 +182,6 @@ export class Canvas {
             this.lastTime = now;
             this.countFrames = 0;
         }
-        window.canvasRunning = true;
     } // loop
 
 } // class Canvas

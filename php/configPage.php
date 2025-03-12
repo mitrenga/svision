@@ -123,7 +123,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '            elImportFrom.classList.add("error");';
     $this->data[] = '          }';
     $this->data[] = '        }';
-    $this->data[] = '        setTimeout(checkImportFrom, 250);';
+    $this->data[] = '        setTimeout(checkImportFrom, 2000);';
     $this->data[] = '      </script>';
     $this->data[] = '      <script type="module" src="app/svision/js/config/checkImportFrom.js?ver='.$srcVersion.'"></script>';
     $this->data[] = '    </ul>';
@@ -150,7 +150,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '          document.getElementById("parentCanvas").innerText = "ERROR: canvas not running";';
     $this->data[] = '        }';
     $this->data[] = '      }';
-    $this->data[] = '      setTimeout(checkCanvas, 250);';
+    $this->data[] = '      setTimeout(checkCanvas, 2000);';
     $this->data[] = '    </script>';
     $this->data[] = '';
     $this->data[] = '    <h2>Current time</h2>';
@@ -195,7 +195,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '        newTimeStr += "<li>time zone: "+Intl.DateTimeFormat().resolvedOptions().timeZone+"</li>";';
     $this->data[] = '        var elementDeviceTime = document.getElementById("device-time");';
     $this->data[] = '        elementDeviceTime.innerHTML = newTimeStr';
-    $this->data[] = '        setTimeout(refreshTime, 250);';
+    $this->data[] = '        setTimeout(refreshTime, 2000);';
     $this->data[] = '      } // refreshTime';
     $this->data[] = '';
     $this->data[] = '      refreshTime();';
