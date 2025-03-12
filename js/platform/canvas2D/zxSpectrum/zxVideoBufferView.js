@@ -1,7 +1,7 @@
 /**/
-const { AbstractView } = await import('../../abstractView.js?ver='+window.srcVersion);
+const { AbstractView } = await import('../../../abstractView.js?ver='+window.srcVersion);
 /*/
-import AbstractView from '../../abstractView.js';
+import AbstractView from '../../../abstractView.js';
 /**/
 // begin code
 
