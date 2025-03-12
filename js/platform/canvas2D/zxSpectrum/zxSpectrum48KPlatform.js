@@ -43,6 +43,7 @@ export class ZXSpectrum48KPlatform extends AbstractPlatform {
   
   initCanvasElement(app, parentElementID) {
     app.parentElement = document.getElementById(parentElementID);
+    app.parentElement.innerText = '';
     app.element = document.createElement('canvas');
     app.element.id = 'canvasApp';
     app.element.classList.add('canvasApp');
