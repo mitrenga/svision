@@ -1,7 +1,7 @@
 /**/
-const { TextView } = await import('../../textView.js?ver='+window.srcVersion);
+const { TextView } = await import('../../../textView.js?ver='+window.srcVersion);
 /*/
-import TextView from '../../textView.js';
+import TextView from '../../../textView.js';
 /**/
 // begin code
 

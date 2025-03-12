@@ -1,10 +1,10 @@
 /**/
-const { AbstractLayout } = await import('./abstractLayout.js?ver='+window.srcVersion);
+const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
 const { BasicLayout } = await import('./basicLayout.js?ver='+window.srcVersion);
 const { NativeLayout } = await import('./nativeLayout.js?ver='+window.srcVersion);
 const { OptimalLayout } = await import('./optimalLayout.js?ver='+window.srcVersion);
 /*/
-import AbstractLayout from './abstractLayout.js';
+import AbstractLayout from '../../abstractLayout.js';
 import BasicLayout from './basicLayout.js';
 import NativeLayout from './nativeLayout.js';
 import OptimalLayout from './optimalLayout.js';

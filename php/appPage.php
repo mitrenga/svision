@@ -39,10 +39,10 @@ class AppPage extends AbstractPage {
     if ($_COOKIE['libImportMethod'] == 'import-from') {
       $this->makeJSFiles4ImportFrom('app', 'js', '/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/layout/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/zxSpectrum/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/html/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/zxSpectrum/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/webGL/');
 
       $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
     }

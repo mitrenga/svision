@@ -1,9 +1,9 @@
 /**/
-const { AbstractPlatform } = await import('../abstractPlatform.js?ver='+window.srcVersion);
-const { AutoLayout } = await import('../../layout/autoLayout.js?ver='+window.srcVersion);
+const { AbstractPlatform } = await import('../../../abstractPlatform.js?ver='+window.srcVersion);
+const { AutoLayout } = await import('../autoLayout.js?ver='+window.srcVersion);
 /*/
-import AbstractPlatform from '../abstractPlatform.js';
-import AutoLayout from '../../layout/autoLayout.js';
+import AbstractPlatform from '../../../abstractPlatform.js';
+import AutoLayout from '../autoLayout.js';
 /**/
 // begin code
 
