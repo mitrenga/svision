@@ -32,36 +32,66 @@ export class WebGL2Layout extends AbstractLayout {
 
   drawEntity(entity) {
     const vsSource =
-    '#version 300 es\n'+
-    'void main(){'+
-    '  gl_Position=vec4(0.0f,0.0f,0.0f,1.0f);'+
-    '  gl_PointSize=50.0f;'+
+    '#version 300 es\n' +
+    'in vec3 inPeak;' +
+    'in vec3 inColor;' +
+    'out vec3 outColor;' +
+    'void main() {' +
+    '  outColor = inColor;' +
+    '  gl_Position = vec4(inPeak.x, inPeak.y, inPeak.z, 1.0f);' +
     '}';
     const fsSource = 
-    '#version 300 es\n'+
-    'precision mediump float;'+
-    'out vec4 color;'+
-    'void main(){'+
-    '  color=vec4(0.0f,0.0f,0.0f,1.0f);'+
+    '#version 300 es\n' +
+    'precision mediump float;' +
+    'in vec3 outColor;' +
+    'out vec4 outFragment;' +
+    'void main() {' +
+    '  outFragment = vec4(outColor, 1.0f);' +
     '}';
 
-    var ctx = this.app.stack['ctx'];
-    ctx.setPixelRatio = this.app.element.devicePixelRatio;
-    var vertexShader = this.createShader(ctx, ctx.VERTEX_SHADER, vsSource);
-    var fragmentShader = this.createShader(ctx, ctx.FRAGMENT_SHADER, fsSource);
+    var peaks = [
+      -0.5, -0.5, 0.0, 1.0, 0.0, 0.0,
+      0.5, -0.5, 0.0, 1.0, 1.0, 0.0,
+      0.5, 0.5, 0.0, 1.0, 0.0, 1.0,
+      -0.5, 0.5, 0.0, 1.0, 0.0, 1.0
+    ]; // x, y, z, R, G, B
 
+    var indexes = [0, 1, 2, 2, 3, 0];
+
+    var ctx = this.app.stack['ctx'];
     ctx.viewport(entity.x, entity.y, entity.width, entity.height);
 
+    var vertexShader = this.createShader(ctx, ctx.VERTEX_SHADER, vsSource);
+    var fragmentShader = this.createShader(ctx, ctx.FRAGMENT_SHADER, fsSource);
     var program = this.createProgram(ctx, [vertexShader, fragmentShader]);;
+
+    var vertexArray = ctx.createVertexArray();
+    ctx.bindVertexArray(vertexArray);
+
+    var vertexBuffer = ctx.createBuffer();
+    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
+    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(peaks), ctx.STATIC_DRAW);
+
+    var elementBuffer = ctx.createBuffer();
+    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, elementBuffer);
+    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), ctx.STATIC_DRAW);
+
+    var peakLocation = ctx.getAttribLocation(program, 'inPeak');
+    ctx.enableVertexAttribArray(peakLocation);
+    var colorLocation = ctx.getAttribLocation(program, 'inColor');
+    ctx.enableVertexAttribArray(colorLocation);
+
+    ctx.vertexAttribPointer(peakLocation, 3, ctx.FLOAT, ctx.FALSE, 6*this.sizeOfType(ctx, ctx.FLOAT), 0*this.sizeOfType(ctx, ctx.FLOAT));
+    ctx.vertexAttribPointer(colorLocation, 3, ctx.FLOAT, ctx.FALSE, 6*this.sizeOfType(ctx, ctx.FLOAT), 3*this.sizeOfType(ctx, ctx.FLOAT));
 
     ctx.useProgram(program);
 
-    ctx.clearColor(0.0, 0.0, 0.0, 0.0);
+    ctx.clearColor(1.0, 1.0, 1.0, 1.0);
     ctx.clear(ctx.COLOR_BUFFER_BIT);
 
     var start = 0;
-    var count = 1;
-    ctx.drawArrays(ctx.POINTSS, start, count);
+    var count = 6;
+    ctx.drawElements(ctx.TRIANGLES, count, ctx.UNSIGNED_SHORT, start);
   } // drawEntity
 
   createShader(ctx, type, src) {
@@ -95,6 +125,19 @@ export class WebGL2Layout extends AbstractLayout {
       console.error(ctx.getProgramInfoLog(program));
     }
   } // checkProgram
+
+  sizeOfType(ctx, type) {
+    switch(type) {
+      case ctx.BYTE:
+      case ctx.UNSIGNED_BYTE:
+        return 1;
+      case ctx.SHORT:
+      case ctx.UNSIGNED_SHORT:
+        return 2;
+      case ctx.FLOAT:
+        return 4;
+    }
+  } // sizeOfType
 
 } // class WebGL2Layout
 
