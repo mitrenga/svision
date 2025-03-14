@@ -42,7 +42,7 @@ class AppPage extends AbstractPage {
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/html/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/zxSpectrum/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/webGL/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/webGL2/');
 
       $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
     }
