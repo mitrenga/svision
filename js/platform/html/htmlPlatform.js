@@ -27,19 +27,19 @@ export class HTMLPlatform extends AbstractPlatform {
     app.stack['containerType'] = 'html';
   } // initCanvasElement
 
-  initView(view) {
+  initEntity(entity) {
     var parentElement = null;
-    if (view.parentView == null) {
-      parentElement = view.app.element;
+    if (entity.parentEntity == null) {
+      parentElement = entity.app.element;
     } else {
-      parentElement = view.parentView.stack['element'];
+      parentElement = entity.parentEntity.stack['element'];
     }
     var element = document.createElement('div');
-    element.id = view.id;
+    element.id = entity.id;
     element.style.position = 'absolute';
     parentElement.appendChild(element);
     return {'element': element};
-  } // initView
+  } // initEntity
 
 
   defaultLayout(app) {

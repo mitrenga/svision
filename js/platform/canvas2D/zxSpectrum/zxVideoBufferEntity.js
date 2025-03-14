@@ -1,15 +1,15 @@
 /**/
-const { AbstractView } = await import('../../../abstractView.js?ver='+window.srcVersion);
+const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 /*/
-import AbstractView from '../../../abstractView.js';
+import AbstractEntity from '../../../abstractEntity.js';
 /**/
 // begin code
 
-export class ZXVideoBufferView extends AbstractView {
+export class ZXVideoBufferEntity extends AbstractEntity {
 
-  constructor(parentView, x, y, width, height, bufferData, bufferAttributes) {
-    super(parentView, x, y, width, height);
-    this.id = 'ZXVideoBufferView';
+  constructor(parentEntity, x, y, width, height, bufferData, bufferAttributes) {
+    super(parentEntity, x, y, width, height);
+    this.id = 'ZXVideoBufferEntity';
     this.penColor = this.app.platform.color('black');
     this.bkColor = false;
 
@@ -17,8 +17,8 @@ export class ZXVideoBufferView extends AbstractView {
     this.bufferAttributes = bufferAttributes;
   } // constructor
 
-  drawView() {
-    super.drawView();
+  drawEntity() {
+    super.drawEntity();
 
     for (var y = 0; y < this.bufferData.length; y++) {
       for (var x = 0; x < this.bufferData[y].length/2; x++) {
@@ -34,8 +34,8 @@ export class ZXVideoBufferView extends AbstractView {
         }
       }
     }
-  } // drawView
+  } // drawEntity
     
-} // class ZXVideoBufferView
+} // class ZXVideoBufferEntity
 
-export default ZXVideoBufferView;
+export default ZXVideoBufferEntity;

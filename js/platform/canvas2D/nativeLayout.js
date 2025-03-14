@@ -19,64 +19,64 @@ export class NativeLayout extends Canvas2DLayout {
     return {'width': this.app.element.clientWidth, 'height': this.app.element.clientHeight};
   } // canvas
 
-  resizeScreen(screen) {
-    super.resizeScreen(screen);
-    this.prepareCoordinates(screen);
-  } // resizeScreen
+  resizeModel(model) {
+    super.resizeModel(model);
+    this.prepareCoordinates(model);
+  } // resizeModel
 
-  prepareCoordinates(screen) {
+  prepareCoordinates(model) {
     this.realX = [];
     this.realY = [];
-    if (screen.desktopWidth+2*screen.borderWidth != this.app.element.clientWidth || screen.desktopHeight+2*screen.borderHeight != this.app.element.clientHeight) {
+    if (model.desktopWidth+2*model.borderWidth != this.app.element.clientWidth || model.desktopHeight+2*model.borderHeight != this.app.element.clientHeight) {
       var x = 0;
-      while (x < screen.desktopWidth+2*screen.borderWidth) {
-        this.realX.push(Math.round(x/(screen.desktopWidth+2*screen.borderWidth)*this.app.element.clientWidth));
+      while (x < model.desktopWidth+2*model.borderWidth) {
+        this.realX.push(Math.round(x/(model.desktopWidth+2*model.borderWidth)*this.app.element.clientWidth));
         x++;
       }
       this.realX.push(this.app.element.clientWidth);
   
       var y = 0;
-      while (y < screen.desktopHeight+2*screen.borderHeight) {
-        this.realY.push(Math.round(y/(screen.desktopHeight+2*screen.borderHeight)*this.app.element.clientHeight));
+      while (y < model.desktopHeight+2*model.borderHeight) {
+        this.realY.push(Math.round(y/(model.desktopHeight+2*model.borderHeight)*this.app.element.clientHeight));
         y++;
       }
       this.realY.push(this.app.element.clientHeight);
     }
   } // prepareCoordinates
 
-  nativeX(screen, x) {
+  nativeX(model, x) {
     if (x < 0) {
       console.log('ERROR: nativeX < 0 ->('+x+')');
       return -1;
     }
-    if (x > screen.desktopWidth+2*screen.borderWidth) {
-      console.log('ERROR: nativeX > screen width ->('+x+')');
-      return screen.desktopWidth+2*screen.borderWidth;
+    if (x > model.desktopWidth+2*model.borderWidth) {
+      console.log('ERROR: nativeX > model width ->('+x+')');
+      return model.desktopWidth+2*model.borderWidth;
     }
     return this.realX[x];
   } // nativeX
 
-  nativeY(screen, y) {
+  nativeY(model, y) {
     if (y < 0) {
       console.log('ERROR: nativeY < 0 ->('+y+')');
       return -1;
     }
-    if (y > screen.desktopHeight+2*screen.borderHeight) {
-      console.log('ERROR: nativeY > screen height ->('+y+')');
-      return screen.desktopHeight+2*screen.borderHeight;
+    if (y > model.desktopHeight+2*model.borderHeight) {
+      console.log('ERROR: nativeY > model height ->('+y+')');
+      return model.desktopHeight+2*model.borderHeight;
     }
     return this.realY[y];
   } // nativeY
 
-  paintRect(view, x, y, width, height, color) {
+  paintRect(entity, x, y, width, height, color) {
     var ctx = this.app.stack['ctx'];
     ctx.fillStyle = color;
     if (this.realX.length > 0 || this.realY.length > 0) {
       ctx.fillRect(
-        this.nativeX(view.screen, x),
-        this.nativeY(view.screen, y),
-        this.nativeX(view.screen, x+width)-this.nativeX(view.screen, x),
-        this.nativeY(view.screen, y+height)-this.nativeY(view.screen, y)
+        this.nativeX(entity.model, x),
+        this.nativeY(entity.model, y),
+        this.nativeX(entity.model, x+width)-this.nativeX(entity.model, x),
+        this.nativeY(entity.model, y+height)-this.nativeY(entity.model, y)
       );
     } else {
       ctx.fillRect(x, y, width, height);

@@ -13,10 +13,10 @@ export class BasicLayout extends Canvas2DLayout {
   } // constructor
 
   canvas() {
-    return {'width': this.app.screen.desktopWidth+2*this.app.screen.borderWidth, 'height': this.app.screen.desktopHeight+2*this.app.screen.borderHeight};
+    return {'width': this.app.model.desktopWidth+2*this.app.model.borderWidth, 'height': this.app.model.desktopHeight+2*this.app.model.borderHeight};
   } // canvas
   
-  paintRect(view, x, y, width, height, color) {
+  paintRect(entity, x, y, width, height, color) {
     var ctx = this.app.stack['ctx'];
     ctx.fillStyle = color;
     ctx.fillRect(x, y, width, height);

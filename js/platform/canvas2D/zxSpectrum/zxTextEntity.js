@@ -1,15 +1,15 @@
 /**/
-const { TextView } = await import('../textView.js?ver='+window.srcVersion);
+const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 /*/
-import TextView from '../textView.js';
+import TextEntity from '../textEntity.js';
 /**/
 // begin code
 
-export class ZXTextView extends TextView {
+export class ZXTextEntity extends TextEntity {
 
-  constructor(parentView, x, y, width, height, text, penColor, bkColor, fontType, proportional) {
-    super(parentView, x, y, width, height);
-    this.id = 'ZXTextView';
+  constructor(parentEntity, x, y, width, height, text, penColor, bkColor, fontType, proportional) {
+    super(parentEntity, x, y, width, height);
+    this.id = 'ZXTextEntity';
     this.penColor = penColor;
     this.bkColor = bkColor;
     
@@ -99,6 +99,6 @@ export class ZXTextView extends TextView {
     return charObject;
   } // getCharData
 
-} // class ZXTextView
+} // class ZXTextEntity
 
-export default ZXTextView;
+export default ZXTextEntity;

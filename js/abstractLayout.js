@@ -24,8 +24,8 @@ export class AbstractLayout {
     return false;
   } // color
 
-  resizeScreen(screen) {
-  } // resizeScreen
+  resizeModel(model) {
+  } // resizeModel
 
 } // class AbstractLayout
 

@@ -13,63 +13,63 @@ export class Canvas2DLayout extends AbstractLayout {
     this.id = 'Canvas2DLayout';
   } // constructor
 
-  paintRect(view, x, y, width, height, color) {
+  paintRect(entity, x, y, width, height, color) {
   } // paintRect
 
-  resizeScreen(screen) {
-    super.resizeScreen(screen);
+  resizeModel(model) {
+    super.resizeModel(model);
     
-    var xRatio = this.app.element.clientWidth/(screen.desktopWidth+2*screen.minimalBorder);
-    var yRatio = this.app.element.clientHeight/(screen.desktopHeight+2*screen.minimalBorder);
+    var xRatio = this.app.element.clientWidth/(model.desktopWidth+2*model.minimalBorder);
+    var yRatio = this.app.element.clientHeight/(model.desktopHeight+2*model.minimalBorder);
 
     if (yRatio < xRatio) {
       if (yRatio < 2) {
-        screen.borderHeight = screen.minimalBorder;
+        model.borderHeight = model.minimalBorder;
       } else {
-        screen.borderHeight = screen.optimalBorder;
-        yRatio = this.app.element.clientHeight/(screen.desktopHeight+2*screen.optimalBorder);
+        model.borderHeight = model.optimalBorder;
+        yRatio = this.app.element.clientHeight/(model.desktopHeight+2*model.optimalBorder);
       }
-      screen.borderWidth = Math.round((this.app.element.clientWidth/yRatio-screen.desktopWidth)/2);
+      model.borderWidth = Math.round((this.app.element.clientWidth/yRatio-model.desktopWidth)/2);
     } else {
       if (xRatio < 2) {
-        screen.borderWidth = screen.minimalBorder;
+        model.borderWidth = model.minimalBorder;
       } else {
-        screen.borderWidth = screen.optimalBorder;
-        xRatio = this.app.element.clientWidth/(screen.desktopWidth+2*screen.optimalBorder);
+        model.borderWidth = model.optimalBorder;
+        xRatio = this.app.element.clientWidth/(model.desktopWidth+2*model.optimalBorder);
       }
-      screen.borderHeight = Math.round((this.app.element.clientHeight/xRatio-screen.desktopHeight)/2);
+      model.borderHeight = Math.round((this.app.element.clientHeight/xRatio-model.desktopHeight)/2);
     } 
 
     this.app.element.width = this.app.layout.canvas()['width'];
     this.app.element.height = this.app.layout.canvas()['height'];
 
-    if (screen.borderView != null) {
-      screen.borderView.x = 0;
-      screen.borderView.y = 0;
-      screen.borderView.width = screen.desktopWidth+2*screen.borderWidth;
-      screen.borderView.height = screen.desktopHeight+2*screen.borderHeight;
-      screen.borderView.parentWidth = screen.desktopWidth+2*screen.borderWidth;
-      screen.borderView.parentHeight = screen.desktopHeight+2*screen.borderHeight;
+    if (model.borderEntity != null) {
+      model.borderEntity.x = 0;
+      model.borderEntity.y = 0;
+      model.borderEntity.width = model.desktopWidth+2*model.borderWidth;
+      model.borderEntity.height = model.desktopHeight+2*model.borderHeight;
+      model.borderEntity.parentWidth = model.desktopWidth+2*model.borderWidth;
+      model.borderEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
     }
 
-    screen.desktopView.x = screen.borderWidth;
-    screen.desktopView.y = screen.borderHeight;
-    screen.desktopView.width = screen.desktopWidth;
-    screen.desktopView.height = screen.desktopHeight;
-    screen.desktopView.parentWidth = screen.desktopWidth+2*screen.borderWidth;
-    screen.desktopView.parentHeight = screen.desktopHeight+2*screen.borderHeight;
-  } // resizeScreen
+    model.desktopEntity.x = model.borderWidth;
+    model.desktopEntity.y = model.borderHeight;
+    model.desktopEntity.width = model.desktopWidth;
+    model.desktopEntity.height = model.desktopHeight;
+    model.desktopEntity.parentWidth = model.desktopWidth+2*model.borderWidth;
+    model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
+  } // resizeModel
 
-  drawView(view) {
-    this.paint(view, 0, 0, view.width, view.height, view.bkColor);
-  } // drawView
+  drawEntity(entity) {
+    this.paint(entity, 0, 0, entity.width, entity.height, entity.bkColor);
+  } // drawEntity
 
-  paint(view, x, y, width, height, color) {
+  paint(entity, x, y, width, height, color) {
     if (color !== false) {
       var w = width;
-      if (view.x+x < 0) {
-        w = w+view.x;
-        x = -view.x;
+      if (entity.x+x < 0) {
+        w = w+entity.x;
+        x = -entity.x;
         if (w < 0) {
           w = 0;
         }
@@ -81,22 +81,22 @@ export class Canvas2DLayout extends AbstractLayout {
           w = 0;
         }
       }
-      if (view.x+x+w > view.parentWidth) {
-        w = view.parentWidth-view.x-x;
+      if (entity.x+x+w > entity.parentWidth) {
+        w = entity.parentWidth-entity.x-x;
         if (w < 0) {
           w = 0;
         }
       }
-      if (x+w > view.width) {
-        w = view.width-x;
+      if (x+w > entity.width) {
+        w = entity.width-x;
         if (w < 0) {
           w = 0;
         }
       }
       var h = height;
-      if (view.y+y < 0) {
-        h = h+view.y;
-        y = -view.y;
+      if (entity.y+y < 0) {
+        h = h+entity.y;
+        y = -entity.y;
         if (h < 0) {
           h = 0;
         }
@@ -108,20 +108,20 @@ export class Canvas2DLayout extends AbstractLayout {
           h = 0;
         }
       }
-      if (view.y+y+h > view.parentHeight) {
-        h = view.parentHeight-view.y-y;
+      if (entity.y+y+h > entity.parentHeight) {
+        h = entity.parentHeight-entity.y-y;
         if (h < 0) {
           h = 0;
         }
       }
-      if (y+h > view.height) {
-        h = view.height-y;
+      if (y+h > entity.height) {
+        h = entity.height-y;
         if (h < 0) {
           h = 0;
         }
       }
       if (w > 0 && h > 0) {
-        this.paintRect(view, view.parentX+view.x+x, view.parentY+view.y+y, w, h, color);
+        this.paintRect(entity, entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
       }
     }
   } // paint

@@ -12,9 +12,9 @@ export class OptimalLayout extends NativeLayout {
     this.id = 'OptimalLayout';
   } // constructor
 
-  resizeScreen(screen) {
-    var ratio = this.app.element.clientWidth/(screen.desktopWidth+2*screen.minimalBorder);
-    var yRatio = this.app.element.clientHeight/(screen.desktopHeight+2*screen.minimalBorder);
+  resizeModel(model) {
+    var ratio = this.app.element.clientWidth/(model.desktopWidth+2*model.minimalBorder);
+    var yRatio = this.app.element.clientHeight/(model.desktopHeight+2*model.minimalBorder);
 
     if (yRatio < ratio) {
       ratio = yRatio;
@@ -23,28 +23,28 @@ export class OptimalLayout extends NativeLayout {
       ratio = Math.floor(ratio);
     }
 
-    screen.borderWidth = Math.ceil((this.app.element.clientWidth-screen.desktopWidth*ratio)/2/ratio);
-    screen.borderHeight = Math.ceil((this.app.element.clientHeight-screen.desktopHeight*ratio)/2/ratio);
+    model.borderWidth = Math.ceil((this.app.element.clientWidth-model.desktopWidth*ratio)/2/ratio);
+    model.borderHeight = Math.ceil((this.app.element.clientHeight-model.desktopHeight*ratio)/2/ratio);
 
     this.app.element.width = this.app.layout.canvas()['width'];
     this.app.element.height = this.app.layout.canvas()['height'];
 
-    screen.borderView.x = 0;
-    screen.borderView.y = 0;
-    screen.borderView.width = screen.desktopWidth+2*screen.borderWidth;
-    screen.borderView.height = screen.desktopHeight+2*screen.borderHeight;
-    screen.borderView.parentWidth = screen.desktopWidth+2*screen.borderWidth;
-    screen.borderView.parentHeight = screen.desktopHeight+2*screen.borderHeight;
+    model.borderEntity.x = 0;
+    model.borderEntity.y = 0;
+    model.borderEntity.width = model.desktopWidth+2*model.borderWidth;
+    model.borderEntity.height = model.desktopHeight+2*model.borderHeight;
+    model.borderEntity.parentWidth = model.desktopWidth+2*model.borderWidth;
+    model.borderEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
 
-    screen.desktopView.x = screen.borderWidth;
-    screen.desktopView.y = screen.borderHeight;
-    screen.desktopView.width = screen.desktopWidth;
-    screen.desktopView.height = screen.desktopHeight;
-    screen.desktopView.parentWidth = screen.desktopWidth+2*screen.borderWidth;
-    screen.desktopView.parentHeight = screen.desktopHeight+2*screen.borderHeight;
+    model.desktopEntity.x = model.borderWidth;
+    model.desktopEntity.y = model.borderHeight;
+    model.desktopEntity.width = model.desktopWidth;
+    model.desktopEntity.height = model.desktopHeight;
+    model.desktopEntity.parentWidth = model.desktopWidth+2*model.borderWidth;
+    model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
 
-    this.prepareCoordinates(screen);
-  } // resizeScreen
+    this.prepareCoordinates(model);
+  } // resizeModel
 
 } // class OptimalLayout
 

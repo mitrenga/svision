@@ -10,7 +10,7 @@ export class AbstractApp {
   constructor(platform, parentElement, wsURL) {
     this.parentElement = false;
     this.element = false;
-    this.screen = false;
+    this.model = false;
     this.stack = {};
     this.platform = platform;
     this.platform.initCanvasElement(this, parentElement);
@@ -20,20 +20,20 @@ export class AbstractApp {
   } // constructor
 
   loopApp() {
-    if (this.screen) {
-      this.screen.loopScreen();
+    if (this.model) {
+      this.model.loopModel();
     }
   } // loopApp
 
   resizeApp() {
-    if (this.screen) {
-      this.screen.resizeScreen();
+    if (this.model) {
+      this.model.resizeModel();
     }
   } // resizeApp
 
   drawApp() {
-    if (this.screen) {
-      this.screen.drawScreen();
+    if (this.model) {
+      this.model.drawModel();
     }
   } // drawApp
   

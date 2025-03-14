@@ -17,9 +17,9 @@ export class AbstractPlatform {
   initCanvasElement(app, parentElementID) {
   } // initCanvasElement
 
-  initView(view) {
+  initEntity(entity) {
     return false;
-  } // initView
+  } // initEntity
 
   defaultLayout(app) {
     return false;

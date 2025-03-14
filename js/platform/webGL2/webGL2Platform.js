@@ -29,8 +29,8 @@ export class WebGL2Platform extends AbstractPlatform {
     app.stack['containerType'] = 'webGL2';
   } // initCanvasElement
 
-  initView(view) {
-  } // initView
+  initEntity(entity) {
+  } // initEntity
 
   defaultLayout(app) {
     return new WebGL2Layout(app);

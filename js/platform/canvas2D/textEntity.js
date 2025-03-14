@@ -1,15 +1,15 @@
 /**/
-const { AbstractView } = await import('../../abstractView.js?ver='+window.srcVersion);
+const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
 /*/
-import AbstractView from '../../abstractView.js';
+import AbstractEntity from '../../abstractEntity.js';
 /**/
 // begin code
 
-export class TextView  extends AbstractView {
+export class TextEntity  extends AbstractEntity {
 
-  constructor(parentView, x, y, width, height) {
-    super(parentView, x, y, width, height, false, false);
-    this.id = 'TextView';
+  constructor(parentEntity, x, y, width, height) {
+    super(parentEntity, x, y, width, height, false, false);
+    this.id = 'TextEntity';
   
     this.margin = 0; // left + top
     this.justify = 0; // 0 - left, 1 - right, 2 - center
@@ -33,8 +33,8 @@ export class TextView  extends AbstractView {
     return charObject;
   } // getCharData
   
-  drawView() {
-    super.drawView();
+  drawEntity() {
+    super.drawEntity();
 
     switch (this.justify) {
       case 0: 
@@ -72,8 +72,8 @@ export class TextView  extends AbstractView {
       case 2:
         break;
       }
-  } // drawView
+  } // drawEntity
 
-} // class TextView
+} // class TextEntity
 
-export default TextView;
+export default TextEntity;

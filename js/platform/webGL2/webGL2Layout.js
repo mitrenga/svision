@@ -16,21 +16,21 @@ export class WebGL2Layout extends AbstractLayout {
     return {'width': this.app.element.clientWidth, 'height': this.app.element.clientHeight};
   } // canvas
 
-  resizeScreen(screen) {
-    super.resizeScreen(screen);
+  resizeModel(model) {
+    super.resizeModel(model);
 
     this.app.element.width = this.app.layout.canvas()['width'];
     this.app.element.height = this.app.layout.canvas()['height'];
 
-    screen.desktopView.x = 0;
-    screen.desktopView.y = 0;
-    screen.desktopView.width = screen.desktopWidth;
-    screen.desktopView.height = screen.desktopHeight;
-    screen.desktopView.parentWidth = screen.desktopWidth;
-    screen.desktopView.parentHeight = screen.desktopHeight;
-  } // resizeScreen
+    model.desktopEntity.x = 0;
+    model.desktopEntity.y = 0;
+    model.desktopEntity.width = model.desktopWidth;
+    model.desktopEntity.height = model.desktopHeight;
+    model.desktopEntity.parentWidth = model.desktopWidth;
+    model.desktopEntity.parentHeight = model.desktopHeight;
+  } // resizeModel
 
-  drawView(view) {
+  drawEntity(entity) {
     const vsSource =
     '#version 300 es\n'+
     'void main(){'+
@@ -50,7 +50,7 @@ export class WebGL2Layout extends AbstractLayout {
     var vertexShader = this.createShader(ctx, ctx.VERTEX_SHADER, vsSource);
     var fragmentShader = this.createShader(ctx, ctx.FRAGMENT_SHADER, fsSource);
 
-    ctx.viewport(view.x, view.y, view.width, view.height);
+    ctx.viewport(entity.x, entity.y, entity.width, entity.height);
 
     var program = this.createProgram(ctx, [vertexShader, fragmentShader]);;
 
@@ -62,7 +62,7 @@ export class WebGL2Layout extends AbstractLayout {
     var start = 0;
     var count = 1;
     ctx.drawArrays(ctx.POINTSS, start, count);
-  } // drawView
+  } // drawEntity
 
   createShader(ctx, type, src) {
     var shader = ctx.createShader(type);

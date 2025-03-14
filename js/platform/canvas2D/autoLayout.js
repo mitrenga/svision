@@ -27,9 +27,9 @@ export class AutoLayout extends Canvas2DLayout {
     return super.element();
   } // canvas
   
-  resizeScreen(screen) {
-    var ratio = Math.floor(this.app.element.clientWidth/(screen.desktopWidth));
-    var yRatio = Math.floor(this.app.element.clientHeight/(screen.desktopHeight));
+  resizeModel(model) {
+    var ratio = Math.floor(this.app.element.clientWidth/(model.desktopWidth));
+    var yRatio = Math.floor(this.app.element.clientHeight/(model.desktopHeight));
     if (yRatio < ratio) {
       ratio = yRatio;
     }
@@ -41,8 +41,8 @@ export class AutoLayout extends Canvas2DLayout {
     } else {
       this.setLayout('BasicLayout');
     }
-    this.layout.resizeScreen(screen);
-  } // resizeScreen
+    this.layout.resizeModel(model);
+  } // resizeModel
 
   setLayout(id) {
     if (this.layout != false && this.layout.id == id) {
@@ -64,9 +64,9 @@ export class AutoLayout extends Canvas2DLayout {
     } // switch
   } // setLayout
 
-  paintRect(view, x, y, width, height, color) {
+  paintRect(entity, x, y, width, height, color) {
     if (this.layout !== false) {
-      this.layout.paintRect(view, x, y, width, height, color);
+      this.layout.paintRect(entity, x, y, width, height, color);
     }
   } // paintRect
 
