@@ -85,7 +85,7 @@ export class AbstractModel {
       this.borderEntity.setData(data);
     }
     this.desktopEntity.setData(data);
-    thi();
+    this.drawModel();
   } // setData
 
   loopModel() {
