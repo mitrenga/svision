@@ -1,11 +1,11 @@
 /**/
-const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
+const { Canvas2DLayout } = await import('./canvas2DLayout.js?ver='+window.srcVersion);
 /*/
-import AbstractLayout from '../../abstractLayout.js';
+import Canvas2DLayout from './canvas2DLayout.js';
 /**/
 // begin code
 
-export class NativeLayout extends AbstractLayout {
+export class NativeLayout extends Canvas2DLayout {
   
   constructor(app) {
     super(app);
@@ -16,31 +16,32 @@ export class NativeLayout extends AbstractLayout {
   } // constructor
 
   canvas() {
-    return {width: this.app.element.clientWidth, height: this.app.element.clientHeight};
+    return {'width': this.app.element.clientWidth, 'height': this.app.element.clientHeight};
   } // canvas
 
   resizeScreen(screen) {
-    console.log('resizeScreen');
     super.resizeScreen(screen);
     this.prepareCoordinates(screen);
   } // resizeScreen
 
   prepareCoordinates(screen) {
     this.realX = [];
-    var x = 0;
-    while (x < screen.desktopWidth+2*screen.borderWidth) {
-      this.realX.push(Math.round(x/(screen.desktopWidth+2*screen.borderWidth)*this.app.element.clientWidth));
-      x++;
-    }
-    this.realX.push(this.app.element.clientWidth);
-
     this.realY = [];
-    var y = 0;
-    while (y < screen.desktopHeight+2*screen.borderHeight) {
-      this.realY.push(Math.round(y/(screen.desktopHeight+2*screen.borderHeight)*this.app.element.clientHeight));
-      y++;
+    if (screen.desktopWidth+2*screen.borderWidth != this.app.element.clientWidth || screen.desktopHeight+2*screen.borderHeight != this.app.element.clientHeight) {
+      var x = 0;
+      while (x < screen.desktopWidth+2*screen.borderWidth) {
+        this.realX.push(Math.round(x/(screen.desktopWidth+2*screen.borderWidth)*this.app.element.clientWidth));
+        x++;
+      }
+      this.realX.push(this.app.element.clientWidth);
+  
+      var y = 0;
+      while (y < screen.desktopHeight+2*screen.borderHeight) {
+        this.realY.push(Math.round(y/(screen.desktopHeight+2*screen.borderHeight)*this.app.element.clientHeight));
+        y++;
+      }
+      this.realY.push(this.app.element.clientHeight);
     }
-    this.realY.push(this.app.element.clientHeight);
   } // prepareCoordinates
 
   nativeX(screen, x) {
@@ -68,14 +69,17 @@ export class NativeLayout extends AbstractLayout {
   } // nativeY
 
   paintRect(view, x, y, width, height, color) {
-    if (color !== false) {
-      this.app.stack['ctx'].fillStyle = color;
-      this.app.stack['ctx'].fillRect(
+    var ctx = this.app.stack['ctx'];
+    ctx.fillStyle = color;
+    if (this.realX.length > 0 || this.realY.length > 0) {
+      ctx.fillRect(
         this.nativeX(view.screen, x),
         this.nativeY(view.screen, y),
         this.nativeX(view.screen, x+width)-this.nativeX(view.screen, x),
         this.nativeY(view.screen, y+height)-this.nativeY(view.screen, y)
       );
+    } else {
+      ctx.fillRect(x, y, width, height);
     }
   } // paintRect
 

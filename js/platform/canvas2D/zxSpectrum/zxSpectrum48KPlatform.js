@@ -1,13 +1,13 @@
 /**/
-const { AbstractPlatform } = await import('../../../abstractPlatform.js?ver='+window.srcVersion);
+const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
 const { AutoLayout } = await import('../autoLayout.js?ver='+window.srcVersion);
 /*/
-import AbstractPlatform from '../../../abstractPlatform.js';
+import Canvas2DPlatform from '../canvas2DPlatform.js';
 import AutoLayout from '../autoLayout.js';
 /**/
 // begin code
 
-export class ZXSpectrum48KPlatform extends AbstractPlatform {
+export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
   
   constructor() {
     super();
@@ -38,30 +38,19 @@ export class ZXSpectrum48KPlatform extends AbstractPlatform {
   } // constructor
 
   platformName() {
-    return 'ZX Spectrum 48K [HTML canvas 2d]';
+    return 'ZX Spectrum 48K [HTML canvas 2D]';
   } // platformName
   
-  initCanvasElement(app, parentElementID) {
-    app.parentElement = document.getElementById(parentElementID);
-    app.parentElement.innerText = '';
-    app.element = document.createElement('canvas');
-    app.element.id = 'canvasApp';
-    app.element.classList.add('canvasApp');
-    app.parentElement.appendChild(app.element);
-    app.stack['ctx'] = app.element.getContext('2d');
-    app.stack['containerType'] = 'canvas2D';
-  } // initCanvasElement
-
   defaultLayout(app) {
     return new AutoLayout(app);
   } // defaultLayout
 
-  desktop() {
-    return {width: 256, height: 192, defaultColor: this.colorByName('white')};
+  desktop(app) {
+    return {'width': 256, 'height': 192, 'defaultColor': this.colorByName('white')};
   } // desktop
 
-  border() {
-    return {minimal: 4, optimal: 10, defaultColor: this.colorByName('white')};
+  border(app) {
+    return {'minimal': 4, 'optimal': 10, 'defaultColor': this.colorByName('white')};
   } // border
 
   colorByName(colorName) {
@@ -71,7 +60,7 @@ export class ZXSpectrum48KPlatform extends AbstractPlatform {
     return false;
   } // colorByName
 
- color(color) {
+  color(color) {
     switch (color) {
       case 0:
       case 1:
@@ -106,7 +95,7 @@ export class ZXSpectrum48KPlatform extends AbstractPlatform {
   bkColorByAttribut(attr) {
     return this.zxColorByAttribut(attr, 56, 8);
   } // bkColorByAttribut
-  
+
 } // class ZXSpectrum48KPlatform
 
 export default ZXSpectrum48KPlatform;

@@ -1,11 +1,11 @@
 /**/
-const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
+const { Canvas2DLayout } = await import('./canvas2DLayout.js?ver='+window.srcVersion);
 /*/
-import AbstractLayout from '../../abstractLayout.js';
+import Canvas2DLayout from './canvas2DLayout.js';
 /**/
 // begin code
 
-export class BasicLayout extends AbstractLayout {
+export class BasicLayout extends Canvas2DLayout {
   
   constructor(app) {
     super(app);
@@ -13,14 +13,13 @@ export class BasicLayout extends AbstractLayout {
   } // constructor
 
   canvas() {
-    return {width: this.app.screen.desktopWidth+2*this.app.screen.borderWidth, height: this.app.screen.desktopHeight+2*this.app.screen.borderHeight};
+    return {'width': this.app.screen.desktopWidth+2*this.app.screen.borderWidth, 'height': this.app.screen.desktopHeight+2*this.app.screen.borderHeight};
   } // canvas
   
   paintRect(view, x, y, width, height, color) {
-    if (color !== false) {
-      this.app.stack['ctx'].fillStyle = color;
-      this.app.stack['ctx'].fillRect(x, y, width, height);
-    }
+    var ctx = this.app.stack['ctx'];
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, width, height);
   } // paintRect
 
 } // class BasicLayout

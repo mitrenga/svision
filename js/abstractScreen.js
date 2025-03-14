@@ -23,24 +23,24 @@ export class AbstractScreen {
     this.borderHeight = 0;
     this.minimalBorder = 0;
     this.optimalBorder = 0;
-    if (this.app.platform.border() !== false) {
-      this.minimalBorder = this.app.platform.border()['minimal'];
-      this.optimalBorder = this.app.platform.border()['optimal'];
+    if (this.app.platform.border(this.app) !== false) {
+      this.minimalBorder = this.app.platform.border(this.app)['minimal'];
+      this.optimalBorder = this.app.platform.border(this.app)['optimal'];
     }
 
     this.desktopView = null;
-    this.desktopWidth = this.app.platform.desktop()['width'];
-    this.desktopHeight = this.app.platform.desktop()['height'];
+    this.desktopWidth = this.app.platform.desktop(this.app)['width'];
+    this.desktopHeight = this.app.platform.desktop(this.app)['height'];
 
     this.messages = [];
   } // constructor
 
   init() {
-    if (this.app.platform.border() !== false) {
+    if (this.app.platform.border(this.app) !== false) {
       this.borderView = new BorderView(null, 0, 0, 0, 0);
       this.borderView.app = this.app;
       this.borderView.screen = this;
-      this.borderView.bkColor = this.app.platform.border()['defaultColor'];
+      this.borderView.bkColor = this.app.platform.border(this.app)['defaultColor'];
       var viewObjects = this.app.platform.initView(this.borderView);
       if (viewObjects !== false) {
         this.borderView.stack = {...this.borderView.stack, ...viewObjects};
@@ -49,7 +49,7 @@ export class AbstractScreen {
     this.desktopView = new DesktopView(null, 0, 0, 0, 0);
     this.desktopView.app = this.app;
     this.desktopView.screen = this;
-    this.desktopView.bkColor = this.app.platform.desktop()['defaultColor'];
+    this.desktopView.bkColor = this.app.platform.desktop(this.app)['defaultColor'];
     var viewObjects = this.app.platform.initView(this.desktopView);
     if (viewObjects !== false) {
       this.desktopView.stack = {...this.desktopView.stack, ...viewObjects};
@@ -101,6 +101,8 @@ export class AbstractScreen {
   } // loopScreen
 
   resizeScreen() {
+    this.desktopWidth = this.app.platform.desktop(this.app)['width'];
+    this.desktopHeight = this.app.platform.desktop(this.app)['height'];
     this.app.layout.resizeScreen(this);
     this.drawScreen();
   } // resizeScreen
@@ -111,30 +113,6 @@ export class AbstractScreen {
     }
     this.desktopView.drawView();
   } // drawScreen
-
-  colorByName(colorName) {
-    return this.app.colorByName(colorName);
-  } // colorByName
-  
-  color(color) {
-    return this.app.colorByName(color);
-  } // color
-
-  penColorByAttribut(attr) {
-    return this.app.penColorByAttribut(attr);
-  } // penColorByAttribut
-
-  bkColorByAttribut(attr) {
-    return this.app.bkColorByAttribut(attr);
-  } // bkColorByAttribut
-
-  hexToBin(hexData) {
-    return this.hexToInt(hexData).toString(2).padStart(8, '0');
-  } // hexToBin
-
-  hexToInt(hexData) {
-    return parseInt(hexData, 16);
-  } // hexToInt
 
 } // class AbstractScreen
 

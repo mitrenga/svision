@@ -1,7 +1,7 @@
 /**/
-const { TextView } = await import('../../../textView.js?ver='+window.srcVersion);
+const { TextView } = await import('../textView.js?ver='+window.srcVersion);
 /*/
-import TextView from '../../../textView.js';
+import TextView from '../textView.js';
 /**/
 // begin code
 
@@ -38,7 +38,7 @@ export class ZXTextView extends TextView {
     var binData = [];
     for (var y = 0; y < 8; y++) {
       var letter = this.zxFonts['chars'].indexOf(char);
-      binData.push(this.hexToBin(this.zxFonts[this.fontType].substring(letter*16+y*2, letter*16+y*2+2)));
+      binData.push(this.app.hexToBin(this.zxFonts[this.fontType].substring(letter*16+y*2, letter*16+y*2+2)));
     }
 
     // convert for proportional font

@@ -1,7 +1,7 @@
 /**/
-const { AbstractView } = await import('./abstractView.js?ver='+window.srcVersion);
+const { AbstractView } = await import('../../abstractView.js?ver='+window.srcVersion);
 /*/
-import AbstractView from './abstractView.js';
+import AbstractView from '../../abstractView.js';
 /**/
 // begin code
 
@@ -19,7 +19,7 @@ export class SpriteView  extends AbstractView {
     super.drawView();
   
     if (this.bkSpriteColor !== false) {
-      this.paint(0, 0, this.width, this.height, this.bkSpriteColor);
+      this.app.layout.paint(0, 0, this.width, this.height, this.bkSpriteColor);
     }
 
     this.spriteData.forEach((pixel) => {
@@ -27,7 +27,7 @@ export class SpriteView  extends AbstractView {
       if ('penColor' in pixel) {
         color = pixel['color'];
       }
-      this.paint(pixel['x'], pixel['y'], 1, 1, color);
+      this.app.layout.paint(this, pixel['x'], pixel['y'], 1, 1, color);
     });  
   } // draView
 

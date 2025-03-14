@@ -8,6 +8,10 @@ body {
   display: inline;
   width: 100vw;
   height: var(--app-height);
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
 }
 
 .canvasApp {
@@ -23,5 +27,4 @@ body {
   width: 100vw;
   height: var(--app-height);
   font-size: 100%;
-  -webkit-user-select: none;
 }

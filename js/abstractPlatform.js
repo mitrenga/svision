@@ -25,29 +25,26 @@ export class AbstractPlatform {
     return false;
   } // defaultLayout
 
-  desktop() {
-    return {width: 0, height: 0, defaultColor: false};
+  desktop(app) {
+    return {'width': 0, 'height': 0, 'defaultColor': false};
   } // resolution
 
-  border() {
-    return {minimal: 0, optimal: 0, defaultColor: false};
-  }
+  border(app) {
+    return false;
+  } // border
 
   colorByName(colorName) {
-    return false;
+    return colorName;
   } // colorByName
 
   color(color) {
-    return false;
+    color >>>= 0;
+    var b = color & 0xFF;
+    var g = (color & 0xFF00) >>> 8;
+    var r = (color & 0xFF0000) >>> 16;
+    var a = 1; //( (color & 0xFF000000) >>> 24 ) / 255;
+    return 'rgba(' + [r, g, b, a].join(',') + ')';
   } // color
-
-  penColorByAttribut(attr) {
-    return false;
-  } // penColorByAttribut
-
-  bkColorByAttribut(attr) {
-    return false;
-  } // bkColorByAttribut
 
 } // class AbstractPlatform
 

@@ -16,13 +16,12 @@ export class HTMLLayout extends AbstractLayout {
   } // constructor
 
   canvas() {
-    return {width: this.app.element.clientWidth, height: this.app.element.clientHeight};
+    return {'width': this.app.element.clientWidth, 'height': this.app.element.clientHeight};
   } // canvas
 
   resizeScreen(screen) {
-    var xRatio = this.app.element.clientWidth/(screen.desktopWidth);
-    var yRatio = this.app.element.clientHeight/(screen.desktopHeight);
-
+    super.resizeScreen(screen);
+    
     this.app.element.width = this.app.layout.canvas()['width'];
     this.app.element.height = this.app.layout.canvas()['height'];
 
@@ -78,15 +77,16 @@ export class HTMLLayout extends AbstractLayout {
     return this.realY[y];
   } // nativeY
 
-  paintRect(view, x, y, width, height, color) {
-    view.stack['element'].style.left = this.nativeX(view.screen, x)+'px';
-    view.stack['element'].style.top = this.nativeY(view.screen, y)+'px';
-    view.stack['element'].style.width = this.nativeX(view.screen, x+width)-this.nativeX(view.screen, x)+'px';
-    view.stack['element'].style.height = this.nativeY(view.screen, y+height)-this.nativeY(view.screen, y)+'px';
-    if (color !== false) {
-      view.stack['element'].style.backgroundColor = color;
+  drawView(view) {
+    var element = view.stack['element'];
+    element.style.left = this.nativeX(view.screen, view.x)+'px';
+    element.style.top = this.nativeY(view.screen, view.y)+'px';
+    element.style.width = this.nativeX(view.screen, view.x+view.width)-this.nativeX(view.screen, view.x)+'px';
+    element.style.height = this.nativeY(view.screen, view.y+view.height)-this.nativeY(view.screen, view.y)+'px';
+    if (view.bkColor !== false) {
+      element.style.backgroundColor = view.bkColor;
     }
-  } // paintRect
+  } // drawView
 
 } // class HTMLLayout
 

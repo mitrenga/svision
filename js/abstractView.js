@@ -91,68 +91,8 @@ export class AbstractView {
     }
   } // setData
 
-  paint(x, y, width, height, color) {
-    var w = width;
-    if (this.x+x < 0) {
-      w = w+this.x;
-      x = -this.x;
-      if (w < 0) {
-        w = 0;
-      }
-    }
-    if (x < 0) {
-      w = w+x;
-      x = 0;
-      if (w < 0) {
-        w = 0;
-      }
-    }
-    if (this.x+x+w > this.parentWidth) {
-      w = this.parentWidth-this.x-x;
-      if (w < 0) {
-        w = 0;
-      }
-    }
-    if (x+w > this.width) {
-      w = this.width-x;
-      if (w < 0) {
-        w = 0;
-      }
-    }
-    var h = height;
-    if (this.y+y < 0) {
-      h = h+this.y;
-      y = -this.y;
-      if (h < 0) {
-        h = 0;
-      }
-    }
-    if (y < 0) {
-      h = h+y;
-      y = 0;
-      if (h < 0) {
-        h = 0;
-      }
-    }
-    if (this.y+y+h > this.parentHeight) {
-      h = this.parentHeight-this.y-y;
-      if (h < 0) {
-        h = 0;
-      }
-    }
-    if (y+h > this.height) {
-      h = this.height-y;
-      if (h < 0) {
-        h = 0;
-      }
-    }
-    if (w > 0 && h > 0) {
-      this.app.layout.paintRect(this, this.parentX+this.x+x, this.parentY+this.y+y, w, h, color);
-    }
-  } // paint
-
   drawView() {
-    this.paint(0, 0, this.width, this.height, this.bkColor);
+    this.app.layout.drawView(this);
 
     this.views.forEach ((view) => {
       view.parentX = this.parentX+this.x;
@@ -177,31 +117,7 @@ export class AbstractView {
       view.drawView();
     });
   } // drawView
-
-  colorByName(colorName) {
-    return this.app.colorByName(colorName);
-  } // colorByName
   
-  color(color) {
-    return this.app.colorByName(color);
-  } // color
-
-  penColorByAttribut(attr) {
-    return this.app.penColorByAttribut(attr);
-  } // penColorByAttribut
-
-  bkColorByAttribut(attr) {
-    return this.app.bkColorByAttribut(attr);
-  } // bkColorByAttribut
-
-  hexToBin(hexData) {
-    return this.hexToInt(hexData).toString(2).padStart(8, '0');
-  } // hexToBin
-
-  hexToInt(hexData) {
-    return parseInt(hexData, 16);
-  } // hexToInt
-
 } // class AbstractView
 
 export default AbstractView;

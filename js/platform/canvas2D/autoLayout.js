@@ -1,17 +1,17 @@
 /**/
-const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
+const { Canvas2DLayout } = await import('./canvas2DLayout.js?ver='+window.srcVersion);
 const { BasicLayout } = await import('./basicLayout.js?ver='+window.srcVersion);
 const { NativeLayout } = await import('./nativeLayout.js?ver='+window.srcVersion);
 const { OptimalLayout } = await import('./optimalLayout.js?ver='+window.srcVersion);
 /*/
-import AbstractLayout from '../../abstractLayout.js';
+import Canvas2DLayout from './canvas2DLayout.js';
 import BasicLayout from './basicLayout.js';
 import NativeLayout from './nativeLayout.js';
 import OptimalLayout from './optimalLayout.js';
 /**/
 // begin code
 
-export class AutoLayout extends AbstractLayout {
+export class AutoLayout extends Canvas2DLayout {
   
   constructor(app) {
     super(app);

@@ -1,7 +1,7 @@
 /**/
-const { AbstractView } = await import('./abstractView.js?ver='+window.srcVersion);
+const { AbstractView } = await import('../../abstractView.js?ver='+window.srcVersion);
 /*/
-import AbstractView from './abstractView.js';
+import AbstractView from '../../abstractView.js';
 /**/
 // begin code
 
@@ -29,7 +29,7 @@ export class TextView  extends AbstractView {
   } // getPenColorChar
 
   getCharData(char, proportional) {
-    var charObject = {width: 8, height: 8, data: ['00110011', '00110011', '11001100', '11001100', '00110011', '00110011', '11001100', '11001100']};
+    var charObject = {'width': 8, 'height': 8, 'data': ['00110011', '00110011', '11001100', '11001100', '00110011', '00110011', '11001100', '11001100']};
     return charObject;
   } // getCharData
   
@@ -50,7 +50,7 @@ export class TextView  extends AbstractView {
           }
           var charData = this.getCharData(this.getTextChar(ch));
           for (var x = 0; x < charData['data'].length; x++) {
-            this.paint(cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+            this.app.layout.paint(this, cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
           }
           cursorX += charData['width'];
         }
@@ -64,7 +64,7 @@ export class TextView  extends AbstractView {
           }
           var charData = this.getCharData(this.getTextChar(ch-1));
           for (var x = 0; x < charData['data'].length; x++) {
-            this.paint(cursorX-this.margin-charData['width']+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+            this.app.layout.paint(this, cursorX-this.margin-charData['width']+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
           }
           cursorX -= charData['width'];
         }

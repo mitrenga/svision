@@ -8,7 +8,7 @@ import AbstractView from './abstractView.js';
 export class DesktopView  extends AbstractView {
 
   constructor(parentView, x, y, width, height) {
-    super(parentView, x, y, width, height);
+    super(parentView, x, y, width, height, false, false);
     this.id = 'DesktopView';
   } // constructor
 

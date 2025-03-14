@@ -40,21 +40,13 @@ export class AbstractApp {
   onClick(e) {
   } // onClick
   
-  colorByName(colorName) {
-    return this.platform.colorByName(colorName);
-  } // colorByName
-  
-  color(color) {
-    return this.platform.color(color);
-  } // color
+  hexToInt(hexData) {
+    return parseInt(hexData, 16);
+  } // hexToInt
 
-  penColorByAttribut(attr) {
-    return this.platform.penColorByAttribut(attr);
-  } // penColorByAttribut
-
-  bkColorByAttribut(attr) {
-    return this.platform.bkColorByAttribut(attr);
-  } // bkColorByAttribut
+  hexToBin(hexData) {
+    return this.hexToInt(hexData).toString(2).padStart(8, '0');
+  } // hexToBin
 
 } // class AbstractApp
 
