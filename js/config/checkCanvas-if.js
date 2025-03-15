@@ -3,8 +3,8 @@ import appPlatform from '../../../../js/appPlatform.js';
 
 var canvas = new Canvas(appPlatform);
 
-function loop() {
-    canvas.loop();
+function loop(timestamp) {
+    canvas.loop(timestamp);
     canvas.draw();
     requestAnimationFrame(loop);
 } // loop

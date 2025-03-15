@@ -19,9 +19,9 @@ export class AbstractApp {
     this.webSocket = false;
   } // constructor
 
-  loopApp() {
+  loopApp(timestamp) {
     if (this.model) {
-      this.model.loopModel();
+      this.model.loopModel(timestamp);
     }
   } // loopApp
 

@@ -3,8 +3,8 @@ const { appPlatform } = await import('../../../appPlatform.js?ver='+window.srcVe
 
 var canvas = new Canvas(appPlatform);
 
-function loop() {
-    canvas.loop();
+function loop(timestamp) {
+    canvas.loop(timestamp);
     canvas.draw();
     requestAnimationFrame(loop);
 } // loop

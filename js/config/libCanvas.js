@@ -99,7 +99,7 @@ export class Canvas {
         this.element.width = this.canvasWidth;
         this.element.height = this.canvasHeight;
         this.element.style.textAlign = 'left';
-        this.lastTime = null;
+        this.prevTimestamp = 0;
         this.cntFrames = 0;
         this.fps = -1;
         this.init();
@@ -162,7 +162,7 @@ export class Canvas {
         this.stack['rightPlayer'].loopGame(this.canvasWidth, this.canvasHeight, this.stack['ball'].directionX, this.stack['ball'].posY);
     } // loopCanvas2D
 
-    loop() {
+    loop(timestamp) {
         window.canvasRunning = true;
         this.countFrames++;
         switch (this.stack['containerType']) {
@@ -173,13 +173,9 @@ export class Canvas {
                 this.loopCanvas2D();
                 break;
         }
-
-        var now = Date.now();
-        var timeDiff;
-        if (this.lastTime != null) timeDiff = now - this.lastTime; else this.lastTime = now;
-        if (timeDiff >= 1000) {
+        if (timestamp-this.prevTimestamp >= 1000) {
             this.fps = this.countFrames;
-            this.lastTime = now;
+            this.prevTimestamp = timestamp;
             this.countFrames = 0;
         }
     } // loop

@@ -14,7 +14,8 @@ export class AbstractModel {
     this.id = 'AbstractModel';
 
     this.flashState = 0;
-    this.now = Date.now();
+    this.now = 0;
+    this.prevTimestamp = 0;
 
     this.borderEntity = null;
     this.borderWidth = 0;
@@ -88,10 +89,10 @@ export class AbstractModel {
     this.drawModel();
   } // setData
 
-  loopModel() {
-    this.now = Date.now();
+  loopModel(timestamp) {
+    this.now = timestamp;
     for (var m = 0; m < this.events.length; m++) {
-      if (this.events[m]['timing'] <= this.now) {
+      if (this.events[m]['timing'] <= timestamp) {
         this.sendEvent(0, this.events[m]['event']);
         this.events.splice(m, 1);
       }
