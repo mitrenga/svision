@@ -24,6 +24,7 @@ export class AbstractEntity {
     this.height = height;
     this.bkColor = bkColor;
     this.penColor = penColor;
+    this.hide = false;
 
     this.parentX = 0;
     this.parentY = 0;
@@ -92,30 +93,36 @@ export class AbstractEntity {
   } // setData
 
   drawEntity() {
+    if (this.hide == true) {
+      return;
+    }
+
     this.app.layout.drawEntity(this);
 
     this.entities.forEach ((entity) => {
-      entity.parentX = this.parentX+this.x;
-      entity.parentY = this.parentY+this.y;
-      
-      var w = this.width;
-      if (this.x+this.width > this.parentWidth) {
-        w = this.parentWidth-this.x;
-        if (w < 0) {
-          w = 0;
+      if (entity.hide == false) {
+        entity.parentX = this.parentX+this.x;
+        entity.parentY = this.parentY+this.y;
+        
+        var w = this.width;
+        if (this.x+this.width > this.parentWidth) {
+          w = this.parentWidth-this.x;
+          if (w < 0) {
+            w = 0;
+          }
         }
-      }
-      var h = this.height;
-      if (this.y+this.height > this.parentHeight) {
-        h = this.parentHeight-this.y;
-        if (h < 0) {
-          h = 0;
+        var h = this.height;
+        if (this.y+this.height > this.parentHeight) {
+          h = this.parentHeight-this.y;
+          if (h < 0) {
+            h = 0;
+          }
         }
-      }
-      entity.parentWidth = w;
-      entity.parentHeight = h;
-      entity.drawEntity();
-    });
+        entity.parentWidth = w;
+        entity.parentHeight = h;
+        entity.drawEntity();
+    }
+  });
   } // drawEntity
   
 } // class AbstractEntity

@@ -32,7 +32,7 @@ export class ZXTextEntity extends TextEntity {
     return this.text.length;
   } // getTextLength
 
-  getCharData(char) {
+  getCharData(char, bitMask) {
     var width = 8;
     var charObject = {data: []};
     var binData = [];
@@ -48,7 +48,7 @@ export class ZXTextEntity extends TextEntity {
       var doIt = true;
       while (doIt == true) {
         for (var y = 0; y < 8; y++) {
-          if (binData[y][0] == '1') {
+          if (binData[y][0] == bitMask) {
             doIt = false;
             break;
           }
@@ -68,7 +68,7 @@ export class ZXTextEntity extends TextEntity {
       doIt = true;
       while (doIt == true) {
         for (var y = 0; y < 8; y++) {
-          if (binData[y][binData[y].length-1] == '1') {
+          if (binData[y][binData[y].length-1] == bitMask) {
             doIt = false;
             break;
           }
@@ -84,12 +84,15 @@ export class ZXTextEntity extends TextEntity {
         }
       }
       width += 2;
+      for (var y = 0; y < 8; y++) {
+        binData[y] = binData[y]+'00';
+      }
     }
 
     // convert binary to array
     binData.forEach ((mask, y) => {
       for (var x = 0; x < mask.length; x++) {
-        if (mask[x] == '1') {
+        if (mask[x] == bitMask) {
           charObject['data'].push([x, y, 1, 1]);
         }
       }

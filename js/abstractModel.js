@@ -14,7 +14,6 @@ export class AbstractModel {
     this.id = 'AbstractModel';
 
     this.flashState = 0;
-    this.now = 0;
     this.prevTimestamp = 0;
 
     this.borderEntity = null;
@@ -59,7 +58,7 @@ export class AbstractModel {
     if (timing == 0) {
       this.handleEvent(event);
     } else {
-      this.events.push({'id': event['id'], 'timing': this.now+timing, 'event': event});
+      this.events.push({'id': event['id'], 'timing': this.app.now+timing, 'event': event});
     }
   } // sendEvent
 
@@ -90,7 +89,6 @@ export class AbstractModel {
   } // setData
 
   loopModel(timestamp) {
-    this.now = timestamp;
     for (var m = 0; m < this.events.length; m++) {
       if (this.events[m]['timing'] <= timestamp) {
         this.sendEvent(0, this.events[m]['event']);

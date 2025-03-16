@@ -14,6 +14,8 @@ export class TextEntity  extends AbstractEntity {
     this.margin = 0; // left + top
     this.justify = 0; // 0 - left, 1 - right, 2 - center
     this.proportional = false;
+    this.flashState = 0;
+    this.flashMask = false;
   } // constructor
 
   getTextChar(position) {
@@ -28,7 +30,7 @@ export class TextEntity  extends AbstractEntity {
     return false;
   } // getPenColorChar
 
-  getCharData(char, proportional) {
+  getCharData(char, bitMask) {
     var charObject = {'width': 8, 'height': 8, 'data': ['00110011', '00110011', '11001100', '11001100', '00110011', '00110011', '11001100', '11001100']};
     return charObject;
   } // getCharData
@@ -48,7 +50,13 @@ export class TextEntity  extends AbstractEntity {
           if (this.getPenColorChar(ch) !== false) {
             penColor = this.getPenColorChar(ch);
           }
-          var charData = this.getCharData(this.getTextChar(ch));
+          var bitMask = '1';
+          if (this.flashMask !== false) {
+            if (this.flashMask[ch] == 'i' && this.flashState == 1) {
+              bitMask = '0';
+            }
+          }
+          var charData = this.getCharData(this.getTextChar(ch), bitMask);
           for (var x = 0; x < charData['data'].length; x++) {
             this.app.layout.paint(this, cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
           }

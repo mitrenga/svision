@@ -10,6 +10,7 @@ export class AbstractApp {
   constructor(platform, parentElement, wsURL) {
     this.parentElement = false;
     this.element = false;
+    this.now = 0;
     this.model = false;
     this.stack = {};
     this.platform = platform;
@@ -20,6 +21,7 @@ export class AbstractApp {
   } // constructor
 
   loopApp(timestamp) {
+    this.now = timestamp;
     if (this.model) {
       this.model.loopModel(timestamp);
     }
