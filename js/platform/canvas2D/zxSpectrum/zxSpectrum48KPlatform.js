@@ -1,9 +1,11 @@
 /**/
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
 const { AutoLayout } = await import('../autoLayout.js?ver='+window.srcVersion);
+const { ZXBorderEntity } = await import('./zxBorderEntity.js?ver='+window.srcVersion);
 /*/
 import Canvas2DPlatform from '../canvas2DPlatform.js';
 import AutoLayout from '../autoLayout.js';
+import ZXBorderEntity from './zxBorderEntity.js';
 /**/
 // begin code
 
@@ -40,7 +42,11 @@ export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
   platformName() {
     return 'ZX Spectrum 48K [HTML canvas 2D]';
   } // platformName
-  
+
+  defaultBorderEntity() {
+    return new ZXBorderEntity();
+  } // defaultBorderEntity
+
   defaultLayout(app) {
     return new AutoLayout(app);
   } // defaultLayout

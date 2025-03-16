@@ -7,8 +7,8 @@ import AbstractEntity from './abstractEntity.js';
 
 export class DesktopEntity  extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height) {
-    super(parentEntity, x, y, width, height, false, false);
+  constructor() {
+    super(null, 0, 0, 0, 0, false, false);
     this.id = 'DesktopEntity';
   } // constructor
 

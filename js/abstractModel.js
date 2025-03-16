@@ -35,7 +35,7 @@ export class AbstractModel {
 
   init() {
     if (this.app.platform.border(this.app) !== false) {
-      this.borderEntity = new BorderEntity(null, 0, 0, 0, 0);
+      this.borderEntity = this.app.platform.defaultBorderEntity();
       this.borderEntity.app = this.app;
       this.borderEntity.model = this;
       this.borderEntity.bkColor = this.app.platform.border(this.app)['defaultColor'];
@@ -44,7 +44,7 @@ export class AbstractModel {
         this.borderEntity.stack = {...this.borderEntity.stack, ...entityObjects};
       }
     }
-    this.desktopEntity = new DesktopEntity(null, 0, 0, 0, 0);
+    this.desktopEntity = this.app.platform.defaultDesktopEntity();
     this.desktopEntity.app = this.app;
     this.desktopEntity.model = this;
     this.desktopEntity.bkColor = this.app.platform.desktop(this.app)['defaultColor'];
