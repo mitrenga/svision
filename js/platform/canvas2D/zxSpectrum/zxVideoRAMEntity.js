@@ -5,25 +5,29 @@ import AbstractEntity from '../../../abstractEntity.js';
 /**/
 // begin code
 
-export class ZXVideoBufferEntity extends AbstractEntity {
+export class ZXVideoRAMEntity extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height, sourceEntity, videoRAMCallback) {
+  constructor(parentEntity, x, y, width, height) {
     super(parentEntity, x, y, width, height);
-    this.id = 'ZXVideoBufferEntity';
-    this.penColor = this.app.platform.color('black');
+    this.id = 'ZXVideoRAMEntity';
+    this.penColor = false;
     this.bkColor = false;
-    this.sourceEntity = sourceEntity;
-    this.videoRAMCallback = videoRAMCallback;
+    this.resultTime = false;
   } // constructor
 
+  getVideoRAMValue(addr) {
+    return false;
+  } // getVideoRAMValue
+
   drawEntity() {
+    var startTime = Date.now();
     super.drawEntity();
     for (var row = 0; row < 192; row++) {
       for (var column = 0; column < 32; column++) {
-        var hexData = this.videoRAMCallback(this.sourceEntity, row*32+column);
+        var hexData = this.getVideoRAMValue(row*32+column);
         if (hexData !== false) {
           var binData = this.app.hexToBin(hexData);
-          var hexAttribut = this.videoRAMCallback(this.sourceEntity, 6144+(row%8)*32+Math.floor(row/64)*256+column);
+          var hexAttribut = this.getVideoRAMValue(6144+(row%8)*32+Math.floor(row/64)*256+column);
           if (hexAttribut === false) {
             hexAttribut = '38';
           }
@@ -38,8 +42,11 @@ export class ZXVideoBufferEntity extends AbstractEntity {
         }
       }
     }
+    var stopTime = Date.now();
+    if (this.resultTime === false) 
+      this.resultTime = stopTime-startTime;
   } // drawEntity
 
-} // class ZXVideoBufferEntity
+} // class ZXVideoRAMEntity
 
-export default ZXVideoBufferEntity;
+export default ZXVideoRAMEntity;

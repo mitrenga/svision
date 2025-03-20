@@ -15,15 +15,11 @@ export class HTMLLayout extends AbstractLayout {
     this.realY = [];
   } // constructor
 
-  canvas() {
-    return {'width': this.app.element.clientWidth, 'height': this.app.element.clientHeight};
-  } // canvas
-
   resizeModel(model) {
     super.resizeModel(model);
     
-    this.app.element.width = this.app.layout.canvas()['width'];
-    this.app.element.height = this.app.layout.canvas()['height'];
+    this.app.element.width = this.app.element.clientWidth;
+    this.app.element.height = this.app.element.clientHeight;
 
     model.desktopEntity.x = model.borderWidth;
     model.desktopEntity.y = model.borderHeight;

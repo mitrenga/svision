@@ -8,18 +8,16 @@ import AbstractEntity from '../../abstractEntity.js';
 export class SpriteEntity  extends AbstractEntity {
 
   constructor(parentEntity, x, y, width, height, spriteData, penColor, bkColor) {
-    super(parentEntity, x, y, width, height, penColor, false);
+    super(parentEntity, x, y, width, height, penColor, bkColor);
     this.id = 'SpriteEntity';
 
     this.spriteData = spriteData;
-    this.bkSpriteColor = bkColor;
   } // constructor
 
   drawEntity() {
     super.drawEntity();
   
     if (this.bkSpriteColor !== false) {
-      this.app.layout.paint(0, 0, this.width, this.height, this.bkSpriteColor);
     }
 
     this.spriteData.forEach((pixel) => {

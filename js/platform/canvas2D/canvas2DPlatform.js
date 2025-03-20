@@ -1,9 +1,9 @@
 /**/
 const { AbstractPlatform } = await import('../../abstractPlatform.js?ver='+window.srcVersion);
-const { NativeLayout } = await import('./nativeLayout.js?ver='+window.srcVersion);
+const { Canvas2DLayout } = await import('./canvas2DLayout.js?ver='+window.srcVersion);
 /*/
 import AbstractPlatform from '../../abstractPlatform.js';
-import NativeLayout from './nativeLayout.js';
+import Canvas2DLayout from './canvas2DLayout.js';
 /**/
 // begin code
 
@@ -30,7 +30,7 @@ export class Canvas2DPlatform extends AbstractPlatform {
   } // initCanvasElement
 
   defaultLayout(app) {
-    return new NativeLayout(app);
+    return new Canvas2DLayout(app);
   } // defaultLayout
 
   desktop(app) {

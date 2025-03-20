@@ -20,10 +20,8 @@ export class AbstractModel {
     this.borderWidth = 0;
     this.borderHeight = 0;
     this.minimalBorder = 0;
-    this.optimalBorder = 0;
     if (this.app.platform.border(this.app) !== false) {
       this.minimalBorder = this.app.platform.border(this.app)['minimal'];
-      this.optimalBorder = this.app.platform.border(this.app)['optimal'];
     }
 
     this.desktopEntity = null;

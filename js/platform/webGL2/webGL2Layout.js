@@ -19,8 +19,8 @@ export class WebGL2Layout extends AbstractLayout {
   resizeModel(model) {
     super.resizeModel(model);
 
-    this.app.element.width = this.app.layout.canvas()['width'];
-    this.app.element.height = this.app.layout.canvas()['height'];
+    this.app.element.width = this.app.element.clientWidth;
+    this.app.element.height = this.app.element.clientHeight;
 
     model.desktopEntity.x = 0;
     model.desktopEntity.y = 0;

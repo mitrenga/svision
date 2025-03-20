@@ -13,9 +13,6 @@ export class Canvas2DLayout extends AbstractLayout {
     this.id = 'Canvas2DLayout';
   } // constructor
 
-  paintRect(entity, x, y, width, height, color) {
-  } // paintRect
-
   resizeModel(model) {
     super.resizeModel(model);
     
@@ -23,25 +20,15 @@ export class Canvas2DLayout extends AbstractLayout {
     var yRatio = this.app.element.clientHeight/(model.desktopHeight+2*model.minimalBorder);
 
     if (yRatio < xRatio) {
-      if (yRatio < 2) {
-        model.borderHeight = model.minimalBorder;
-      } else {
-        model.borderHeight = model.optimalBorder;
-        yRatio = this.app.element.clientHeight/(model.desktopHeight+2*model.optimalBorder);
-      }
+      model.borderHeight = model.minimalBorder;
       model.borderWidth = Math.round((this.app.element.clientWidth/yRatio-model.desktopWidth)/2);
     } else {
-      if (xRatio < 2) {
-        model.borderWidth = model.minimalBorder;
-      } else {
-        model.borderWidth = model.optimalBorder;
-        xRatio = this.app.element.clientWidth/(model.desktopWidth+2*model.optimalBorder);
-      }
+      model.borderWidth = model.minimalBorder;
       model.borderHeight = Math.round((this.app.element.clientHeight/xRatio-model.desktopHeight)/2);
     } 
 
-    this.app.element.width = this.app.layout.canvas()['width'];
-    this.app.element.height = this.app.layout.canvas()['height'];
+    this.app.element.width = this.app.element.clientWidth;
+    this.app.element.height = this.app.element.clientHeight;
 
     if (model.borderEntity != null) {
       model.borderEntity.x = 0;
@@ -121,10 +108,15 @@ export class Canvas2DLayout extends AbstractLayout {
         }
       }
       if (w > 0 && h > 0) {
-        this.paintRect(entity, entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
+        this.paintRect(this.app.stack['ctx'], entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
       }
     }
   } // paint
+
+  paintRect(ctx, x, y, width, height, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, width, height);
+  } // paintRect
 
 } // class Canvas2DLayout
 

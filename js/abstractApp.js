@@ -15,6 +15,10 @@ export class AbstractApp {
     this.stack = {};
     this.platform = platform;
     this.platform.initCanvasElement(this, parentElement);
+
+    this.offscreenCanvas = document.createElement("canvas");
+    this.offscreenCanvas.width = 100;
+    this.offscreenCanvas.height = 100;
     this.layout = platform.defaultLayout(this);
     this.wsURL = wsURL;
     this.webSocket = false;
@@ -32,12 +36,6 @@ export class AbstractApp {
       this.model.resizeModel();
     }
   } // resizeApp
-
-  drawApp() {
-    if (this.model) {
-      this.model.drawModel();
-    }
-  } // drawApp
   
   onClick(e) {
   } // onClick

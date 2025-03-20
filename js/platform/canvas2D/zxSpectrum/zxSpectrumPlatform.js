@@ -1,15 +1,15 @@
 /**/
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
-const { AutoLayout } = await import('../autoLayout.js?ver='+window.srcVersion);
+const { ZXSpectrumLayout } = await import('./zxSpectrumLayout.js?ver='+window.srcVersion);
 const { ZXBorderEntity } = await import('./zxBorderEntity.js?ver='+window.srcVersion);
 /*/
 import Canvas2DPlatform from '../canvas2DPlatform.js';
-import AutoLayout from '../autoLayout.js';
+import ZXSpectrumLayout from './zxSpectrumLayout.js';
 import ZXBorderEntity from './zxBorderEntity.js';
 /**/
 // begin code
 
-export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
+export class ZXSpectrumPlatform extends Canvas2DPlatform {
   
   constructor() {
     super();
@@ -40,7 +40,7 @@ export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
   } // constructor
 
   platformName() {
-    return 'ZX Spectrum 48K [HTML canvas 2D]';
+    return 'ZX Spectrum [HTML canvas 2D]';
   } // platformName
 
   defaultBorderEntity() {
@@ -48,7 +48,7 @@ export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
   } // defaultBorderEntity
 
   defaultLayout(app) {
-    return new AutoLayout(app);
+    return new ZXSpectrumLayout(app);
   } // defaultLayout
 
   desktop(app) {
@@ -56,7 +56,7 @@ export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
   } // desktop
 
   border(app) {
-    return {'minimal': 4, 'optimal': 10, 'defaultColor': this.colorByName('white')};
+    return {'minimal': 8, 'defaultColor': this.colorByName('white')};
   } // border
 
   colorByName(colorName) {
@@ -102,6 +102,6 @@ export class ZXSpectrum48KPlatform extends Canvas2DPlatform {
     return this.zxColorByAttribut(attr, 56, 8);
   } // bkColorByAttribut
 
-} // class ZXSpectrum48KPlatform
+} // class ZXSpectrumPlatform
 
-export default ZXSpectrum48KPlatform;
+export default ZXSpectrumPlatform;

@@ -11,10 +11,6 @@ export class AbstractLayout {
     this.app = app;
     this.id = 'AbstractLayout';
   } // constructor
-
-  canvas() {
-    return false;
-  } // canvas
   
   colorByName(colorName) {
     return false;
@@ -26,6 +22,9 @@ export class AbstractLayout {
 
   resizeModel(model) {
   } // resizeModel
+
+  drawEntity(entity) {
+  } // drawEntity
 
 } // class AbstractLayout
 
