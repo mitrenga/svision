@@ -40,12 +40,20 @@ export class AbstractApp {
   onClick(e) {
   } // onClick
   
-  hexToInt(hexData) {
-    return parseInt(hexData, 16);
+  hexToInt(hexNum) {
+    return parseInt(hexNum, 16);
   } // hexToInt
 
-  hexToBin(hexData) {
-    return this.hexToInt(hexData).toString(2).padStart(8, '0');
+  intToHex(intNum) {
+    return intNum.toString(16);
+  } // intToHex
+
+  hexToBin(hexNum) {
+    return this.hexToInt(hexNum).toString(2).padStart(8, '0');
+  } // hexToBin
+
+  binToInt(binNum) {
+    return parseInt(binNum, 2);
   } // hexToBin
 
 } // class AbstractApp
