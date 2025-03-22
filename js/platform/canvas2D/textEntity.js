@@ -42,8 +42,14 @@ export class TextEntity  extends AbstractEntity {
       case 0: 
       case 2: 
         var cursorX = 0;
-        if (this.justify == 2 && this.text.length*8 < this.width && this.proportional == false) {
-          cursorX = Math.floor(this.width/2)-this.text.length*4;
+        var textLength = 0;
+        if (this.justify == 2) {
+          for (var ch = 0; ch < this.text.length; ch++) {
+            textLength += this.getCharData(this.getTextChar(ch), '1')['width'];
+          }
+          if (textLength < this.width) {
+            cursorX = Math.floor(this.width/2-textLength/2);
+          }
         }
         for (var ch = 0; ch < this.getTextLength(); ch++) {
           var penColor = this.penColor;
