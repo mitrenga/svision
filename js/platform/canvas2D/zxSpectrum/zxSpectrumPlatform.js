@@ -76,7 +76,7 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
       case 5:
       case 6:
       case 7:
-        return this.platformColorByName(this.zxColorsName[0][color]);
+        return this.colorByName(this.zxColorsName[0][color]);
       case 8:
       case 9:
       case 10:
@@ -85,7 +85,7 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
       case 13:
       case 14:
       case 15:
-        return this.platformColorByName(this.zxColorsName[1][color-8]);
+        return this.colorByName(this.zxColorsName[1][color-8]);
       }
     return false;
   } // color
