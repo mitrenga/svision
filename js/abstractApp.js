@@ -49,7 +49,7 @@ export class AbstractApp {
   } // intToHex
 
   hexToBin(hexNum) {
-    return this.hexToInt(hexNum).toString(2).padStart(8, '0');
+    return this.hexToInt(hexNum).toString(2).padStart(hexNum.length*4, '0');
   } // hexToBin
 
   binToInt(binNum) {
