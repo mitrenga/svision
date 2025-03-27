@@ -38,10 +38,20 @@ export class TextEntity  extends AbstractEntity {
   drawEntity() {
     super.drawEntity();
 
+    var bitMask = '1';
+    if (this.flashMask !== false) {
+      if (this.flashMask[ch] == 'i' && this.flashState == 1) {
+        bitMask = '0';
+      }
+    }
+    
     switch (this.justify) {
       case 0: 
       case 2: 
         var cursorX = 0;
+        if (this.proportional == true) {
+          cursorX++;
+        }
         var textLength = 0;
         if (this.justify == 2) {
           for (var ch = 0; ch < this.text.length; ch++) {
@@ -55,12 +65,6 @@ export class TextEntity  extends AbstractEntity {
           var penColor = this.penColor;
           if (this.getPenColorChar(ch) !== false) {
             penColor = this.getPenColorChar(ch);
-          }
-          var bitMask = '1';
-          if (this.flashMask !== false) {
-            if (this.flashMask[ch] == 'i' && this.flashState == 1) {
-              bitMask = '0';
-            }
           }
           var charData = this.getCharData(this.getTextChar(ch), bitMask);
           for (var x = 0; x < charData['data'].length; x++) {
@@ -76,14 +80,13 @@ export class TextEntity  extends AbstractEntity {
           if (this.getPenColorChar(ch-1) !== false) {
             penColor = this.getPenColorChar(ch-1);
           }
-          var charData = this.getCharData(this.getTextChar(ch-1));
-          for (var x = 0; x < charData['data'].length; x++) {
-            this.app.layout.paint(this, cursorX-this.margin-charData['width']+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
-          }
+          var charData = this.getCharData(this.getTextChar(ch-1), bitMask);
           cursorX -= charData['width'];
+          console.log(charData);
+          for (var x = 0; x < charData['data'].length; x++) {
+            this.app.layout.paint(this, cursorX-this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+          }
         }
-        break;
-      case 2:
         break;
       }
   } // drawEntity
