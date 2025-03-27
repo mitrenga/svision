@@ -34,9 +34,9 @@ export class ZXVideoRAMEntity extends AbstractEntity {
           var intAttribut = this.app.hexToInt(hexAttribut);
           for (var bit = 0; bit < 8; bit++) {
             if (binData[bit] == '1') {
-              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.penColorByAttribut(intAttribut));
+              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.penColorByAttribute(intAttribut));
             } else {
-              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.bkColorByAttribut(intAttribut));
+              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.bkColorByAttribute(intAttribut));
             }
           }
         }
