@@ -85,7 +85,6 @@ export class TextEntity  extends AbstractEntity {
           }
           var charData = this.getCharData(this.getTextChar(ch-1), bitMask);
           cursorX -= charData['width'];
-          console.log(charData);
           for (var x = 0; x < charData['data'].length; x++) {
             this.app.layout.paint(this, cursorX-this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
           }
