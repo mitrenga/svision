@@ -14,7 +14,6 @@ export class TextEntity  extends AbstractEntity {
     this.margin = 0; // left + top
     this.justify = 0; // 0 - left, 1 - right, 2 - center
     this.proportional = false;
-    this.flashState = 0;
     this.flashMask = false;
   } // constructor
 
