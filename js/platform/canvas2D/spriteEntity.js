@@ -77,6 +77,14 @@ export class SpriteEntity  extends AbstractEntity {
     return spriteFrame;
   } // setOneFrameData
 
+  setGraphicsDataFromHexStr(kind, str) {
+    var sprite = [];
+    for (var x = 0; x < 8; x++) {
+      sprite.push(this.app.hexToBin(str.substring(x*2, x*2+2)));
+    }
+    this.setGraphicsData({'kind': kind, 'pen': '1', 'sprite': sprite});
+  } // setGraphicsDataFromHexStr
+
   incFrame() {
     this.frame = this.app.rotateInc(this.frame, 0, this.framesCount-1);
   } // incFrame
