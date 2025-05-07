@@ -78,17 +78,11 @@ export class SpriteEntity  extends AbstractEntity {
   } // setOneFrameData
 
   incFrame() {
-    this.frame++;
-    if (this.frame >= this.framesCount) {
-      this.frame = 0;
-    }
+    this.frame = this.app.rotateInc(this.frame, 0, this.framesCount-1);
   } // incFrame
 
   decFrame() {
-    this.frame--;
-    if (this.frame < 0) {
-      this.frame = this.framesCount-1;
-    }
+    this.frame = this.app.rotateDec(this.frame, 0, this.framesCount-1);
   } // decFrame
 
   switchDirection() {

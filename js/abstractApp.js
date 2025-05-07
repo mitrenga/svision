@@ -58,7 +58,7 @@ export class AbstractApp {
 
   rotateInc(value, min, max) {
     var result = value+1;
-    if (result >= max) {
+    if (result > max) {
       result = min;
     }
     return result;
@@ -66,7 +66,7 @@ export class AbstractApp {
 
   rotateDec(value, min, max) {
     var result = value-1;
-    if (result <= min) {
+    if (result < min) {
       result = max;
     }
     return result;
