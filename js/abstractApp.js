@@ -56,6 +56,22 @@ export class AbstractApp {
     return parseInt(binNum, 2);
   } // hexToBin
 
+  rotateInc(value, min, max) {
+    var result = value+1;
+    if (result >= max) {
+      result = min;
+    }
+    return result;
+  } // rotateInc
+
+  rotateDec(value, min, max) {
+    var result = value-1;
+    if (result <= min) {
+      result = max;
+    }
+    return result;
+  } // rotateDec
+
 } // class AbstractApp
 
 export default AbstractApp;
