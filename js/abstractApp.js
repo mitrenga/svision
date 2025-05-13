@@ -44,27 +44,28 @@ export class AbstractApp {
   // events processing
 
   eventKeyDown(event) {
-    this.model.sendEvent(0, {'id': 'keyPress', 'key': event.key});
+    if (this.model) {
+      this.model.sendEvent(0, {'id': 'keyPress', 'key': event.key});
+    }
   } // eventKeyDown
 
   eventKeyUp(event) {
-    this.model.sendEvent(0, {'id': 'keyRelease', 'key': event.key});
+    if (this.model) {
+      this.model.sendEvent(0, {'id': 'keyRelease', 'key': event.key});
+    }
   } // eventKeyUp
 
   eventMouseClick(event, key) {
     event.preventDefault();
-    this.model.sendEvent(0, {'id': 'mouseClick', 'key': key, 'x': event.clientX, 'y': event.clientY});
+    if (this.model) {
+      this.model.sendEvent(0, {'id': 'mouseClick', 'key': key, 'x': this.layout.convertClientCoordinateX(event.clientX), 'y': this.layout.convertClientCoordinateY(event.clientY)});
+    }
   } // eventMouseClick
   
   eventTouchStart(event) {
     event.preventDefault();
     if (this.model) {
-      this.model.sendEvent(0, {
-        'id': 'mouseClick',
-        'key': 'left',
-        'x': this.layout.convertClientCoordinateX(event.touches[0].clientX),
-        'y': this.layout.convertClientCoordinateY(event.touches[0].clientY)
-      });
+      this.model.sendEvent(0, {'id': 'mouseClick', 'key': 'left', 'x': this.layout.convertClientCoordinateX(event.touches[0].clientX), 'y': this.layout.convertClientCoordinateY(event.touches[0].clientY)});
     }
   } // eventTouchStart
   

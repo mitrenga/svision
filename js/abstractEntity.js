@@ -170,10 +170,16 @@ export class AbstractEntity {
         entity.parentWidth = w;
         entity.parentHeight = h;
         entity.drawEntity();
-    }
-  });
+      }
+    });
   } // drawEntity
   
+  pointOnEntity(data) {
+    if ((this.parentX+this.x <= data['x']) && (this.parentY+this.y <= data['y']) && (this.parentX+this.x+this.width >= data['x']) && (this.parentY+this.y+this.height >= data['y'])) {
+      return true;
+    }
+    return false;
+  }
 } // class AbstractEntity
 
 export default AbstractEntity;

@@ -119,11 +119,11 @@ export class Canvas2DLayout extends AbstractLayout {
   } // paintRect
 
   convertClientCoordinateX(clientX) {
-    return (this.app.model.borderWidth*2+this.app.model.desktopWidth)/this.app.element.clientWidth*clientX;
+    return this.app.element.width/this.app.element.clientWidth*clientX;
   } // convertClientCoordinateX
 
   convertClientCoordinateY(clientY) {
-    return (this.app.model.borderHeight*2+this.app.model.desktopHeight)/this.app.element.clientHeight*clientY;
+    return this.app.element.height/this.app.element.clientHeight*clientY;
   } // convertClientCoordinateY
 
 } // class Canvas2DLayout

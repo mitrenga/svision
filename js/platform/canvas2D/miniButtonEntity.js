@@ -29,15 +29,9 @@ export class MiniButtonEntity extends MiniTextEntity {
         }
         break;
       case 'mouseClick':
-        if (event['key'] == 'left') {
-          if ((this.parentX+this.x)*this.app.layout.ratio <= event['x'] &&
-              (this.parentY+this.y)*this.app.layout.ratio <= event['y'] &&
-              (this.parentX+this.x+this.width)*this.app.layout.ratio >= event['x'] &&
-              (this.parentY+this.y+this.height)*this.app.layout.ratio >= event['y'])
-          {
-            this.sendEvent(-1, 0, {'id': this.eventID});
-            return true;
-          }
+        if ((event['key'] == 'left') && (this.pointOnEntity(event))) {
+          this.sendEvent(-1, 0, {'id': this.eventID});
+          return true;
         }
         break;
     }
