@@ -30,16 +30,64 @@ export class AbstractApp {
       this.model.loopModel(timestamp);
     }
   } // loopApp
-
+  
   resizeApp() {
+    if (window.innerHeight != this.element.height) {
+      document.documentElement.style.setProperty('--app-height', window.innerHeight+'px');
+    }
     if (this.model) {
       this.model.resizeModel();
     }
   } // resizeApp
+
+
+  // events processing
+
+  eventKeyDown(event) {
+    this.model.sendEvent(0, {'id': 'keyPress', 'key': event.key});
+  } // eventKeyDown
+
+  eventKeyUp(event) {
+    this.model.sendEvent(0, {'id': 'keyRelease', 'key': event.key});
+  } // eventKeyUp
+
+  eventMouseClick(event, key) {
+    this.model.sendEvent(0, {'id': 'mouseClick', 'key': key, 'x': event.clientX, 'y': event.clientY});
+  } // eventMouseClick
   
-  onClick(e) {
-  } // onClick
+  eventTouchStart(event) {
+    if (this.model) {
+      this.model.sendEvent(0, {
+        'id': 'mouseClick',
+        'key': 'left',
+        'x': this.layout.convertClientCoordinateX(event.touches[0].clientX),
+        'y': this.layout.convertClientCoordinateY(event.touches[0].clientY)
+      });
+    }
+  } // eventTouchStart
   
+  eventTouchEnd(event) {
+  } // eventTouchEnd
+  
+  eventTouchCancel(event) {
+  } // eventTouchCancel
+
+  eventTouchMove(event) {
+  } // eventTouchMove
+  
+  eventBlurWindow(event) {
+  } // eventBlurWindow
+
+  eventFocusWindow(event) {
+  } // eventFocusWindow
+  
+  eventResizeWindow(event) {
+    this.resizeApp();
+  } // eventResizeWindow
+
+
+  // conversion functions
+
   hexToInt(hexNum) {
     return parseInt(hexNum, 16);
   } // hexToInt

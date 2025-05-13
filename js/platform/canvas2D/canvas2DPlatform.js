@@ -33,7 +33,7 @@ export class Canvas2DPlatform extends AbstractPlatform {
     return new Canvas2DLayout(app);
   } // defaultLayout
 
-  desktop(app) {
+  desktop() {
     return {'width': app.element.clientWidth, 'height': app.element.clientHeight, 'defaultColor': false};
   } // desktop
 

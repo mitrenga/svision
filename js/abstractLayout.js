@@ -26,6 +26,14 @@ export class AbstractLayout {
   drawEntity(entity) {
   } // drawEntity
 
+  convertClientCoordinateX(clientX) {
+    return clientX;
+  } // convertClientCoordinateX
+
+  convertClientCoordinateY(clientY) {
+    return clientY;
+  } // convertClientCoordinateY
+
 } // class AbstractLayout
 
 export default AbstractLayout;

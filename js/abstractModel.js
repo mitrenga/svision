@@ -20,23 +20,23 @@ export class AbstractModel {
     this.borderWidth = 0;
     this.borderHeight = 0;
     this.minimalBorder = 0;
-    if (this.app.platform.border(this.app) !== false) {
-      this.minimalBorder = this.app.platform.border(this.app)['minimal'];
+    if (this.app.platform.border() !== false) {
+      this.minimalBorder = this.app.platform.border()['minimal'];
     }
 
     this.desktopEntity = null;
-    this.desktopWidth = this.app.platform.desktop(this.app)['width'];
-    this.desktopHeight = this.app.platform.desktop(this.app)['height'];
+    this.desktopWidth = this.app.platform.desktop()['width'];
+    this.desktopHeight = this.app.platform.desktop()['height'];
 
     this.events = [];
   } // constructor
 
   init() {
-    if (this.app.platform.border(this.app) !== false) {
+    if (this.app.platform.border() !== false) {
       this.borderEntity = this.app.platform.defaultBorderEntity();
       this.borderEntity.app = this.app;
       this.borderEntity.model = this;
-      this.borderEntity.bkColor = this.app.platform.border(this.app)['defaultColor'];
+      this.borderEntity.bkColor = this.app.platform.border()['defaultColor'];
       var entityObjects = this.app.platform.initEntity(this.borderEntity);
       if (entityObjects !== false) {
         this.borderEntity.stack = {...this.borderEntity.stack, ...entityObjects};
@@ -45,7 +45,7 @@ export class AbstractModel {
     this.desktopEntity = this.app.platform.defaultDesktopEntity();
     this.desktopEntity.app = this.app;
     this.desktopEntity.model = this;
-    this.desktopEntity.bkColor = this.app.platform.desktop(this.app)['defaultColor'];
+    this.desktopEntity.bkColor = this.app.platform.desktop()['defaultColor'];
     var entityObjects = this.app.platform.initEntity(this.desktopEntity);
     if (entityObjects !== false) {
       this.desktopEntity.stack = {...this.desktopEntity.stack, ...entityObjects};
@@ -97,8 +97,8 @@ export class AbstractModel {
   } // loopModel
 
   resizeModel() {
-    this.desktopWidth = this.app.platform.desktop(this.app)['width'];
-    this.desktopHeight = this.app.platform.desktop(this.app)['height'];
+    this.desktopWidth = this.app.platform.desktop()['width'];
+    this.desktopHeight = this.app.platform.desktop()['height'];
     this.app.layout.resizeModel(this);
     this.drawModel();
   } // resizeModel

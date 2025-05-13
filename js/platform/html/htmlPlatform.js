@@ -46,7 +46,7 @@ export class HTMLPlatform extends AbstractPlatform {
     return new HTMLLayout(app);
   } // defaultLayout
 
-  desktop(app) {
+  desktop() {
     return {width: 256, height: 192, defaultColor: this.colorByName('white')};
   } // desktop
 

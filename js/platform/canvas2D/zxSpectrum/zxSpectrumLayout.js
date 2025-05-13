@@ -53,8 +53,16 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
 
   paintRect(ctx, x, y, width, height, color) {
     ctx.fillStyle = color;
-    ctx.fillRect(Math.round(x*this.ratio), Math.round(y*this.ratio), Math.round(width*this.ratio), Math.round(height*this.ratio));
+    ctx.fillRect(x*this.ratio, y*this.ratio, width*this.ratio, height*this.ratio);
   } // paintRect
+
+  convertClientCoordinateX(clientX) {
+    return (this.app.model.borderWidth*2+this.app.model.desktopWidth)*this.ratio/this.app.element.clientWidth*clientX;
+  } // convertClientCoordinateX
+
+  convertClientCoordinateY(clientY) {
+    return (this.app.model.borderHeight*2+this.app.model.desktopHeight)*this.ratio/this.app.element.clientHeight*clientY;
+  } // convertClientCoordinateY
 
 } // class ZXSpectrumLayout
 

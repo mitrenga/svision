@@ -118,6 +118,14 @@ export class Canvas2DLayout extends AbstractLayout {
     ctx.fillRect(x, y, width, height);
   } // paintRect
 
+  convertClientCoordinateX(clientX) {
+    return (this.app.model.borderWidth*2+this.app.model.desktopWidth)/this.app.element.clientWidth*clientX;
+  } // convertClientCoordinateX
+
+  convertClientCoordinateY(clientY) {
+    return (this.app.model.borderHeight*2+this.app.model.desktopHeight)/this.app.element.clientHeight*clientY;
+  } // convertClientCoordinateY
+
 } // class Canvas2DLayout
 
 export default Canvas2DLayout;
