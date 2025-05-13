@@ -52,10 +52,12 @@ export class AbstractApp {
   } // eventKeyUp
 
   eventMouseClick(event, key) {
+    event.preventDefault();
     this.model.sendEvent(0, {'id': 'mouseClick', 'key': key, 'x': event.clientX, 'y': event.clientY});
   } // eventMouseClick
   
   eventTouchStart(event) {
+    event.preventDefault();
     if (this.model) {
       this.model.sendEvent(0, {
         'id': 'mouseClick',
@@ -67,12 +69,15 @@ export class AbstractApp {
   } // eventTouchStart
   
   eventTouchEnd(event) {
+    event.preventDefault();
   } // eventTouchEnd
   
   eventTouchCancel(event) {
+    event.preventDefault();
   } // eventTouchCancel
 
   eventTouchMove(event) {
+    event.preventDefault();
   } // eventTouchMove
   
   eventBlurWindow(event) {

@@ -11,7 +11,10 @@ body {
 
   -webkit-user-select: none; /* Safari */
   -ms-user-select: none; /* IE 10 and IE 11 */
-  user-select: none; /* Standard syntax */
+  user-select: none; /* standard syntax */
+
+  -webkit-tap-highlight-color: transparent; /* disable blue box when clicking in chrome mobile */
+  overscroll-behavior: none; /* disable pull-to-refresh */
 }
 
 .canvasApp {
