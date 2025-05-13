@@ -25,6 +25,8 @@ export class AbstractEntity {
     this.bkColor = bkColor;
     this.penColor = penColor;
     this.hide = false;
+    this.modal = false;
+    this.modalEntity = null;
 
     this.parentX = 0;
     this.parentY = 0;
@@ -37,14 +39,37 @@ export class AbstractEntity {
     this.entities = [];
   } // constructor
   
+  init() {
+  } // init
+
   addEntity(entity) {
+    entity.init();
     var entityObjects = this.app.platform.initEntity(entity);
     if (entityObjects !== false) {
       entity.stack = {...entity.stack, ...entityObjects};
     }
     this.entities.push(entity);
   } // addEntity
-  
+
+  addModalEntity(entity) {
+    this.addEntity(entity);
+    entity.modal = true;
+    this.modalEntity = entity;
+  } // addModalEntity
+
+  destroy() {
+    this.sendEvent(0, 1, {'id': 'destroy', 'entity': this});
+  } // destroy
+
+  shutDown() {
+    for (var v = 0; v < this.entities.length; v++) {
+      this.entities[v].shutDown();
+      this.entities[v] = null;
+      this.entities.splice(v, 1);
+      v--;
+    }
+  } // shutDown
+
   sendEvent(direction, timing, event) {
     if (timing == 0) {
       switch (direction) {
@@ -80,10 +105,32 @@ export class AbstractEntity {
   } // cancelEvent
 
   handleEvent(event) {
+    if ((this.modalEntity != null) && (['keyPress', 'mouseClick'].indexOf(event['id']) >= 0)) {
+      this.modalEntity.handleEvent(event);
+      return true;
+    }
+    
+    if (event['id'] == 'destroy') {
+      if (this.modalEntity == event['entity']) {
+        this.modalEntity = null;
+      }
+      for (var v = 0; v < this.entities.length; v++) {
+        if (this.entities[v] == event['entity']) {
+          this.entities[v].shutDown();
+          this.entities[v] = null;
+          this.entities.splice(v, 1);
+          return true;
+        }
+      }
+    }
+
     for (var v = 0; v < this.entities.length; v++) {
       if (this.entities[v].handleEvent(event) == true) {
         return true;
       }
+    }
+    if ((this.modal == true) && (['keyPress', 'mouseClick'].indexOf(event['id']) >= 0)) {
+      return true;
     }
     return false;
   } // handleEvent

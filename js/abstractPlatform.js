@@ -13,7 +13,7 @@ export class AbstractPlatform {
   } // constructor
 
   platformName() {
-    return 'unknown';
+    return 'AbstractPlatform';
   } // platformName
   
   initCanvasElement(app, parentElementID) {

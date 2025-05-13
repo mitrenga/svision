@@ -74,8 +74,9 @@ export class AbstractModel {
       result = this.borderEntity.handleEvent(event);
     }
     if (result == false) {
-      this.desktopEntity.handleEvent(event);
+      result = this.desktopEntity.handleEvent(event);
     }
+    return result;
   } // handleEvent
 
   setData(data) {
