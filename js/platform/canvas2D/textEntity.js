@@ -36,13 +36,6 @@ export class TextEntity  extends AbstractEntity {
   
   drawEntity() {
     super.drawEntity();
-
-    var bitMask = '1';
-    if (this.flashMask !== false) {
-      if (this.flashMask[ch] == 'i' && this.flashState == 1) {
-        bitMask = '0';
-      }
-    }
     
     switch (this.justify) {
       case 0: 
@@ -65,6 +58,12 @@ export class TextEntity  extends AbstractEntity {
           if (this.getPenColorChar(ch) !== false) {
             penColor = this.getPenColorChar(ch);
           }
+          var bitMask = '1';
+          if (this.flashMask !== false) {
+            if ((this.flashMask[ch] == '#') && (this.flashState == true)) {
+              bitMask = '0';
+            }
+          }
           var charData = this.getCharData(this.getTextChar(ch), bitMask);
           for (var x = 0; x < charData['data'].length; x++) {
             this.app.layout.paint(this, cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
@@ -81,6 +80,12 @@ export class TextEntity  extends AbstractEntity {
           var penColor = this.penColor;
           if (this.getPenColorChar(ch-1) !== false) {
             penColor = this.getPenColorChar(ch-1);
+          }
+          var bitMask = '1';
+          if (this.flashMask !== false) {
+            if ((this.flashMask[ch] == '#') && (this.flashState == true)) {
+              bitMask = '0';
+            }
           }
           var charData = this.getCharData(this.getTextChar(ch-1), bitMask);
           cursorX -= charData['width'];
