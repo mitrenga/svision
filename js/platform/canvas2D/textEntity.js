@@ -15,6 +15,7 @@ export class TextEntity  extends AbstractEntity {
     this.justify = 0; // 0 - left, 1 - right, 2 - center
     this.proportional = false;
     this.flashMask = false;
+    this.cursorX = 0;
   } // constructor
 
   getTextChar(position) {
@@ -40,9 +41,9 @@ export class TextEntity  extends AbstractEntity {
     switch (this.justify) {
       case 0: 
       case 2: 
-        var cursorX = 0;
+        this.cursorX = 0;
         if (this.proportional == true) {
-          cursorX++;
+          this.cursorX++;
         }
         var textLength = 0;
         if (this.justify == 2) {
@@ -50,7 +51,7 @@ export class TextEntity  extends AbstractEntity {
             textLength += this.getCharData(this.getTextChar(ch), '1')['width'];
           }
           if (textLength < this.width) {
-            cursorX = Math.floor(this.width/2-textLength/2);
+            this.cursorX = Math.floor(this.width/2-textLength/2);
           }
         }
         for (var ch = 0; ch < this.getTextLength(); ch++) {
@@ -60,21 +61,21 @@ export class TextEntity  extends AbstractEntity {
           }
           var bitMask = '1';
           if (this.flashMask !== false) {
-            if ((this.flashMask[ch] == '#') && (this.flashState == true)) {
+            if ((this.flashMask[ch] == '#') && (this.app.stack['flashState'] == true)) {
               bitMask = '0';
             }
           }
           var charData = this.getCharData(this.getTextChar(ch), bitMask);
           for (var x = 0; x < charData['data'].length; x++) {
-            this.app.layout.paint(this, cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+            this.app.layout.paint(this, this.cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
           }
-          cursorX += charData['width'];
+          this.cursorX += charData['width'];
         }
         break;
       case 1: 
-        var cursorX = this.width;
+        this.cursorX = this.width;
         if (this.proportional == true) {
-          cursorX++;
+          this.cursorX++;
         }
         for (var ch = this.getTextLength(); ch > 0 ; ch--) {
           var penColor = this.penColor;
@@ -83,14 +84,14 @@ export class TextEntity  extends AbstractEntity {
           }
           var bitMask = '1';
           if (this.flashMask !== false) {
-            if ((this.flashMask[ch] == '#') && (this.flashState == true)) {
+            if ((this.flashMask[ch] == '#') && (this.app.stack['flashState'] == true)) {
               bitMask = '0';
             }
           }
           var charData = this.getCharData(this.getTextChar(ch-1), bitMask);
-          cursorX -= charData['width'];
+          this.cursorX -= charData['width'];
           for (var x = 0; x < charData['data'].length; x++) {
-            this.app.layout.paint(this, cursorX-this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+            this.app.layout.paint(this, this.cursorX-this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
           }
         }
         break;

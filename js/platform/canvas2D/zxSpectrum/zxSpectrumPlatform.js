@@ -51,11 +51,11 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     return new ZXSpectrumLayout(app);
   } // defaultLayout
 
-  desktop() {
+  desktop(app) {
     return {'width': 256, 'height': 192, 'defaultColor': this.colorByName('white')};
   } // desktop
 
-  border() {
+  border(app) {
     return {'minimal': 8, 'defaultColor': this.colorByName('white')};
   } // border
 

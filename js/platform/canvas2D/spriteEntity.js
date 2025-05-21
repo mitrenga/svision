@@ -95,7 +95,7 @@ export class SpriteEntity  extends AbstractEntity {
 
   switchDirection() {
     if (this.directionsCount == 2) {
-      this.direction = Math.abs(this.direction-1);
+      this.direction = 1-this.direction;
     }
   } // switchDirection
 

@@ -35,11 +35,11 @@ export class AbstractPlatform {
     return false;
   } // defaultLayout
 
-  desktop() {
+  desktop(app) {
     return {'width': 0, 'height': 0, 'defaultColor': false};
   } // resolution
 
-  border() {
+  border(app) {
     return false;
   } // border
 

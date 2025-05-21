@@ -33,8 +33,6 @@ export class AbstractEntity {
     this.parentWidth = width;
     this.parentHeight = height;
 
-    this.flashState = false;
-
     this.stack = {};
     this.entities = [];
   } // constructor
