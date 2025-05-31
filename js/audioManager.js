@@ -15,13 +15,13 @@ export class AudioManager {
   openChannel(channel, audioHandler) {
     if (!(channel in this.channels)) {
       this.channels[channel] = audioHandler;
-      this.channels[channel].open(channel);
+      this.channels[channel].openChannel(channel);
     }
   } // openChannel
 
   closeChannel(channel) {
     if (channel in this.channels) {
-      if (this.channels[channel].close() == true) {
+      if (this.channels[channel].closeChannel() == true) {
         delete this.channels[channel];
       }
     }
@@ -33,9 +33,17 @@ export class AudioManager {
     }
   } // closeAllChannels
   
+  refreshAllChannels() {
+    Object.keys(this.channels).forEach(channel => {
+      if (this.channels[channel].ctx.state == 'suspended') {
+        this.channels[channel].ctx.resume();
+      }
+    });
+  } // refreshAllChannels
+
   stopChannel(channel) {
     if (channel in this.channels) {
-      this.channels[channel].stop();
+      this.channels[channel].stopChannel();
     }
   } // stopChannel
 
@@ -47,19 +55,31 @@ export class AudioManager {
 
   pauseChannel(channel) {
     if (channel in this.channels) {
-      this.channels[channel].pause();
+      this.channels[channel].pauseChannel();
     }
   } // pauseChannel
 
   pauseAllChannels() {
     Object.keys(this.channels).forEach(channel => {
-      this.stopChannel(channel);
+      this.pauseChannel(channel);
     });
   } // pauseAllChannels
 
+  continueChannel(channel) {
+    if (channel in this.channels) {
+      this.channels[channel].continueChannel();
+    }
+  } // continueChannel
+
+  continueAllChannels() {
+    Object.keys(this.channels).forEach(channel => {
+      this.continueChannel(channel);
+    });
+  } // continueAllChannels
+
   playSound(channel, sound, parameter) {
     if (channel in this.channels) {
-      this.channels[channel].play(sound, parameter);
+      this.channels[channel].playSound(sound, parameter);
     }
   } // playSound
 

@@ -52,6 +52,10 @@ export class AbstractModel {
     }
   } // init
 
+  shutdown() {
+    this.app.audioManager.closeAllChannels();
+  } // shutdown
+
   sendEvent(timing, event) {
     if (timing == 0) {
       this.handleEvent(event);
@@ -70,10 +74,10 @@ export class AbstractModel {
 
   handleEvent(event) {
     switch (event['id']) {
-      case 'openAudioHandler':
+      case 'openAudioChannel':
         this.app.openAudioChannel(event['channel']);
         return true;
-      case 'closeAudioHandler':
+      case 'closeAudioChannel':
         this.app.audioManager.closeChannel(event['channel']);
         return true;
     }
@@ -103,6 +107,7 @@ export class AbstractModel {
         this.events.splice(m, 1);
       }
     }
+    this.app.audioManager.refreshAllChannels();
   } // loopModel
 
   resizeModel() {
