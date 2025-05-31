@@ -21,8 +21,9 @@ export class AudioManager {
 
   closeChannel(channel) {
     if (channel in this.channels) {
-      this.channels[channel].close();
-      delete this.channels[channel];
+      if (this.channels[channel].close() == true) {
+        delete this.channels[channel];
+      }
     }
   } // closeChannel
 

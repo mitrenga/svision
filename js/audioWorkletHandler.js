@@ -24,7 +24,9 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
       this.node = new AudioWorkletNode(this.ctx, this.channel+'Processor');
       this.node.connect(this.ctx.destination);
     } catch(error) {
-      console.log ('ERROR: audio worklet not supported!');
+      console.log (error);
+    } finally {
+      this.busy = false;
     }
   } // openProcessor
 

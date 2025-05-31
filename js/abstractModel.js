@@ -69,6 +69,15 @@ export class AbstractModel {
   } // cancelEvent
 
   handleEvent(event) {
+    switch (event['id']) {
+      case 'openAudioHandler':
+        this.app.openAudioChannel(event['channel']);
+        return true;
+      case 'closeAudioHandler':
+        this.app.audioManager.closeChannel(event['channel']);
+        return true;
+    }
+
     var result = false;
     if (this.borderEntity != null) {
       result = this.borderEntity.handleEvent(event);
