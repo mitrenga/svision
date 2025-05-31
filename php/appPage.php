@@ -33,6 +33,7 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
     
     if ($_COOKIE['libImportMethod'] == 'await-import') {
+      $this->data[] = '    <script>var importPath = "app";</script>';
       $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
     }
 
@@ -44,6 +45,7 @@ class AppPage extends AbstractPage {
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/zxSpectrum/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/webGL2/');
 
+      $this->data[] = '    <script>var importPath = "js";</script>';
       $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
     }
     

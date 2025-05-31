@@ -1,17 +1,21 @@
 /**/
 const { InputEventsManager } = await import('./inputEventsManager.js?ver='+window.srcVersion);
+const { AudioManager } = await import('./audioManager.js?ver='+window.srcVersion);
 /*/
 import InputEventsManager from './inputEventsManager.js';
+import AudioManager from './audioManager.js';
 /**/
 // begin code
 
 export class AbstractApp {
   
-  constructor(platform, parentElement, wsURL) {
+  constructor(platform, parentElement, importPath, wsURL) {
     this.parentElement = false;
     this.element = false;
+    this.importPath = importPath;
     this.now = 0;
     this.inputEventsManager = new InputEventsManager(this);
+    this.audioManager = new AudioManager(this);
     this.model = false;
     this.stack = {};
     this.platform = platform;
@@ -21,6 +25,9 @@ export class AbstractApp {
     this.wsURL = wsURL;
     this.webSocket = false;
   } // constructor
+
+  initAfterUserGesture() {
+  } // initAfterUserGesture
 
   loopApp(timestamp) {
     this.now = timestamp;
