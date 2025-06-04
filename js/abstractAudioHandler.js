@@ -23,7 +23,7 @@ export class AbstractAudioHandler {
     this.busy = true;
     this.error = false;
     this.channel = channel;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)({'sampleRate':44100, 'latencyHint': 'interactive'});
   } // openChannel
 
   closeChannel() {
@@ -54,7 +54,7 @@ export class AbstractAudioHandler {
   continueChannel() {
   } // continueChannel
 
-  playSound(sound, options) {
+  playSound(audioData, options) {
   } // playSound
   
 } // class AbstractAudioHandler

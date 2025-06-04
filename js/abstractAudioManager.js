@@ -88,11 +88,11 @@ export class AbstractAudioManager {
 
   playSound(channel, sound, options) {
     if (channel in this.channels) {
-      this.channels[channel].playSound(sound, options);
+      this.channels[channel].playSound(this.audioData(channel, sound, options), options);
     }
   } // playSound
 
-  audioData(sound, options) {
+  audioData(channel, sound, options) {
     return false;
   } // audioData
 

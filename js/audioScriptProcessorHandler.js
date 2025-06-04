@@ -12,7 +12,9 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.id = 'AudioScriptProcessorHandler';
     this.node = null;
     this.paused = false;
-    this.buffer = false;
+    this.audioData = false;
+    this.readPtr = 0;
+    this.repeat = false;
   } // constructor
 
   openChannel(channel) {
@@ -24,13 +26,17 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.node = this.ctx.createScriptProcessor(0, 0, 1);
 
     this.node.onaudioprocess = (audioProcessingEvent) => {
-      if ((!this.paused) && (this.buffer != false)) {
+      if ((!this.paused) && (this.audioData != false)) {
         var outputBuffer = audioProcessingEvent.outputBuffer;
         var channelDataLength = outputBuffer.getChannelData(0).length;
         for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
           var channelData = outputBuffer.getChannelData(channel);
-          for (var x = 0; x < channelDataLength && x < this.buffer.length; x++) {
-            channelData[x] = this.buffer[x];
+          for (var x = 0; x < channelDataLength; x++) {
+            channelData[x] = this.audioData[this.readPtr];
+            this.readPtr++;
+            if (this.readPtr > this.audioData.length && this.repeat) {
+              this.readPtr = 0;
+            }
           }
         }
       }
@@ -47,8 +53,13 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     return super.closeChannel();
   } // closeChannel
 
-  playSound(sound, options) {
-    this.buffer = [1,1,1,1,1];
+  playSound(audioData, options) {
+    this.audioData = audioData;
+    this.readPtr = 0;
+    this.repeat = false;
+    if ('repeat' in options) {
+      this.repeat = options['repeat'];
+    }
   } // playSound
 
 } // class AudioScriptProcessorHandler
