@@ -54,7 +54,7 @@ export class AbstractApp {
   } // eventResizeWindow
 
 
-  // conversion functions
+  // tools
 
   hexToInt(hexNum) {
     return parseInt(hexNum, 16);
@@ -87,6 +87,19 @@ export class AbstractApp {
     }
     return result;
   } // rotateDec
+
+  setCookie(name, value) {
+    document.cookie=name+'='+value+';max-age=31536000;path=/';
+  } // setCookie
+
+  getCookie(name, defaultValue) {
+    var regex = new RegExp('(^| )'+name+'=([^;]+)');
+    var match = document.cookie.match(regex);
+    if (match) {
+      return match[2];
+    }
+    return defaultValue;
+  } // getCookie
 
 } // class AbstractApp
 
