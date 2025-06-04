@@ -10,7 +10,31 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
   constructor(app) {
     super(app);
     this.id = 'AudioOscillatorHandler';
+    this.gainNode = null;
+    this.oscillator = null;
   } // constructor
+
+  openChannel(channel) {
+    super.openChannel(channel);
+    this.busy = false;
+  } // openChannel
+
+  playSound(sound, parameters) {
+    if (this.gainNode) {
+      this.oscillator.stop();
+      this.oscillator.disconnect(this.gainNode);
+      this.gainNode.disconnect(this.ctx.destination);
+      this.oscillator = null;
+      this.gainNode = null;
+    } else {
+      this.gainNode = this.ctx.createGain();
+      this.oscillator = this.ctx.createOscillator();
+      this.oscillator.frequency.value = 400; // 40..6000
+      this.oscillator.connect(this.gainNode);
+      this.gainNode.connect(this.ctx.destination);
+      this.oscillator.start();
+    }
+  } // playSound
 
 } // class AudioOscillatorHandler
 

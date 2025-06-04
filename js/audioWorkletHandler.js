@@ -20,15 +20,32 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
 
   async openProcessor() {
     try {
-      await this.ctx.audioWorklet.addModule(this.app.importPath+'/'+this.channel+'Processor.js').catch(error => {error.log ('ERROR: loading worklet module!');});
-      this.node = new AudioWorkletNode(this.ctx, this.channel+'Processor');
+      await this.ctx.audioWorklet.addModule(this.app.importPath+'/svision/js/audioProcessor.js').catch(error => {
+        this.app.model.sendEvent(1, {'id': 'unsupportedAudioChannel', 'channel': this.channel});
+      });
+      this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor');
       this.node.connect(this.ctx.destination);
     } catch(error) {
-      error.log (error);
+      this.app.model.sendEvent(1, {'id': 'unsupportedAudioChannel', 'channel': this.channel});
+      this.busy = false;
     } finally {
       this.busy = false;
     }
   } // openProcessor
+
+  closeChannel() {
+    if (this.waitForBusy('closeAudioChannel')) {
+      return false;
+    }
+    if (this.node != null) {
+      this.node.disconnect();
+    }
+    return super.closeChannel();
+  } // closeChannel
+
+  playSound(sound, parameters) {
+    this.node.port.postMessage({'id': 'play', 'soundData': [1,1,1,1,1], 'parameters': parameters});
+  } // playSound
 
 } // class AudioWorkletHandler
 

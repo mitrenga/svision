@@ -13,21 +13,21 @@ export class AbstractAudioHandler {
     this.busy = false;
     this.ctx = null;
     this.channel = false;
+    this.error = false;
   } // constructor
 
   openChannel(channel) {
-    if (this.busy == true) {
-      this.app.model.sendEvent(100, {'id': 'openAudioChannel', 'channel': channel});
-      return;
+    if (this.waitForBusy('openAudioChannel')) {
+      return false;
     }
     this.busy = true;
+    this.error = false;
     this.channel = channel;
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-   } // openChannel
+  } // openChannel
 
   closeChannel() {
-    if (this.busy == true) {
-      this.app.model.sendEvent(100, {'id': 'closeAudioChannel', 'channel': this.channel});
+    if (this.waitForBusy('closeAudioChannel')) {
       return false;
     }
     this.busy = true;
@@ -36,6 +36,14 @@ export class AbstractAudioHandler {
     this.busy = false;
     return true;
   } // closeChannel
+
+  waitForBusy(operation) {
+    if (this.busy == true) {
+      this.app.model.sendEvent(100, {'id': operation, 'channel': this.channel});
+      return true;
+    }
+    return false;
+  } // waitForBusy
 
   stopChannel() {
   } // stopChannel
@@ -46,9 +54,9 @@ export class AbstractAudioHandler {
   continueChannel() {
   } // continueChannel
 
-  playSound(sound, parameter) {
+  playSound(sound, parameters) {
   } // playSound
-
+  
 } // class AbstractAudioHandler
 
 export default AbstractAudioHandler;

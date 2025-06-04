@@ -75,10 +75,18 @@ export class AbstractModel {
   handleEvent(event) {
     switch (event['id']) {
       case 'openAudioChannel':
-        this.app.openAudioChannel(event['channel']);
+        this.app.audioManager.openChannel(event['channel']);
         return true;
       case 'closeAudioChannel':
         this.app.audioManager.closeChannel(event['channel']);
+        return true;
+      case 'unsupportedAudioChannel':
+        this.app.audioManager.unsupportedAudioChannel = this.app.audioManager.channels[event['channel']].id;
+        this.sendEvent(50, {'id': 'closeAudioChannel', 'channel': event['channel']});
+        this.sendEvent(100, {'id': 'openAudioChannel', 'channel': event['channel']});
+        return true;
+      case 'playSound':
+        this.app.audioManager.playSound(event['channel'], event['sound'], event['parameters']);
         return true;
     }
 

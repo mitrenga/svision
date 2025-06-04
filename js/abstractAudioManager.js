@@ -1,21 +1,30 @@
 /**/
-
+const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+window.srcVersion);
 /*/
-
+import AbstractAudioHandler from './abstractAudioHandler.js';
 /**/
 // begin code
 
-export class AudioManager {
+export class AbstractAudioManager {
   
   constructor(app) {
     this.app = app;
+    this.id = 'AbstractAudioManager';
     this.channels = {};
+    this.unsupportedAudioChannel = false;
   } // constructor
 
-  openChannel(channel, audioHandler) {
+  createAudioHandler() {
+    return false;
+  } // createAudioHandler
+  
+  openChannel(channel) {
     if (!(channel in this.channels)) {
-      this.channels[channel] = audioHandler;
-      this.channels[channel].openChannel(channel);
+      var audioHandler = this.createAudioHandler(false);
+      if (audioHandler != false) {
+        audioHandler.openChannel(channel);
+        this.channels[channel] = audioHandler;
+      }
     }
   } // openChannel
 
@@ -77,12 +86,12 @@ export class AudioManager {
     });
   } // continueAllChannels
 
-  playSound(channel, sound, parameter) {
+  playSound(channel, sound, parameters) {
     if (channel in this.channels) {
-      this.channels[channel].playSound(sound, parameter);
+      this.channels[channel].playSound(sound, parameters);
     }
   } // playSound
 
-} // class AudioManager
+} // class AbstractAudioManager
 
-export default AudioManager;
+export default AbstractAudioManager;
