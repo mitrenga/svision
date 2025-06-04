@@ -19,7 +19,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.busy = false;
   } // openChannel
 
-  playSound(sound, parameters) {
+  playSound(sound, options) {
     if (this.gainNode) {
       this.oscillator.stop();
       this.oscillator.disconnect(this.gainNode);

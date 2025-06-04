@@ -26,7 +26,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     };
   } // constructor
 
-  process (inputs, outputs, parameters) {
+  process (inputs, outputs, options) {
     if ((!this.paused) && (this.buffer != false)) {
       const output = outputs[0];
       output.forEach((channel) => {

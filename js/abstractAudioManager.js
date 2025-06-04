@@ -86,11 +86,15 @@ export class AbstractAudioManager {
     });
   } // continueAllChannels
 
-  playSound(channel, sound, parameters) {
+  playSound(channel, sound, options) {
     if (channel in this.channels) {
-      this.channels[channel].playSound(sound, parameters);
+      this.channels[channel].playSound(sound, options);
     }
   } // playSound
+
+  audioData(sound, options) {
+    return false;
+  } // audioData
 
 } // class AbstractAudioManager
 

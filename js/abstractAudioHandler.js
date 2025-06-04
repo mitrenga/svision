@@ -54,7 +54,7 @@ export class AbstractAudioHandler {
   continueChannel() {
   } // continueChannel
 
-  playSound(sound, parameters) {
+  playSound(sound, options) {
   } // playSound
   
 } // class AbstractAudioHandler

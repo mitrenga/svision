@@ -47,7 +47,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     return super.closeChannel();
   } // closeChannel
 
-  playSound(sound, parameters) {
+  playSound(sound, options) {
     this.buffer = [1,1,1,1,1];
   } // playSound
 
