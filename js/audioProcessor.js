@@ -12,6 +12,9 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.fragments = false;
     this.pulses = false;
     this.outputVolume = [0.0, 0.0];
+    this.infinityRndPulses = false;
+    this.infinityQuantity = 0;
+    this.infinityFragment = 0;
     this.outputBit = 1;
     this.readPtr = 0;
     this.oneReadPulse = 0;
@@ -24,6 +27,12 @@ class AudioProcessor extends AudioWorkletProcessor {
           this.fragments = e.data['audioData']['fragments'];
           this.pulses = e.data['audioData']['pulses'];
           this.outputVolume = [0.0, e.data['audioData']['volume']];
+          this.infinityRndPulses = false;
+          this.infinityQuantity = 0;
+          this.infinityFragment = 0;
+          if ('infinityRndPulses' in e.data['audioData']) {
+            this.infinityRndPulses = e.data['audioData']['infinityRndPulses'];
+          }
           this.outputBit = 1;
           this.readPtr = 0;
           this.oneReadPulse = 0;
@@ -51,7 +60,18 @@ class AudioProcessor extends AudioWorkletProcessor {
         var writePtr = 0;
         while (writePtr < channel.length) {
           if (this.oneReadPulse == 0) {
-            this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+            if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
+              if (this.infinityQuantity > 0) {
+                this.infinityQuantity--;
+                this.oneReadPulse = this.fragments[this.infinityFragment];
+              } else {
+                this.infinityQuantity = this.infinityRndPulses['quantity']-1;
+                this.infinityFragment = this.infinityRndPulses['fragments'][Math.round(Math.random()*(this.infinityRndPulses['fragments'].length-1))];
+                this.oneReadPulse = this.fragments[this.infinityFragment];
+              }
+            } else {
+              this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+            }
           }
           if (writePtr+this.oneReadPulse <= channel.length) {
             channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
@@ -64,10 +84,10 @@ class AudioProcessor extends AudioWorkletProcessor {
             this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
             writePtr = channel.length;
           }
-          if (this.readPtr >= this.pulses.length) {
+          if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
             if (this.repeat) {
               this.readPtr = 0;
-            } else {
+            } else if (this.infinityRndPulses === false) {
               channel.fill(0, writePtr);
               this.fragments = false;
               this.pulses = false;
