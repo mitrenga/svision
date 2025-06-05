@@ -55,49 +55,50 @@ class AudioProcessor extends AudioWorkletProcessor {
 
   process (inputs, outputs, options) {
     if ((!this.paused) && (this.pulses !== false)) {
-      var output = outputs[0];
-      output.forEach((channel) => {
-        var writePtr = 0;
-        while (writePtr < channel.length) {
-          if (this.oneReadPulse == 0) {
-            if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
-              if (this.infinityQuantity > 0) {
-                this.infinityQuantity--;
-                this.oneReadPulse = this.fragments[this.infinityFragment];
+      outputs.forEach((output) => {
+        output.forEach((channel) => {
+          var writePtr = 0;
+          while (writePtr < channel.length) {
+            if (this.oneReadPulse == 0) {
+              if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
+                if (this.infinityQuantity > 0) {
+                  this.infinityQuantity--;
+                  this.oneReadPulse = this.fragments[this.infinityFragment];
+                } else {
+                  this.infinityQuantity = this.infinityRndPulses['quantity']-1;
+                  this.infinityFragment = this.infinityRndPulses['fragments'][Math.round(Math.random()*(this.infinityRndPulses['fragments'].length-1))];
+                  this.oneReadPulse = this.fragments[this.infinityFragment];
+                }
               } else {
-                this.infinityQuantity = this.infinityRndPulses['quantity']-1;
-                this.infinityFragment = this.infinityRndPulses['fragments'][Math.round(Math.random()*(this.infinityRndPulses['fragments'].length-1))];
-                this.oneReadPulse = this.fragments[this.infinityFragment];
+                this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
               }
-            } else {
-              this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
             }
-          }
-          if (writePtr+this.oneReadPulse <= channel.length) {
-            channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
-            writePtr += this.oneReadPulse;
-            this.oneReadPulse = 0;
-            this.readPtr++;
-            this.outputBit = 1-this.outputBit;
-          } else {
-            channel.fill(this.outputVolume[this.outputBit], writePtr);
-            this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
-            writePtr = channel.length;
-          }
-          if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
-            if (this.repeat) {
-              this.readPtr = 0;
-            } else if (this.infinityRndPulses === false) {
-              channel.fill(0, writePtr);
-              this.fragments = false;
-              this.pulses = false;
-              this.outputVolume = [0.0, 0.0];
-              this.outputBit = 0;
-              this.readPtr = 0;
+            if (writePtr+this.oneReadPulse <= channel.length) {
+              channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
+              writePtr += this.oneReadPulse;
               this.oneReadPulse = 0;
+              this.readPtr++;
+              this.outputBit = 1-this.outputBit;
+            } else {
+              channel.fill(this.outputVolume[this.outputBit], writePtr);
+              this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
+              writePtr = channel.length;
+            }
+            if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
+              if (this.repeat) {
+                this.readPtr = 0;
+              } else if (this.infinityRndPulses === false) {
+                channel.fill(0, writePtr);
+                this.fragments = false;
+                this.pulses = false;
+                this.outputVolume = [0.0, 0.0];
+                this.outputBit = 0;
+                this.readPtr = 0;
+                this.oneReadPulse = 0;
+              }
             }
           }
-        }
+        });
       });
     }
     return true;
