@@ -43,6 +43,10 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
     return super.closeChannel();
   } // closeChannel
 
+  stopChannel() {
+    this.node.port.postMessage({'id': 'play', 'audioData': {'fragments': false, 'pulses': false}, 'options': false});
+  } // stopChannel
+
   playSound(audioData, options) {
     this.node.port.postMessage({'id': 'play', 'audioData': audioData, 'options': options});
   } // playSound

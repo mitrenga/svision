@@ -14,13 +14,13 @@ export class AbstractAudioManager {
     this.unsupportedAudioChannel = false;
   } // constructor
 
-  createAudioHandler() {
+  createAudioHandler(channel) {
     return false;
   } // createAudioHandler
   
   openChannel(channel) {
     if (!(channel in this.channels)) {
-      var audioHandler = this.createAudioHandler(false);
+      var audioHandler = this.createAudioHandler(channel);
       if (audioHandler != false) {
         audioHandler.openChannel(channel);
         this.channels[channel] = audioHandler;
