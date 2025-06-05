@@ -26,7 +26,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.node = this.ctx.createScriptProcessor(0, 0, 1);
 
     this.node.onaudioprocess = (audioProcessingEvent) => {
-      if ((!this.paused) && (this.audioData != false)) {
+      if ((!this.paused) && (this.audioData !== false)) {
         var outputBuffer = audioProcessingEvent.outputBuffer;
         var channelDataLength = outputBuffer.getChannelData(0).length;
         for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
