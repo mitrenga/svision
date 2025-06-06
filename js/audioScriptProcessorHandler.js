@@ -39,7 +39,6 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
         for (var idChannel = 0; idChannel < audioProcessingEvent.outputBuffer.numberOfChannels; idChannel++) {
           var channel = audioProcessingEvent.outputBuffer.getChannelData(idChannel);
 
-
           var writePtr = 0;
           while (writePtr < channel.length) {
             if (this.oneReadPulse == 0) {
@@ -110,6 +109,15 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.node.disconnect();
     return super.closeChannel();
   } // closeChannel
+
+  stopChannel() {
+    this.fragments = false;
+    this.pulses = false;
+    this.infinityRndPulses = false;
+    this.infinityQuantity = 0;
+    this.infinityFragment = 0;
+    this.repeat = false;
+  } // stopChannel
 
   playSound(audioData, options) {
     this.fragments = audioData['fragments'];

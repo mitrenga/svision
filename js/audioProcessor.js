@@ -55,8 +55,10 @@ class AudioProcessor extends AudioWorkletProcessor {
 
   process (inputs, outputs, options) {
     if ((!this.paused) && (this.pulses !== false)) {
+
       outputs.forEach((output) => {
         output.forEach((channel) => {
+
           var writePtr = 0;
           while (writePtr < channel.length) {
             if (this.oneReadPulse == 0) {
