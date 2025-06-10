@@ -47,8 +47,8 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
                   this.infinityQuantity--;
                   this.oneReadPulse = this.fragments[this.infinityFragment];
                 } else {
-                  this.infinityQuantity = this.infinityRndPulses['quantity']-1;
-                  this.infinityFragment = this.infinityRndPulses['fragments'][Math.round(Math.random()*(this.infinityRndPulses['fragments'].length-1))];
+                  this.infinityQuantity = this.infinityRndPulses.quantity-1;
+                  this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
                   this.oneReadPulse = this.fragments[this.infinityFragment];
                 }
               } else {
@@ -70,7 +70,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
               if (this.repeat) {
                 this.readPtr = 0;
               } else if (this.infinityRndPulses === false) {
-                channel.fill(0, writePtr);
+                channel.fill(0.0, writePtr);
                 this.fragments = false;
                 this.pulses = false;
                 this.outputVolume = [0.0, 0.0];

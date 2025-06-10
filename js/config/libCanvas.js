@@ -106,43 +106,43 @@ export class Canvas {
     } // constructor
 
     init() {
-        switch (this.stack['containerType']) {
+        switch (this.stack.containerType) {
             case 'html':
-                this.stack['label'] = new Label(this.element);
+                this.stack.label = new Label(this.element);
                 break;
             case 'canvas2D':
-                this.stack['ball'] = new Ball(this.canvasWidth/2, this.canvasHeight/2);
-                this.stack['leftPlayer'] = new Player('l', 10, this.stack['ball'].posY);
-                this.stack['rightPlayer'] = new Player('r', this.canvasWidth-10, this.stack['ball'].posY);
+                this.stack.ball = new Ball(this.canvasWidth/2, this.canvasHeight/2);
+                this.stack.leftPlayer = new Player('l', 10, this.stack.ball.posY);
+                this.stack.rightPlayer = new Player('r', this.canvasWidth-10, this.stack.ball.posY);
                 break;
         }
     } // init
 
     drawHTML() {
-        this.stack['label'].draw(this.canvasWidth, this.canvasHeight, this.fps);
+        this.stack.label.draw(this.canvasWidth, this.canvasHeight, this.fps);
     } // drawHTML
 
     drawCanvas2D() {
-        this.stack['ctx'].clearRect(0, 0, this.canvasWidth, this.canvasHeight);
-        this.stack['ctx'].fillStyle = 'black';
-        this.stack['ctx'].fillRect(0, 0, this.canvasWidth, 10);
-        this.stack['ctx'].fillRect(0, this.canvasHeight-10, this.canvasWidth, 10);
-        this.stack['ctx'].fillStyle = 'white';
-        this.stack['ball'].draw(this.stack['ctx']);
-        this.stack['ctx'].fillStyle = 'aquamarine';
-        this.stack['leftPlayer'].draw(this.stack['ctx']);
-        this.stack['ctx'].fillStyle = 'gold';
-        this.stack['rightPlayer'].draw(this.stack['ctx']);
-        this.stack['ctx'].fillStyle = 'white';
-        this.stack['ctx'].font = '16px Times';
-        this.stack['ctx'].textAlign = 'center';
+        this.stack.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
+        this.stack.ctx.fillStyle = 'black';
+        this.stack.ctx.fillRect(0, 0, this.canvasWidth, 10);
+        this.stack.ctx.fillRect(0, this.canvasHeight-10, this.canvasWidth, 10);
+        this.stack.ctx.fillStyle = 'white';
+        this.stack.ball.draw(this.stack.ctx);
+        this.stack.ctx.fillStyle = 'aquamarine';
+        this.stack.leftPlayer.draw(this.stack.ctx);
+        this.stack.ctx.fillStyle = 'gold';
+        this.stack.rightPlayer.draw(this.stack.ctx);
+        this.stack.ctx.fillStyle = 'white';
+        this.stack.ctx.font = '16px Times';
+        this.stack.ctx.textAlign = 'center';
         if (this.fps >= 0) {
-            this.stack['ctx'].fillText(this.fps+' fps', this.canvasWidth/2, this.canvasHeight-15);
+            this.stack.ctx.fillText(this.fps+' fps', this.canvasWidth/2, this.canvasHeight-15);
         }
     } // drawCanvas2D
 
     draw() {
-        switch (this.stack['containerType']) {
+        switch (this.stack.containerType) {
             case 'html':
                 this.drawHTML();
                 break;
@@ -153,19 +153,19 @@ export class Canvas {
     } // draw
 
     loopHTML() {
-        this.stack['label'].loopAnimate(this.canvasWidth, this.canvasHeight);
+        this.stack.label.loopAnimate(this.canvasWidth, this.canvasHeight);
     } // loopHTML
 
     loopCanvas2D() {
-        this.stack['ball'].loopGame(this.canvasWidth, this.canvasHeight);
-        this.stack['leftPlayer'].loopGame(this.canvasWidth, this.canvasHeight, this.stack['ball'].directionX, this.stack['ball'].posY);
-        this.stack['rightPlayer'].loopGame(this.canvasWidth, this.canvasHeight, this.stack['ball'].directionX, this.stack['ball'].posY);
+        this.stack.ball.loopGame(this.canvasWidth, this.canvasHeight);
+        this.stack.leftPlayer.loopGame(this.canvasWidth, this.canvasHeight, this.stack.ball.directionX, this.stack.ball.posY);
+        this.stack.rightPlayer.loopGame(this.canvasWidth, this.canvasHeight, this.stack.ball.directionX, this.stack.ball.posY);
     } // loopCanvas2D
 
     loop(timestamp) {
         window.canvasRunning = true;
         this.countFrames++;
-        switch (this.stack['containerType']) {
+        switch (this.stack.containerType) {
             case 'html':
                 this.loopHTML();
                 break;

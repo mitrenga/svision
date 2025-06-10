@@ -25,8 +25,8 @@ export class Canvas2DPlatform extends AbstractPlatform {
     app.element.classList.add('canvasApp');
     app.element.style.cursor = 'pointer';
     app.parentElement.appendChild(app.element);
-    app.stack['ctx'] = app.element.getContext('2d');
-    app.stack['containerType'] = 'canvas2D';
+    app.stack.ctx = app.element.getContext('2d');
+    app.stack.containerType = 'canvas2D';
   } // initCanvasElement
 
   defaultLayout(app) {

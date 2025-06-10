@@ -109,12 +109,12 @@ export class MiniTextEntity extends TextEntity {
 
   getCharData(char, bitMask) {
     var charObject = {};
-    charObject['width'] = this.miniFonts[char]['width']*this.scale;
+    charObject.width = this.miniFonts[char].width*this.scale;
 
-    charObject['data'] = [];
-    for (var x = 0; x < this.miniFonts[char]['data'].length; x++) {
-      var piece = this.miniFonts[char]['data'][x];
-      charObject['data'].push([piece[0]*this.scale, piece[1]*this.scale, piece[2]*this.scale, piece[3]*this.scale]);
+    charObject.data = [];
+    for (var x = 0; x < this.miniFonts[char].data.length; x++) {
+      var piece = this.miniFonts[char].data[x];
+      charObject.data.push([piece[0]*this.scale, piece[1]*this.scale, piece[2]*this.scale, piece[3]*this.scale]);
     }
 
     return charObject;

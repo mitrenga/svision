@@ -21,15 +21,15 @@ export class MiniButtonEntity extends MiniTextEntity {
       return true;
     }
 
-    switch (event['id']) {
+    switch (event.id) {
       case 'keyPress':
-        if (this.hotKeys.indexOf(event['key']) >= 0) {
+        if (this.hotKeys.indexOf(event.key) >= 0) {
           this.sendEvent(-1, 0, {'id': this.eventID});
           return true;
         }
         break;
       case 'mouseClick':
-        if ((event['key'] == 'left') && (this.pointOnEntity(event))) {
+        if ((event.key == 'left') && (this.pointOnEntity(event))) {
           this.sendEvent(-1, 0, {'id': this.eventID});
           return true;
         }

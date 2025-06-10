@@ -22,24 +22,24 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.paused = false;
 
     this.port.onmessage = (e) => {
-      switch (e.data['id']) {
+      switch (e.data.id) {
         case 'play':
-          this.fragments = e.data['audioData']['fragments'];
-          this.pulses = e.data['audioData']['pulses'];
-          this.outputVolume = [0.0, e.data['audioData']['volume']];
+          this.fragments = e.data.audioData.fragments;
+          this.pulses = e.data.audioData.pulses;
+          this.outputVolume = [0.0, e.data.audioData.volume];
           this.infinityRndPulses = false;
           this.infinityQuantity = 0;
           this.infinityFragment = 0;
-          if ('infinityRndPulses' in e.data['audioData']) {
-            this.infinityRndPulses = e.data['audioData']['infinityRndPulses'];
+          if ('infinityRndPulses' in e.data.audioData) {
+            this.infinityRndPulses = e.data.audioData.infinityRndPulses;
           }
           this.outputBit = 1;
           this.readPtr = 0;
           this.oneReadPulse = 0;
           this.repeat = false;
-          if (e.data['options'] !== false) {
-            if ('repeat' in e.data['options']) {
-              this.repeat = e.data['options']['repeat'];
+          if (e.data.options !== false) {
+            if ('repeat' in e.data.options) {
+              this.repeat = e.data.options.repeat;
             }
           }
           break;
@@ -67,8 +67,8 @@ class AudioProcessor extends AudioWorkletProcessor {
                   this.infinityQuantity--;
                   this.oneReadPulse = this.fragments[this.infinityFragment];
                 } else {
-                  this.infinityQuantity = this.infinityRndPulses['quantity']-1;
-                  this.infinityFragment = this.infinityRndPulses['fragments'][Math.round(Math.random()*(this.infinityRndPulses['fragments'].length-1))];
+                  this.infinityQuantity = this.infinityRndPulses.quantity-1;
+                  this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
                   this.oneReadPulse = this.fragments[this.infinityFragment];
                 }
               } else {

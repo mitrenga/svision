@@ -108,7 +108,7 @@ export class Canvas2DLayout extends AbstractLayout {
         }
       }
       if (w > 0 && h > 0) {
-        this.paintRect(this.app.stack['ctx'], entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
+        this.paintRect(this.app.stack.ctx, entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
       }
     }
   } // paint

@@ -103,17 +103,17 @@ export class AbstractEntity {
   } // cancelEvent
 
   handleEvent(event) {
-    if ((this.modalEntity != null) && (['keyPress', 'mouseClick'].indexOf(event['id']) >= 0)) {
+    if ((this.modalEntity != null) && (['keyPress', 'mouseClick'].indexOf(event.id) >= 0)) {
       this.modalEntity.handleEvent(event);
       return true;
     }
     
-    if (event['id'] == 'destroy') {
-      if (this.modalEntity == event['entity']) {
+    if (event.id == 'destroy') {
+      if (this.modalEntity == event.entity) {
         this.modalEntity = null;
       }
       for (var v = 0; v < this.entities.length; v++) {
-        if (this.entities[v] == event['entity']) {
+        if (this.entities[v] == event.entity) {
           this.entities[v].shutDown();
           this.entities[v] = null;
           this.entities.splice(v, 1);
@@ -127,7 +127,7 @@ export class AbstractEntity {
         return true;
       }
     }
-    if ((this.modal == true) && (['keyPress', 'mouseClick'].indexOf(event['id']) >= 0)) {
+    if ((this.modal == true) && (['keyPress', 'mouseClick'].indexOf(event.id) >= 0)) {
       return true;
     }
     return false;
@@ -173,7 +173,7 @@ export class AbstractEntity {
   } // drawEntity
   
   pointOnEntity(data) {
-    if ((this.parentX+this.x <= data['x']) && (this.parentY+this.y <= data['y']) && (this.parentX+this.x+this.width >= data['x']) && (this.parentY+this.y+this.height >= data['y'])) {
+    if ((this.parentX+this.x <= data.x) && (this.parentY+this.y <= data.y) && (this.parentX+this.x+this.width >= data.x) && (this.parentY+this.y+this.height >= data.y)) {
       return true;
     }
     return false;
