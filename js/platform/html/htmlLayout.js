@@ -74,7 +74,7 @@ export class HTMLLayout extends AbstractLayout {
   } // nativeY
 
   drawEntity(entity) {
-    var element = entity.stack['element'];
+    var element = entity.stack.element;
     element.style.left = this.nativeX(entity.model, entity.x)+'px';
     element.style.top = this.nativeY(entity.model, entity.y)+'px';
     element.style.width = this.nativeX(entity.model, entity.x+entity.width)-this.nativeX(entity.model, entity.x)+'px';

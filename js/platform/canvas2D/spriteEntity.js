@@ -23,24 +23,24 @@ export class SpriteEntity  extends AbstractEntity {
 
   setGraphicsData(data) {
     if ('pen' in data) {
-      this.penChar = data['pen'];
+      this.penChar = data.pen;
     }
     if ('frames' in data) {
-      this.framesCount = data['frames'];
+      this.framesCount = data.frames;
     }
     if ('directions' in data) {
-      this.directionsCount = data['directions'];
+      this.directionsCount = data.directions;
     }
     this.spriteData = [];
     this.spriteWidth = 0;
     this.spriteHeight = 0;
     if (this.framesCount == 0) {
-      this.spriteData[0] = this.setOneFrameData(data['sprite']);
+      this.spriteData[0] = this.setOneFrameData(data.sprite);
       this.framesCount = 1;
       this.directionsCount = 1;
     } else {
-      for (var s = 0; s < data['sprite'].length; s++) {
-        this.spriteData[s] = this.setOneFrameData(data['sprite'][s]);
+      for (var s = 0; s < data.sprite.length; s++) {
+        this.spriteData[s] = this.setOneFrameData(data.sprite[s]);
       }
     }
     this.width = this.spriteWidth;
@@ -106,9 +106,9 @@ export class SpriteEntity  extends AbstractEntity {
       this.spriteData[this.frame+this.direction*this.framesCount].forEach((pixel) => {
         var color = this.penColor;
         if ('penColor' in pixel) {
-          color = pixel['color'];
+          color = pixel.color;
         }
-        this.app.layout.paint(this, pixel['x'], pixel['y'], 1, 1, color);
+        this.app.layout.paint(this, pixel.x, pixel.y, 1, 1, color);
       });  
     }
   } // drawEntity

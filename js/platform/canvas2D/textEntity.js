@@ -48,7 +48,7 @@ export class TextEntity  extends AbstractEntity {
         var textLength = 0;
         if (this.justify == 2) {
           for (var ch = 0; ch < this.text.length; ch++) {
-            textLength += this.getCharData(this.getTextChar(ch), '1')['width'];
+            textLength += this.getCharData(this.getTextChar(ch), '1').width;
           }
           if (textLength < this.width) {
             this.cursorX = Math.floor(this.width/2-textLength/2);
@@ -61,15 +61,15 @@ export class TextEntity  extends AbstractEntity {
           }
           var bitMask = '1';
           if (this.flashMask !== false) {
-            if ((this.flashMask[ch] == '#') && (this.app.stack['flashState'] == true)) {
+            if ((this.flashMask[ch] == '#') && (this.app.stack.flashState == true)) {
               bitMask = '0';
             }
           }
           var charData = this.getCharData(this.getTextChar(ch), bitMask);
-          for (var x = 0; x < charData['data'].length; x++) {
-            this.app.layout.paint(this, this.cursorX+this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+          for (var x = 0; x < charData.data.length; x++) {
+            this.app.layout.paint(this, this.cursorX+this.margin+charData.data[x][0], this.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
           }
-          this.cursorX += charData['width'];
+          this.cursorX += charData.width;
         }
         break;
       case 1: 
@@ -84,14 +84,14 @@ export class TextEntity  extends AbstractEntity {
           }
           var bitMask = '1';
           if (this.flashMask !== false) {
-            if ((this.flashMask[ch] == '#') && (this.app.stack['flashState'] == true)) {
+            if ((this.flashMask[ch] == '#') && (this.app.stack.flashState == true)) {
               bitMask = '0';
             }
           }
           var charData = this.getCharData(this.getTextChar(ch-1), bitMask);
-          this.cursorX -= charData['width'];
-          for (var x = 0; x < charData['data'].length; x++) {
-            this.app.layout.paint(this, this.cursorX-this.margin+charData['data'][x][0], this.margin+charData['data'][x][1], charData['data'][x][2], charData['data'][x][3], penColor);
+          this.cursorX -= charData.width;
+          for (var x = 0; x < charData.data.length; x++) {
+            this.app.layout.paint(this, this.cursorX-this.margin+charData.data[x][0], this.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
           }
         }
         break;

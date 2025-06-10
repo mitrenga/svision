@@ -37,7 +37,7 @@ export class ZXTextEntity extends TextEntity {
     var charObject = {data: []};
     var binData = [];
     for (var y = 0; y < 8; y++) {
-      var letter = this.zxFonts['chars'].indexOf(char);
+      var letter = this.zxFonts.chars.indexOf(char);
       binData.push(this.app.hexToBin(this.zxFonts[this.fontType].substring(letter*16+y*2, letter*16+y*2+2)));
     }
 
@@ -93,11 +93,11 @@ export class ZXTextEntity extends TextEntity {
     binData.forEach ((mask, y) => {
       for (var x = 0; x < mask.length; x++) {
         if (mask[x] == bitMask) {
-          charObject['data'].push([x, y, 1, 1]);
+          charObject.data.push([x, y, 1, 1]);
         }
       }
     });
-    charObject['width'] = width;
+    charObject.width = width;
 
     return charObject;
   } // getCharData

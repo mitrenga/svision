@@ -25,8 +25,8 @@ export class WebGL2Platform extends AbstractPlatform {
     app.element.classList.add('canvasApp');
     app.element.style.cursor = 'pointer';
     app.parentElement.appendChild(app.element);
-    app.stack['ctx'] = app.element.getContext('webgl2');
-    app.stack['containerType'] = 'webGL2';
+    app.stack.ctx = app.element.getContext('webgl2');
+    app.stack.containerType = 'webGL2';
   } // initCanvasElement
 
   initEntity(entity) {

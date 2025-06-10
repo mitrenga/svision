@@ -31,7 +31,7 @@ export class ZXBorderEntity  extends BorderEntity {
     var color = Math.floor(this.diff/10);
     if (this.stripes.length == 0) {
       while (y < this.height) {
-        var stripeHeight = this.style[this.animation]['stripeHeight'];
+        var stripeHeight = this.style[this.animation].stripeHeight;
         if ((y == 0) && (this.animation == 'pilotTone')) {
           stripeHeight = 10-this.diff%10;
         }
@@ -42,20 +42,20 @@ export class ZXBorderEntity  extends BorderEntity {
         if (y+stripeHeight+extraStripe > this.height) {
           stripeHeight = this.height-y-extraStripe;
         }
-        this.stripes.push({'y': y, 'height': stripeHeight+extraStripe, 'color': this.app.platform.colorByName(this.style[this.animation]['colors'][color])});
+        this.stripes.push({'y': y, 'height': stripeHeight+extraStripe, 'color': this.app.platform.colorByName(this.style[this.animation].colors[color])});
         y += stripeHeight+extraStripe;
         color = 1-color;
       }
     }
     for (var s = 0; s < this.stripes.length; s++) {
-      this.app.layout.paintRect(this.app.stack['ctx'], 0, this.stripes[s]['y'], this.width, this.stripes[s]['height'], this.stripes[s]['color']);
+      this.app.layout.paintRect(this.app.stack.ctx, 0, this.stripes[s].y, this.width, this.stripes[s].height, this.stripes[s].color);
     }
   } // drawEntity
 
   handleEvent(event) {
-    switch (event['id']) {
+    switch (event.id) {
       case 'setBorderAnimation':
-        this.animation = event['value'];
+        this.animation = event.value;
         if (this.animation === 'pilotTone') {
           this.sendEvent(0, 50, {'id': 'moveStripes'});
         }

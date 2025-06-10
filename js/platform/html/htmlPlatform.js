@@ -24,7 +24,7 @@ export class HTMLPlatform extends AbstractPlatform {
     app.element.id = 'canvasApp';
     app.element.classList.add('canvasApp');
     app.parentElement.appendChild(app.element);
-    app.stack['containerType'] = 'html';
+    app.stac.containerType = 'html';
   } // initCanvasElement
 
   initEntity(entity) {
@@ -32,7 +32,7 @@ export class HTMLPlatform extends AbstractPlatform {
     if (entity.parentEntity == null) {
       parentElement = entity.app.element;
     } else {
-      parentElement = entity.parentEntity.stack['element'];
+      parentElement = entity.parentEntity.stack.element;
     }
     var element = document.createElement('div');
     element.id = entity.id;

@@ -71,7 +71,7 @@ export class WebGL2Layout extends AbstractLayout {
       4, 5, 1,    1, 0, 4   // spodní stěna
     ]; // první a druhý trojúhelník
 
-    var ctx = this.app.stack['ctx'];
+    var ctx = this.app.stack.ctx;
 
     var vertexShader = this.createShader(ctx, ctx.VERTEX_SHADER, vertexShaderSource);
     var fragmentShader = this.createShader(ctx, ctx.FRAGMENT_SHADER, fragmentShaderSource);
