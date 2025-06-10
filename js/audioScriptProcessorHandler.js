@@ -120,14 +120,14 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
   } // stopChannel
 
   playSound(audioData, options) {
-    this.fragments = audioData['fragments'];
-    this.pulses = audioData['pulses'];
-    this.outputVolume = [0.0, audioData['volume']];
+    this.fragments = audioData.fragments;
+    this.pulses = audioData.pulses;
+    this.outputVolume = [0.0, audioData.volume];
     this.infinityRndPulses = false;
     this.infinityQuantity = 0;
     this.infinityFragment = 0;
     if ('infinityRndPulses' in audioData) {
-      this.infinityRndPulses = audioData['infinityRndPulses'];
+      this.infinityRndPulses = audioData.infinityRndPulses;
     }
     this.outputBit = 1;
     this.readPtr = 0;
@@ -135,7 +135,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.repeat = false;
     if (options !== false) {
       if ('repeat' in options) {
-        this.repeat = options['repeat'];
+        this.repeat = options.repeat;
       }
     }
   } // playSound
