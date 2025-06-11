@@ -59,14 +59,14 @@ export class AbstractEntity {
     this.sendEvent(0, 1, {'id': 'destroy', 'entity': this});
   } // destroy
 
-  shutDown() {
+  shutdown() {
     for (var v = 0; v < this.entities.length; v++) {
-      this.entities[v].shutDown();
+      this.entities[v].shutdown();
       this.entities[v] = null;
       this.entities.splice(v, 1);
       v--;
     }
-  } // shutDown
+  } // shutdown
 
   sendEvent(direction, timing, event) {
     if (timing == 0) {
@@ -114,7 +114,7 @@ export class AbstractEntity {
       }
       for (var v = 0; v < this.entities.length; v++) {
         if (this.entities[v] == event.entity) {
-          this.entities[v].shutDown();
+          this.entities[v].shutdown();
           this.entities[v] = null;
           this.entities.splice(v, 1);
           return true;
