@@ -12,92 +12,76 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
 
     this.id = 'AudioScriptProcessorHandler';
     this.node = null;
-    
-    this.fragments = false;
-    this.pulses = false;
-    this.outputVolume = [0.0, 0.0];
-    this.infinityRndPulses = false;
-    this.infinityQuantity = 0;
-    this.infinityFragment = 0;
-    this.outputBit = 1;
+  
+    this.bufferSize = 0;
+    this.buffer = null;
     this.readPtr = 0;
-    this.oneReadPulse = 0;
-    this.repeat = false;
-    this.paused = false;
+    this.writePtr = 0;
   } // constructor
 
   openChannel(channel) {
     super.openChannel(channel);
+    this.bufferSize = Math.ceil(this.ctx.sampleRate*0.3);
+    this.buffer = new Float32Array(this.bufferSize);
     this.openProcessor();
   } // openChannel
 
   openProcessor() {
+    this.worker = new Worker(this.app.importPath+'/svision/js/audioScriptProcessorWorker.js');
+    this.worker.postMessage({'id': 'initProcessor', 'sampleRate': this.ctx.sampleRate});
+    
+    this.worker.onmessage = (event) => {
+      switch (event.data.id) {
+        case 'audioData':
+          var available = event.data.buffer.length;
+          if (this.writePtr+available <= this.bufferSize) {
+            this.buffer.set(event.data.buffer, this.writePtr);
+            this.writePtr = this.writePtr+available;
+          } else {
+            var part1 = this.bufferSize-this.writePtr;
+            var part2 = available-part1;
+            this.buffer.set(event.data.buffer.slice(0, part1), this.writePtr);
+            this.buffer.set(event.data.buffer.slice(part1), 0);
+            this.writePtr = part2;
+          }
+          break;
+      }
+    } // onmessage
+    
     this.node = this.ctx.createScriptProcessor(0, 0, 1);
 
-    this.node.onaudioprocess = (audioProcessingEvent) => {
-      if ((!this.paused) && (this.pulses !== false)) {
-        for (var idChannel = 0; idChannel < audioProcessingEvent.outputBuffer.numberOfChannels; idChannel++) {
-          var channel = audioProcessingEvent.outputBuffer.getChannelData(idChannel);
-
-          var writePtr = 0;
-          while (writePtr < channel.length) {
-            if (this.oneReadPulse == 0) {
-              if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
-                if (this.infinityQuantity > 0) {
-                  this.infinityQuantity--;
-                  this.oneReadPulse = this.fragments[this.infinityFragment];
-                } else {
-                  this.infinityQuantity = this.infinityRndPulses.quantity-1;
-                  this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
-                  this.oneReadPulse = this.fragments[this.infinityFragment];
-                }
-              } else {
-                this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
-              }
-            }
-            if (writePtr+this.oneReadPulse <= channel.length) {
-              channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
-              writePtr += this.oneReadPulse;
-              this.oneReadPulse = 0;
-              this.readPtr++;
-              this.outputBit = 1-this.outputBit;
-            } else {
-              channel.fill(this.outputVolume[this.outputBit], writePtr);
-              this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
-              writePtr = channel.length;
-            }
-            if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
-              if (this.repeat) {
-                this.readPtr = 0;
-              } else if (this.infinityRndPulses === false) {
-                channel.fill(0.0, writePtr);
-                this.fragments = false;
-                this.pulses = false;
-                this.outputVolume = [0.0, 0.0];
-                this.outputBit = 0;
-                this.readPtr = 0;
-                this.oneReadPulse = 0;
-              }
-            }
-          }
+    this.node.onaudioprocess = (event) => {
+      var nextReadPtr = 0;
+      var lastBufferValue = 0.0;
+      for (var idChannel = 0; idChannel < event.outputBuffer.numberOfChannels; idChannel++) {
+        var channelData = event.outputBuffer.getChannelData(idChannel);
+        var available = this.writePtr-this.readPtr;
+        if (available < 0) {
+          available = available+this.bufferSize;
+        }
+        this.worker.postMessage({'id': 'availableBuffer', 'value': this.bufferSize-available});
+        if (available > channelData.length) {
+          available = channelData.length;
+        }
+        if (this.readPtr+available <= this.bufferSize) {
+          channelData.set(this.buffer.slice(this.readPtr, this.readPtr+available));
+          nextReadPtr = this.readPtr+available;
+          //lastBufferValue = this.buffer[this.readPtr+available-1];
+        } else {
+          var part1 = this.bufferSize-this.readPtr;
+          var part2 = available-part1;
+          channelData.set(this.buffer.slice(this.readPtr, this.readPtr+part1));
+          channelData.set(this.buffer.slice(0, part2), part1);
+          nextReadPtr = part2;
+          //lastBufferValue = this.buffer[part2-1];
+        }
+        if (available < channelData.length) {
+          channelData.fill(lastBufferValue, available, channelData.length);
         }
       }
+      this.readPtr = nextReadPtr;
+    } // onaudioprocess
 
-
-/*        var outputBuffer = audioProcessingEvent.outputBuffer;
-        var channelDataLength = outputBuffer.getChannelData(0).length;
-        for (var channel = 0; channel < outputBuffer.numberOfChannels; channel++) {
-          var channelData = outputBuffer.getChannelData(channel);
-          for (var x = 0; x < channelDataLength; x++) {
-            channelData[x] = this.audioData[this.readPtr];
-            this.readPtr++;
-            if (this.readPtr > this.audioData.length && this.repeat) {
-              this.readPtr = 0;
-            }
-          }
-        }
-      }*/
-    }
     this.node.connect(this.ctx.destination);
     this.busy = false;
   } // openProcessor
@@ -107,37 +91,15 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
       return false;
     }
     this.node.disconnect();
+    this.worker.terminate();
     return super.closeChannel();
   } // closeChannel
 
   stopChannel() {
-    this.fragments = false;
-    this.pulses = false;
-    this.infinityRndPulses = false;
-    this.infinityQuantity = 0;
-    this.infinityFragment = 0;
-    this.repeat = false;
+    this.worker.postMessage({'id': 'stopChannel'});
   } // stopChannel
 
   playSound(audioData, options) {
-    this.fragments = audioData.fragments;
-    this.pulses = audioData.pulses;
-    this.outputVolume = [0.0, audioData.volume];
-    this.infinityRndPulses = false;
-    this.infinityQuantity = 0;
-    this.infinityFragment = 0;
-    if ('infinityRndPulses' in audioData) {
-      this.infinityRndPulses = audioData.infinityRndPulses;
-    }
-    this.outputBit = 1;
-    this.readPtr = 0;
-    this.oneReadPulse = 0;
-    this.repeat = false;
-    if (options !== false) {
-      if ('repeat' in options) {
-        this.repeat = options.repeat;
-      }
-    }
   } // playSound
 
 } // class AudioScriptProcessorHandler
