@@ -104,6 +104,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
   } // stopChannel
 
   playSound(audioData, options) {
+    this.worker.postMessage({'id': 'play', 'audioData': audioData, 'options': options});
   } // playSound
 
 } // class AudioScriptProcessorHandler

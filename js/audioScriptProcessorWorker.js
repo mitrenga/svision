@@ -27,8 +27,46 @@ class AudioScriptProcessorWorker {
 
   process() {
     if (this.availableBuffer > Math.ceil(this.buffer.length)) {
-      for (var x = 0; x < this.buffer.length; x++) {
-        this.buffer[x] = Math.round(Math.random());
+      var writePtr = 0;
+      while (writePtr < this.buffer.length) {
+        if (this.oneReadPulse == 0) {
+          if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
+            if (this.infinityQuantity > 0) {
+              this.infinityQuantity--;
+              this.oneReadPulse = this.fragments[this.infinityFragment];
+            } else {
+              this.infinityQuantity = this.infinityRndPulses.quantity-1;
+              this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
+              this.oneReadPulse = this.fragments[this.infinityFragment];
+            }
+          } else {
+            this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+          }
+        }
+        if (writePtr+this.oneReadPulse <= this.buffer.length) {
+          this.buffer.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
+          writePtr += this.oneReadPulse;
+          this.oneReadPulse = 0;
+          this.readPtr++;
+          this.outputBit = 1-this.outputBit;
+        } else {
+          this.buffer.fill(this.outputVolume[this.outputBit], writePtr);
+          this.oneReadPulse = this.oneReadPulse-(this.buffer.length-writePtr);
+          writePtr = this.buffer.length;
+        }
+        if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
+          if (this.repeat) {
+            this.readPtr = 0;
+          } else if (this.infinityRndPulses === false) {
+            this.buffer.fill(0, writePtr);
+            this.fragments = false;
+            this.pulses = false;
+            this.outputVolume = [0.0, 0.0];
+            this.outputBit = 0;
+            this.readPtr = 0;
+            this.oneReadPulse = 0;
+          }
+        }
       }
       postMessage({'id': 'audioData', 'buffer': this.buffer});
       this.availableBuffer = this.availableBuffer-this.buffer.length;
@@ -80,11 +118,20 @@ onmessage = (event) => {
       audioScriptProcessorWorker = new AudioScriptProcessorWorker(event.data.sampleRate);
       loop = setInterval(onLoop, 5);
       break;
+    case 'availableBuffer':
+      audioScriptProcessorWorker.availableBuffer = event.data.value;
+      break;
     case 'stopChannel':
       audioScriptProcessorWorker.stopChannel();
       break;
-    case 'availableBuffer':
-      audioScriptProcessorWorker.availableBuffer = event.data.value;
+    case 'play':
+      audioScriptProcessorWorker.playSound(event.data.audioData, event.data.options);
+      break;
+    case 'pause':
+      audioScriptProcessorWorker.paused = true;
+      break;
+    case 'continue':
+      audioScriptProcessorWorker.paused = false;
       break;
   }
 } // onmessage

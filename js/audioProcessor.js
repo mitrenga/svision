@@ -37,7 +37,7 @@ class AudioProcessor extends AudioWorkletProcessor {
           this.readPtr = 0;
           this.oneReadPulse = 0;
           this.repeat = false;
-          if (e.data.options !== false) {
+          if (event.data.options !== false) {
             if ('repeat' in event.data.options) {
               this.repeat = event.data.options.repeat;
             }
@@ -56,10 +56,8 @@ class AudioProcessor extends AudioWorkletProcessor {
 
   process (inputs, outputs, options) {
     if ((!this.paused) && (this.pulses !== false)) {
-
       outputs.forEach((output) => {
         output.forEach((channel) => {
-
           var writePtr = 0;
           while (writePtr < channel.length) {
             if (this.oneReadPulse == 0) {
