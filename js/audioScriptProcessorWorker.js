@@ -26,11 +26,12 @@ class AudioScriptProcessorWorker {
   } // constructor
 
   process() {
-    if (this.availableBuffer > Math.ceil(this.sampleRate*0.1)) {
+    if (this.availableBuffer > Math.ceil(this.buffer.length)) {
       for (var x = 0; x < this.buffer.length; x++) {
         this.buffer[x] = Math.round(Math.random());
       }
       postMessage({'id': 'audioData', 'buffer': this.buffer});
+      this.availableBuffer = this.availableBuffer-this.buffer.length;
     }
   } // process
 

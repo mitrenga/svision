@@ -21,7 +21,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
 
   openChannel(channel) {
     super.openChannel(channel);
-    this.bufferSize = Math.ceil(this.ctx.sampleRate*0.3);
+    this.bufferSize = Math.ceil(this.ctx.sampleRate*0.2);
     this.buffer = new Float32Array(this.bufferSize);
     this.openProcessor();
   } // openChannel
@@ -59,26 +59,30 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
         if (available < 0) {
           available = available+this.bufferSize;
         }
-        this.worker.postMessage({'id': 'availableBuffer', 'value': this.bufferSize-available});
         if (available > channelData.length) {
           available = channelData.length;
         }
         if (this.readPtr+available <= this.bufferSize) {
           channelData.set(this.buffer.slice(this.readPtr, this.readPtr+available));
           nextReadPtr = this.readPtr+available;
-          //lastBufferValue = this.buffer[this.readPtr+available-1];
+          lastBufferValue = this.buffer[this.readPtr+available-1];
         } else {
           var part1 = this.bufferSize-this.readPtr;
           var part2 = available-part1;
           channelData.set(this.buffer.slice(this.readPtr, this.readPtr+part1));
           channelData.set(this.buffer.slice(0, part2), part1);
           nextReadPtr = part2;
-          //lastBufferValue = this.buffer[part2-1];
+          lastBufferValue = this.buffer[part2-1];
         }
         if (available < channelData.length) {
           channelData.fill(lastBufferValue, available, channelData.length);
         }
       }
+      var available = this.writePtr-this.readPtr;
+      if (available < 0) {
+        available = available+this.bufferSize;
+      }
+      this.worker.postMessage({'id': 'availableBuffer', 'value': this.bufferSize-available});
       this.readPtr = nextReadPtr;
     } // onaudioprocess
 
