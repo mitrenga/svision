@@ -21,25 +21,25 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.repeat = false;
     this.paused = false;
 
-    this.port.onmessage = (e) => {
-      switch (e.data.id) {
+    this.port.onmessage = (event) => {
+      switch (event.data.id) {
         case 'play':
-          this.fragments = e.data.audioData.fragments;
-          this.pulses = e.data.audioData.pulses;
-          this.outputVolume = [0.0, e.data.audioData.volume];
+          this.fragments = event.data.audioData.fragments;
+          this.pulses = event.data.audioData.pulses;
+          this.outputVolume = [0.0, event.data.audioData.volume];
           this.infinityRndPulses = false;
           this.infinityQuantity = 0;
           this.infinityFragment = 0;
-          if ('infinityRndPulses' in e.data.audioData) {
-            this.infinityRndPulses = e.data.audioData.infinityRndPulses;
+          if ('infinityRndPulses' in event.data.audioData) {
+            this.infinityRndPulses = event.data.audioData.infinityRndPulses;
           }
           this.outputBit = 1;
           this.readPtr = 0;
           this.oneReadPulse = 0;
           this.repeat = false;
           if (e.data.options !== false) {
-            if ('repeat' in e.data.options) {
-              this.repeat = e.data.options.repeat;
+            if ('repeat' in event.data.options) {
+              this.repeat = event.data.options.repeat;
             }
           }
           break;
@@ -50,7 +50,8 @@ class AudioProcessor extends AudioWorkletProcessor {
           this.paused = false;
           break;
       }
-    }
+    } // onmessage
+    
   } // constructor
 
   process (inputs, outputs, options) {
