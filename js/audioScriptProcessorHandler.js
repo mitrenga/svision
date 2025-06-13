@@ -45,6 +45,9 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
             this.writePtr = part2;
           }
           break;
+        default:
+          this.app.model.sendEvent(1, {'id': event.data.id, 'data': event.data});
+          break;
       }
     } // onmessage
     

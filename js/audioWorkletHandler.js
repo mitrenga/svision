@@ -30,6 +30,10 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
       this.busy = false;
     } finally {
       this.busy = false;
+
+      this.node.port.onmessage = (event) => {
+        this.app.model.sendEvent(1, {'id': event.data.id, 'data': event.data});
+      } // onmessage
     }
   } // openProcessor
 

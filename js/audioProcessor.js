@@ -11,6 +11,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     super(...args);
     this.fragments = false;
     this.pulses = false;
+    this.events = false;
     this.outputVolume = [0.0, 0.0];
     this.infinityRndPulses = false;
     this.infinityQuantity = 0;
@@ -26,6 +27,10 @@ class AudioProcessor extends AudioWorkletProcessor {
         case 'play':
           this.fragments = event.data.audioData.fragments;
           this.pulses = event.data.audioData.pulses;
+          this.events = false;
+          if ('events' in event.data.audioData) {
+            this.events = event.data.audioData.events;
+          }
           this.outputVolume = [0.0, event.data.audioData.volume];
           this.infinityRndPulses = false;
           this.infinityQuantity = 0;
@@ -72,6 +77,11 @@ class AudioProcessor extends AudioWorkletProcessor {
                 }
               } else {
                 this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+                if (this.events != false) {
+                  if (this.readPtr in this.events) {
+                    this.port.postMessage(this.events[this.readPtr]);
+                  }
+                }
               }
             }
             if (writePtr+this.oneReadPulse <= channel.length) {
@@ -86,12 +96,18 @@ class AudioProcessor extends AudioWorkletProcessor {
               writePtr = channel.length;
             }
             if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
+              if (this.events != false) {
+                if (this.readPtr in this.events) {
+                  this.port.postMessage(this.events[this.readPtr]);
+                }
+              }
               if (this.repeat) {
                 this.readPtr = 0;
               } else if (this.infinityRndPulses === false) {
                 channel.fill(0, writePtr);
                 this.fragments = false;
                 this.pulses = false;
+                this.events = false;
                 this.outputVolume = [0.0, 0.0];
                 this.outputBit = 0;
                 this.readPtr = 0;

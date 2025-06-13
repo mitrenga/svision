@@ -14,6 +14,7 @@ class AudioScriptProcessorWorker {
 
     this.fragments = false;
     this.pulses = false;
+    this.events = false;
     this.outputVolume = [0.0, 0.0];
     this.infinityRndPulses = false;
     this.infinityQuantity = 0;
@@ -41,6 +42,11 @@ class AudioScriptProcessorWorker {
             }
           } else {
             this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+            if (this.events != false) {
+              if (this.readPtr in this.events) {
+                postMessage(this.events[this.readPtr]);
+              }
+            }
           }
         }
         if (writePtr+this.oneReadPulse <= this.buffer.length) {
@@ -55,12 +61,18 @@ class AudioScriptProcessorWorker {
           writePtr = this.buffer.length;
         }
         if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
+          if (this.events != false) {
+            if (this.readPtr in this.events) {
+              postMessage(this.events[this.readPtr]);
+            }
+          }
           if (this.repeat) {
             this.readPtr = 0;
           } else if (this.infinityRndPulses === false) {
             this.buffer.fill(0, writePtr);
             this.fragments = false;
             this.pulses = false;
+            this.events = false;
             this.outputVolume = [0.0, 0.0];
             this.outputBit = 0;
             this.readPtr = 0;
@@ -85,6 +97,10 @@ class AudioScriptProcessorWorker {
   playSound(audioData, options) {
     this.fragments = audioData.fragments;
     this.pulses = audioData.pulses;
+    this.events = false;
+    if ('events' in audioData) {
+      this.events = audioData.events;
+    }
     this.outputVolume = [0.0, audioData.volume];
     this.infinityRndPulses = false;
     this.infinityQuantity = 0;
