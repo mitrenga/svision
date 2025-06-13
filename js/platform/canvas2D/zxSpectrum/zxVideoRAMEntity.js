@@ -12,7 +12,6 @@ export class ZXVideoRAMEntity extends AbstractEntity {
     this.id = 'ZXVideoRAMEntity';
     this.penColor = false;
     this.bkColor = false;
-    this.resultTime = false;
   } // constructor
 
   getVideoRAMValue(addr) {
@@ -27,24 +26,21 @@ export class ZXVideoRAMEntity extends AbstractEntity {
         var hexData = this.getVideoRAMValue(row*32+column);
         if (hexData !== false) {
           var binData = this.app.hexToBin(hexData);
-          var hexAttribut = this.getVideoRAMValue(6144+(row%8)*32+Math.floor(row/64)*256+column);
-          if (hexAttribut === false) {
-            hexAttribut = '38';
+          var hexAttr = this.getVideoRAMValue(6144+(row%8)*32+Math.floor(row/64)*256+column);
+          if (hexAttr === false) {
+            hexAttr = '38';
           }
-          var intAttribut = this.app.hexToInt(hexAttribut);
+          var intAttr = this.app.hexToInt(hexAttr);
           for (var bit = 0; bit < 8; bit++) {
             if (binData[bit] == '1') {
-              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.penColorByAttribute(intAttribut));
+              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.penColorByAttr(intAttr));
             } else {
-              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.bkColorByAttribute(intAttribut));
+              this.app.layout.paint(this, column*8+bit, (row%8)*8+Math.floor(row%64/8)+Math.floor(row/64)*64, 1, 1, this.app.platform.bkColorByAttr(intAttr));
             }
           }
         }
       }
     }
-    var stopTime = Date.now();
-    if (this.resultTime === false) 
-      this.resultTime = stopTime-startTime;
   } // drawEntity
 
 } // class ZXVideoRAMEntity

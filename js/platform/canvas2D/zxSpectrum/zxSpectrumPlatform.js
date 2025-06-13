@@ -90,17 +90,17 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     return false;
   } // color
 
-  zxColorByAttribute(attr, mask, displacement) {
+  zxColorByAttr(attr, mask, displacement) {
     return this.colorByName(this.zxColorsName[(attr & 64) / 64][(attr & mask) / displacement]);
-  } // zxColorByAttribute
+  } // zxColorByAttr
 
-  penColorByAttribute(attr) {
-    return this.zxColorByAttribute(attr, 7, 1);
-  } // penColorByAttribute
+  penColorByAttr(attr) {
+    return this.zxColorByAttr(attr, 7, 1);
+  } // penColorByAttr
 
-  bkColorByAttribute(attr) {
-    return this.zxColorByAttribute(attr, 56, 8);
-  } // bkColorByAttribute
+  bkColorByAttr(attr) {
+    return this.zxColorByAttr(attr, 56, 8);
+  } // bkColorByAttr
 
 } // class ZXSpectrumPlatform
 
