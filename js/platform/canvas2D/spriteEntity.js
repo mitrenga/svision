@@ -100,9 +100,7 @@ export class SpriteEntity  extends AbstractEntity {
   } // switchDirection
 
   drawEntity() {
-    super.drawEntity();
-  
-    if (this.spriteData !== null) {
+      if (this.spriteData !== null) {
       this.spriteData[this.frame+this.direction*this.framesCount].forEach((pixel) => {
         var color = this.penColor;
         if ('penColor' in pixel) {

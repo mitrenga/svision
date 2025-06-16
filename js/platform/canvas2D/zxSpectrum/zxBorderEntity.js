@@ -50,6 +50,7 @@ export class ZXBorderEntity  extends BorderEntity {
     for (var s = 0; s < this.stripes.length; s++) {
       this.app.layout.paintRect(this.app.stack.ctx, 0, this.stripes[s].y, this.width, this.stripes[s].height, this.stripes[s].color);
     }
+    this.drawSubEntities();
   } // drawEntity
 
   handleEvent(event) {

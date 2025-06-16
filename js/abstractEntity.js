@@ -145,7 +145,10 @@ export class AbstractEntity {
     }
 
     this.app.layout.drawEntity(this);
+    this.drawSubEntities();
+  } // drawEntity
 
+  drawSubEntities() {
     this.entities.forEach ((entity) => {
       if (entity.hide == false) {
         entity.parentX = this.parentX+this.x;
@@ -170,7 +173,7 @@ export class AbstractEntity {
         entity.drawEntity();
       }
     });
-  } // drawEntity
+  } // drawSubEntities
   
   pointOnEntity(data) {
     if ((this.parentX+this.x <= data.x) && (this.parentY+this.y <= data.y) && (this.parentX+this.x+this.width >= data.x) && (this.parentY+this.y+this.height >= data.y)) {

@@ -19,8 +19,6 @@ export class ZXVideoRAMEntity extends AbstractEntity {
   } // getVideoRAMValue
 
   drawEntity() {
-    var startTime = Date.now();
-    super.drawEntity();
     for (var row = 0; row < 192; row++) {
       for (var column = 0; column < 32; column++) {
         var hexData = this.getVideoRAMValue(row*32+column);
@@ -41,6 +39,7 @@ export class ZXVideoRAMEntity extends AbstractEntity {
         }
       }
     }
+    super.drawSubEntities();
   } // drawEntity
 
 } // class ZXVideoRAMEntity
