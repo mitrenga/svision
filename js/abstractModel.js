@@ -29,6 +29,7 @@ export class AbstractModel {
     this.desktopHeight = this.app.platform.desktop(this.app).height;
 
     this.events = [];
+    this.timer = false;
   } // constructor
 
   init() {
@@ -118,7 +119,9 @@ export class AbstractModel {
         this.events.splice(m, 1);
       }
     }
-    this.app.audioManager.refreshAllChannels();
+    if (this.app.audioManager != false) {
+      this.app.audioManager.refreshAllChannels();
+    }
   } // loopModel
 
   resizeModel() {
