@@ -1,11 +1,9 @@
 /**/
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
 const { ZXSpectrumLayout } = await import('./zxSpectrumLayout.js?ver='+window.srcVersion);
-const { ZXBorderEntity } = await import('./zxBorderEntity.js?ver='+window.srcVersion);
 /*/
 import Canvas2DPlatform from '../canvas2DPlatform.js';
 import ZXSpectrumLayout from './zxSpectrumLayout.js';
-import ZXBorderEntity from './zxBorderEntity.js';
 /**/
 // begin code
 
@@ -43,13 +41,9 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     return 'ZX Spectrum [HTML canvas 2D]';
   } // platformName
 
-  defaultBorderEntity() {
-    return new ZXBorderEntity();
-  } // defaultBorderEntity
-
-  defaultLayout(app) {
+  newLayout(app) {
     return new ZXSpectrumLayout(app);
-  } // defaultLayout
+  } // newLayout
 
   desktop(app) {
     return {'width': 256, 'height': 192, 'defaultColor': this.colorByName('white')};

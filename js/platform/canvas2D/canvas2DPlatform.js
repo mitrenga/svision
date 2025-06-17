@@ -29,9 +29,9 @@ export class Canvas2DPlatform extends AbstractPlatform {
     app.stack.containerType = 'canvas2D';
   } // initCanvasElement
 
-  defaultLayout(app) {
+  newLayout(app) {
     return new Canvas2DLayout(app);
-  } // defaultLayout
+  } // newLayout
 
   desktop(app) {
     return {'width': app.element.clientWidth, 'height': app.element.clientHeight, 'defaultColor': false};

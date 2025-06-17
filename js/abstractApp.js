@@ -19,7 +19,7 @@ export class AbstractApp {
     this.platform = platform;
     this.platform.initCanvasElement(this, parentElement);
 
-    this.layout = platform.defaultLayout(this);
+    this.layout = platform.newLayout(this);
     this.wsURL = wsURL;
     this.webSocket = false;
   } // constructor

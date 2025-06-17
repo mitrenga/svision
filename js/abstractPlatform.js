@@ -1,9 +1,7 @@
 /**/
-const { DesktopEntity } = await import('./desktopEntity.js?ver='+window.srcVersion);
-const { BorderEntity } = await import('./borderEntity.js?ver='+window.srcVersion);
+
 /*/
-import DesktopEntity from './desktopEntity.js';
-import BorderEntity from './borderEntity.js';
+
 /**/
 // begin code
 
@@ -23,17 +21,9 @@ export class AbstractPlatform {
     return false;
   } // initEntity
 
-  defaultDesktopEntity() {
-    return new DesktopEntity();
-  } // defaultDesktopEntity
-
-  defaultBorderEntity() {
-    return new BorderEntity();
-  } // defaultBorderEntity
-
-  defaultLayout(app) {
+  newLayout(app) {
     return false;
-  } // defaultLayout
+  } // newLayout
 
   desktop(app) {
     return {'width': 0, 'height': 0, 'defaultColor': false};

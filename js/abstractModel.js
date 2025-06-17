@@ -1,9 +1,7 @@
 /**/
-const { DesktopEntity } = await import('./desktopEntity.js?ver='+window.srcVersion);
-const { BorderEntity } = await import('./borderEntity.js?ver='+window.srcVersion);
+const { AbstractEntity } = await import('./abstractEntity.js?ver='+window.srcVersion);
 /*/
-import DesktopEntity from './desktopEntity.js';
-import BorderEntity from './borderEntity.js';
+import AbstractEntity from './abstractEntity.js';
 /**/
 // begin code
 
@@ -32,9 +30,17 @@ export class AbstractModel {
     this.timer = false;
   } // constructor
 
+  newDesktopEntity() {
+    return new AbstractEntity(null, 0, 0, 0, 0, false, false);
+  } // desktopEntity
+
+  newBorderEntity() {
+    return new AbstractEntity(null, 0, 0, 0, 0, false, false);
+  } // newBorderEntity
+
   init() {
     if (this.app.platform.border(this.app) !== false) {
-      this.borderEntity = this.app.platform.defaultBorderEntity();
+      this.borderEntity = this.newBorderEntity();
       this.borderEntity.app = this.app;
       this.borderEntity.model = this;
       this.borderEntity.bkColor = this.app.platform.border(this.app).defaultColor;
@@ -43,7 +49,7 @@ export class AbstractModel {
         this.borderEntity.stack = {...this.borderEntity.stack, ...entityObjects};
       }
     }
-    this.desktopEntity = this.app.platform.defaultDesktopEntity();
+    this.desktopEntity = this.newDesktopEntity();
     this.desktopEntity.app = this.app;
     this.desktopEntity.model = this;
     this.desktopEntity.bkColor = this.app.platform.desktop(this.app).defaultColor;

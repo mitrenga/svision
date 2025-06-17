@@ -42,9 +42,9 @@ export class HTMLPlatform extends AbstractPlatform {
   } // initEntity
 
 
-  defaultLayout(app) {
+  newLayout(app) {
     return new HTMLLayout(app);
-  } // defaultLayout
+  } // newLayout
 
   desktop(app) {
     return {width: 256, height: 192, defaultColor: this.colorByName('white')};
