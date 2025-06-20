@@ -19,6 +19,10 @@ export class SpriteEntity  extends AbstractEntity {
     this.spriteData = null;
     this.spriteWidth = 0;
     this.spriteHeight = 0;
+    
+    this.drawCache = [];
+    this.drawCacheRatio = [];
+    this.drawCacheCtx = [];
   } // constructor
 
   setGraphicsData(data) {
@@ -34,13 +38,23 @@ export class SpriteEntity  extends AbstractEntity {
     this.spriteData = [];
     this.spriteWidth = 0;
     this.spriteHeight = 0;
+    this.drawCache = [];
+    this.drawCacheRatio = [];
+    this.drawCacheCtx = [];
+
     if (this.framesCount == 0) {
       this.spriteData[0] = this.setOneFrameData(data.sprite);
       this.framesCount = 1;
       this.directionsCount = 1;
+      this.drawCache[0] = null;
+      this.drawCacheRatio[0] = 0;
+      this.drawCacheCtx[0] = false;
     } else {
       for (var s = 0; s < data.sprite.length; s++) {
         this.spriteData[s] = this.setOneFrameData(data.sprite[s]);
+        this.drawCache[s] = null;
+        this.drawCacheRatio[s] = 0;
+        this.drawCacheCtx[s] = false;
       }
     }
     this.width = this.spriteWidth;
@@ -100,14 +114,28 @@ export class SpriteEntity  extends AbstractEntity {
   } // switchDirection
 
   drawEntity() {
-      if (this.spriteData !== null) {
-      this.spriteData[this.frame+this.direction*this.framesCount].forEach((pixel) => {
-        var color = this.penColor;
-        if ('penColor' in pixel) {
-          color = pixel.color;
-        }
-        this.app.layout.paint(this, pixel.x, pixel.y, 1, 1, color);
-      });  
+    if (this.spriteData !== null) {
+      var index = this.frame+this.direction*this.framesCount;
+      if (this.drawCache[index] == null) {
+        this.drawCache[index] = document.createElement('canvas');
+        this.drawCacheCtx[index] = this.drawCache[index].getContext('2d');
+      }
+      if (this.drawCacheRatio[index] != this.app.layout.ratio) {
+        this.drawCacheRatio[index] = this.app.layout.ratio;
+        this.drawCache[index].width = this.width*this.drawCacheRatio[index];
+        this.drawCache[index].height = this.height*this.drawCacheRatio[index];
+        this.drawCacheCtx[index].clearRect(0, 0, this.width*this.drawCacheRatio[index], this.height*this.drawCacheRatio[index]);
+
+        this.spriteData[index].forEach((pixel) => {
+          var color = this.penColor;
+          if ('penColor' in pixel) {
+            color = pixel.color;
+          }
+          this.drawCacheCtx[index].fillStyle = color;
+          this.drawCacheCtx[index].fillRect(pixel.x*this.drawCacheRatio[index], pixel.y*this.drawCacheRatio[index], this.drawCacheRatio[index], this.drawCacheRatio[index]);
+        });  
+      }
+      this.app.stack['ctx'].drawImage(this.drawCache[index], (this.parentX+this.x)*this.drawCacheRatio[index], (this.parentY+this.y)*this.drawCacheRatio[index]);
     }
   } // drawEntity
 
