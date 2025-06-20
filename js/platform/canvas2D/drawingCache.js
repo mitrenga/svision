@@ -23,7 +23,7 @@ export class DrawingCache {
     this.ctx.clearRect(0, 0, width*this.ratio, height*this.ratio);
   } // init
 
-  needRefresh(entity) {
+  needToRefresh(entity) {
     if (this.ratio != this.app.layout.ratio) {
       this.init(entity.width, entity.height);
       return true;
