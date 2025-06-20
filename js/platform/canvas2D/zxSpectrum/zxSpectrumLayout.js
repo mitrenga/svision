@@ -10,8 +10,6 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
   constructor(app) {
     super(app);
     this.id = 'ZXSpectrumLayout';
-
-    this.ratio = 1;
   } // constructor
 
   resizeModel(model) {

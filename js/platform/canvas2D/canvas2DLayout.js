@@ -1,7 +1,9 @@
 /**/
 const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
+const { DrawingCache } = await import('./drawingCache.js?ver='+window.srcVersion);
 /*/
 import AbstractLayout from '../../abstractLayout.js';
+import DrawingCache from './drawingCache.js';
 /**/
 // begin code
 
@@ -11,6 +13,7 @@ export class Canvas2DLayout extends AbstractLayout {
     super(app);
     this.app = app;
     this.id = 'Canvas2DLayout';
+    this.ratio = 1;
   } // constructor
 
   resizeModel(model) {
@@ -113,10 +116,18 @@ export class Canvas2DLayout extends AbstractLayout {
     }
   } // paint
 
+  paintCache(entity, index) {
+    this.app.stack.ctx.drawImage(entity.drawingCache[index].canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
+  } // paintCache
+
   paintRect(ctx, x, y, width, height, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, width, height);
   } // paintRect
+
+  createDrawingCache(entity, index) {
+    entity.drawingCache[index] = new DrawingCache(entity.app);
+  } // createDrawingCache
 
   convertClientCoordinateX(clientX) {
     return this.app.element.width/this.app.element.clientWidth*clientX;
