@@ -127,8 +127,19 @@ export class Canvas2DLayout extends AbstractLayout {
     entity.drawingCache[index] = new DrawingCache(entity.app);
   } // newDrawingCache
 
+  newDrawingCropCache(entity) {
+    entity.drawingCropCache = new DrawingCache(entity.app);
+  } // newDrawingCropCache
+
   paintCache(entity, index) {
     this.app.stack.ctx.drawImage(entity.drawingCache[index].canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
+  } // paintCache
+
+  paintCropCache(entity, index, shiftX, shiftY) {
+    entity.drawingCropCache.needToRefresh(entity, entity.width, entity.height);
+    entity.drawingCropCache.ctx.clearRect(0, 0, entity.drawingCropCache.canvas.width, entity.drawingCropCache.canvas.height);
+    entity.drawingCropCache.ctx.drawImage(entity.drawingCache[0].canvas, shiftX*this.ratio, shiftY*this.ratio);
+    entity.app.stack.ctx.drawImage(entity.drawingCropCache.canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
   } // paintCache
 
   paintCacheWithCrop(entity, index, x, y, width, height) {
