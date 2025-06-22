@@ -138,6 +138,7 @@ export class AbstractModel {
   } // resizeModel
 
   drawModel() {
+    this.app.layout.clearCanvas();
     if (this.borderEntity != null) {
       this.borderEntity.drawEntity();
     }

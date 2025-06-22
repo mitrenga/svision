@@ -34,6 +34,7 @@ export class AbstractEntity {
     this.parentHeight = height;
 
     this.drawingCache = [];
+    this.drawingCropCache = null;
     this.stack = {};
     this.entities = [];
   } // constructor
@@ -145,7 +146,9 @@ export class AbstractEntity {
       return;
     }
 
-    this.app.layout.drawEntity(this);
+    if (this.bkColor != false) {
+      this.app.layout.paint(this, 0, 0, this.width, this.height, this.bkColor);
+    }
     this.drawSubEntities();
   } // drawEntity
 

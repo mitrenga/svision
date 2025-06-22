@@ -23,8 +23,8 @@ export class AbstractLayout {
   resizeModel(model) {
   } // resizeModel
 
-  drawEntity(entity) {
-  } // drawEntity
+  clearCanvas() {
+  } // clearCanvas
 
   convertClientCoordinateX(clientX) {
     return clientX;

@@ -50,84 +50,90 @@ export class Canvas2DLayout extends AbstractLayout {
     model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
   } // resizeModel
 
-  drawEntity(entity) {
-    this.paint(entity, 0, 0, entity.width, entity.height, entity.bkColor);
-  } // drawEntity
+  clearCanvas() {
+    this.app.stack.ctx.clearRect(0, 0, this.app.element.clientWidth, this.app.element.clientHeight);
+  } // clearCanvas
 
   paint(entity, x, y, width, height, color) {
-    if (color !== false) {
-      var w = width;
-      if (entity.x+x < 0) {
-        w = w+entity.x;
-        x = -entity.x;
-        if (w < 0) {
-          w = 0;
-        }
-      }
-      if (x < 0) {
-        w = w+x;
-        x = 0;
-        if (w < 0) {
-          w = 0;
-        }
-      }
-      if (entity.x+x+w > entity.parentWidth) {
-        w = entity.parentWidth-entity.x-x;
-        if (w < 0) {
-          w = 0;
-        }
-      }
-      if (x+w > entity.width) {
-        w = entity.width-x;
-        if (w < 0) {
-          w = 0;
-        }
-      }
-      var h = height;
-      if (entity.y+y < 0) {
-        h = h+entity.y;
-        y = -entity.y;
-        if (h < 0) {
-          h = 0;
-        }
-      }
-      if (y < 0) {
-        h = h+y;
-        y = 0;
-        if (h < 0) {
-          h = 0;
-        }
-      }
-      if (entity.y+y+h > entity.parentHeight) {
-        h = entity.parentHeight-entity.y-y;
-        if (h < 0) {
-          h = 0;
-        }
-      }
-      if (y+h > entity.height) {
-        h = entity.height-y;
-        if (h < 0) {
-          h = 0;
-        }
-      }
-      if (w > 0 && h > 0) {
-        this.paintRect(this.app.stack.ctx, entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
-      }
-    }
+    this.paintRect(this.app.stack.ctx, entity.parentX+entity.x+x, entity.parentY+entity.y+y, width, height, color);
   } // paint
 
-  paintCache(entity, index) {
-    this.app.stack.ctx.drawImage(entity.drawingCache[index].canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
-  } // paintCache
+  paintWithVisibility(entity, x, y, width, height, color) {
+    this.paintRect(this.app.stack.ctx, entity.parentX+entity.x+x, entity.parentY+entity.y+y, width, height, color);
+    if (entity.x+x < 0) {
+      w = w+entity.x;
+      x = -entity.x;
+      if (w < 0) {
+        w = 0;
+      }
+    }
+    if (x < 0) {
+      w = w+x;
+      x = 0;
+      if (w < 0) {
+        w = 0;
+      }
+    }
+    if (entity.x+x+w > entity.parentWidth) {
+      w = entity.parentWidth-entity.x-x;
+      if (w < 0) {
+        w = 0;
+      }
+    }
+    if (x+w > entity.width) {
+      w = entity.width-x;
+      if (w < 0) {
+        w = 0;
+      }
+    }
+    var h = height;
+    if (entity.y+y < 0) {
+      h = h+entity.y;
+      y = -entity.y;
+      if (h < 0) {
+        h = 0;
+      }
+    }
+    if (y < 0) {
+      h = h+y;
+      y = 0;
+      if (h < 0) {
+        h = 0;
+      }
+    }
+    if (entity.y+y+h > entity.parentHeight) {
+      h = entity.parentHeight-entity.y-y;
+      if (h < 0) {
+        h = 0;
+      }
+    }
+    if (y+h > entity.height) {
+      h = entity.height-y;
+      if (h < 0) {
+        h = 0;
+      }
+    }
+    if (w > 0 && h > 0) {
+      this.paintRect(this.app.stack.ctx, entity.parentX+entity.x+x, entity.parentY+entity.y+y, w, h, color);
+    }
+  } // paint
 
   paintRect(ctx, x, y, width, height, color) {
     ctx.fillStyle = color;
     ctx.fillRect(x, y, width, height);
   } // paintRect
 
-  createDrawingCache(entity, index) {
+  newDrawingCache(entity, index) {
     entity.drawingCache[index] = new DrawingCache(entity.app);
-  } // createDrawingCache
+  } // newDrawingCache
+
+  paintCache(entity, index) {
+    this.app.stack.ctx.drawImage(entity.drawingCache[index].canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
+  } // paintCache
+
+  paintCacheWithCrop(entity, index, x, y, width, height) {
+
+  } // paintCacheWithCrop
 
   convertClientCoordinateX(clientX) {
     return this.app.element.width/this.app.element.clientWidth*clientX;
