@@ -135,16 +135,12 @@ export class Canvas2DLayout extends AbstractLayout {
     this.app.stack.ctx.drawImage(entity.drawingCache[index].canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
   } // paintCache
 
-  paintCropCache(entity, index, shiftX, shiftY) {
+  paintCropCache(entity, index, posX, posY, moveX, moveY) {
     entity.drawingCropCache.needToRefresh(entity, entity.width, entity.height);
     entity.drawingCropCache.ctx.clearRect(0, 0, entity.drawingCropCache.canvas.width, entity.drawingCropCache.canvas.height);
-    entity.drawingCropCache.ctx.drawImage(entity.drawingCache[0].canvas, shiftX*this.ratio, shiftY*this.ratio);
-    entity.app.stack.ctx.drawImage(entity.drawingCropCache.canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
+    entity.drawingCropCache.ctx.drawImage(entity.drawingCache[index].canvas, -posX*this.ratio, -posY*this.ratio);
+    entity.app.stack.ctx.drawImage(entity.drawingCropCache.canvas, (entity.parentX+entity.x+moveX)*this.ratio, (entity.parentY+entity.y+moveY)*this.ratio);
   } // paintCache
-
-  paintCacheWithCrop(entity, index, x, y, width, height) {
-
-  } // paintCacheWithCrop
 
   convertClientCoordinateX(clientX) {
     return this.app.element.width/this.app.element.clientWidth*clientX;

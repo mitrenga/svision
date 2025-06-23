@@ -19,6 +19,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.spriteData = null;
     this.spriteWidth = 0;
     this.spriteHeight = 0;
+    this.app.layout.newDrawingCropCache(this);
   } // constructor
 
   setGraphicsData(data) {
@@ -117,7 +118,13 @@ export class SpriteEntity  extends AbstractEntity {
           this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x, pixel.y, 1, 1, color);
         });  
       }
-      this.app.layout.paintCache(this, index);
+      if (this.x > -this.width) {
+        if (this.x < 0) {
+          this.app.layout.paintCropCache(this, 0, -this.x, 0, -this.x, 0);
+      } else {
+          this.app.layout.paintCache(this, index);
+        }
+      }
     }
   } // drawEntity
 

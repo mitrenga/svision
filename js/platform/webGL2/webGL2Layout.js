@@ -30,7 +30,7 @@ export class WebGL2Layout extends AbstractLayout {
     model.desktopEntity.parentHeight = model.desktopHeight;
   } // resizeModel
 
-  drawEntity(entity) {
+  paint(entity, x, y, width, height, color) {
     var vertexShaderSource =
     '#version 300 es\n' +
     'in vec3 inPeak;' +
@@ -135,7 +135,7 @@ export class WebGL2Layout extends AbstractLayout {
     var start = 0;
     var count = 36;
     ctx.drawElements(ctx.TRIANGLES, count, ctx.UNSIGNED_SHORT, start);
-  } // drawEntity
+  } // paint
 
   createShader(ctx, type, src) {
     var shader = ctx.createShader(type);
