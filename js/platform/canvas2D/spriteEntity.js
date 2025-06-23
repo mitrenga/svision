@@ -19,8 +19,15 @@ export class SpriteEntity  extends AbstractEntity {
     this.spriteData = null;
     this.spriteWidth = 0;
     this.spriteHeight = 0;
-    this.app.layout.newDrawingCropCache(this);
   } // constructor
+
+  enablePaintWithVisibility() {
+    this.app.layout.newDrawingCropCache(this);
+  } // enablePaintWithVisibility
+
+  disablePaintWithVisibility() {
+    this.drawingCropCache = null;
+  } // disablePaintWithVisibility
 
   setGraphicsData(data) {
     if ('pen' in data) {
@@ -118,11 +125,28 @@ export class SpriteEntity  extends AbstractEntity {
           this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x, pixel.y, 1, 1, color);
         });  
       }
-      if (this.x > -this.width) {
-        if (this.x < 0) {
-          this.app.layout.paintCropCache(this, 0, -this.x, 0, -this.x, 0);
+      
+      if (this.drawingCropCache == null) {
+        this.app.layout.paintCache(this, index);
       } else {
+        if ((this.x >= 0) && (this.y >= 0) && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight)) {
           this.app.layout.paintCache(this, index);
+        } else {
+          var posX = 0;
+          if (this.x < 0) {
+            posX = this.x;
+          }
+          if (this.x+this.width-1 > this.parentWidth) {
+            posX = this.x+this.width-this.parentWidth;
+          }
+          var posY = 0;
+          if (this.y < 0) {
+            posY = this.y;
+          }
+          if (this.y+this.height-1 > this.parentHeight) {
+            posY = this.y+this.height-this.parentHeight;
+          }
+          this.app.layout.paintCropCache(this, 0, -posX, -posY, -posX, -posY);
         }
       }
     }
