@@ -117,6 +117,9 @@ export class SpriteEntity  extends AbstractEntity {
     if (this.spriteData !== null) {
       var index = this.frame+this.direction*this.framesCount;
       if (this.drawingCache[index].needToRefresh(this, this.width, this.height)) {
+        if (this.bkColor != false) {
+          this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width, this.height, this.bkColor);
+        }
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
           if ('penColor' in pixel) {
