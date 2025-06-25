@@ -20,6 +20,13 @@ export class TextEntity  extends AbstractEntity {
     this.cursorX = 0;
   } // constructor
 
+  setText(text) {
+    if (this.text != text) {
+      this.text = text;
+      this.drawingCache[0].cleanCache();
+    }
+  } // setText
+
   setPenColor(color) {
     this.penColor = color;
     this.drawingCache[0].cleanCache();

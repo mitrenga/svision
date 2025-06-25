@@ -99,6 +99,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     }
     this.node.disconnect();
     this.worker.terminate();
+    this.worker = null;
     return super.closeChannel();
   } // closeChannel
 

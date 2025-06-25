@@ -24,13 +24,6 @@ export class ZXTextEntity extends TextEntity {
     };
   } // constructor
 
-  setText(text) {
-    if (this.text != text) {
-      this.text = text;
-      this.drawingCache[0].cleanCache();
-    }
-  } // setText
-
   getTextChar(position) {
     return this.text[position];
   } // getTextChar
