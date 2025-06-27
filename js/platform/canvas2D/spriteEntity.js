@@ -33,6 +33,25 @@ export class SpriteEntity  extends AbstractEntity {
     this.drawingCropCache = null;
   } // disablePaintWithVisibility
 
+  setFixSize(width, height) {
+    this.fixWidth = width;
+    this.fixHeight = height;
+    this.width = width*this.repeatX;
+    this.height = height*this.repeatY;
+    this.spriteWidth = width;
+    this.spriteHeight = height;
+  }
+
+  setRepeatX(value) {
+    this.repeatX = value;
+    this.width = this.spriteWidth*value;
+  } // setRepeatX
+
+  setRepeatY(value) {
+    this.repeatY = value;
+    this.height = this.spriteHeight*value;
+  } // setRepeatY
+
   setGraphicsData(data) {
     if ('pen' in data) {
       this.penChar = data.pen;
@@ -77,25 +96,6 @@ export class SpriteEntity  extends AbstractEntity {
       this.height = this.spriteHeight*this.repeatY;
     }
   } // setGraphicsData
-
-  setFixSize(width, height) {
-    this.fixWidth = width;
-    this.fixHeight = height;
-    this.width = width*this.repeatX;
-    this.height = height*this.repeatY;
-    this.spriteWidth = width;
-    this.spriteHeight = height;
-  }
-
-  setRepeatX(value) {
-    this.repeatX = value;
-    this.width = this.spriteWidth*value;
-  } // setRepeatX
-
-  setRepeatY(value) {
-    this.repeatY = value;
-    this.height = this.spriteHeight*value;
-  } // setRepeatY
 
   setOneFrameData(frameData) {
     var spriteFrame = [];
@@ -177,7 +177,7 @@ export class SpriteEntity  extends AbstractEntity {
       var index = this.frame+this.direction*this.framesCount;
       if (this.drawingCache[index].needToRefresh(this, this.width, this.height)) {
         if (this.bkColor != false) {
-          this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width, this.height, this.bkColor);
+          this.app.layout.paintRect(this.drawingCache[index].ctx, 0, 0, this.width, this.height, this.bkColor);
         }
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
