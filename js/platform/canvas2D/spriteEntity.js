@@ -104,6 +104,29 @@ export class SpriteEntity  extends AbstractEntity {
     this.setGraphicsData({'kind': kind, 'pen': '1', 'sprite': sprite});
   } // setGraphicsDataFromHexStr
 
+  cloneSprite(sprite) {
+    this.spriteData[this.framesCount] = Array(this.spriteData[sprite].length);
+    for (var s = 0; s < this.spriteData[sprite].length; s++) {
+      this.spriteData[this.framesCount][s] = {...this.spriteData[sprite][s]};
+    }
+    this.app.layout.newDrawingCache(this, this.framesCount);
+    this.framesCount++;
+  } // cloneSprite
+
+  rotateSpriteRow(index, row, shift) {
+    this.spriteData[index].forEach((pixel, p) => {
+      if (pixel.y == row) {
+       this.spriteData[index][p].x += shift;
+       if (this.spriteData[index][p].x < 0) {
+        this.spriteData[index][p].x += this.spriteWidth;
+       }
+       if (this.spriteData[index][p].x >= this.spriteWidth) {
+        this.spriteData[index][p].x -= this.spriteWidth;
+       }
+      }
+    });
+  } // rotateSpriteRow
+
   incFrame() {
     this.frame = this.app.rotateInc(this.frame, 0, this.framesCount-1);
   } // incFrame

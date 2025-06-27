@@ -61,26 +61,12 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
   } // colorByName
 
   color(color) {
-    switch (color) {
-      case 0:
-      case 1:
-      case 2:
-      case 3:
-      case 4:
-      case 5:
-      case 6:
-      case 7:
-        return this.colorByName(this.zxColorsName[0][color]);
-      case 8:
-      case 9:
-      case 10:
-      case 11:
-      case 12:
-      case 13:
-      case 14:
-      case 15:
-        return this.colorByName(this.zxColorsName[1][color-8]);
-      }
+    if (color >= 0 && color < 8) {
+      return this.colorByName(this.zxColorsName[0][color]);
+    }
+    if (color > 7 && color < 16) {
+      return this.colorByName(this.zxColorsName[1][color-8]);
+    }
     return false;
   } // color
 
