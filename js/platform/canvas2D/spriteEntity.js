@@ -19,6 +19,8 @@ export class SpriteEntity  extends AbstractEntity {
     this.spriteData = null;
     this.spriteWidth = 0;
     this.spriteHeight = 0;
+    this.repeatX = 1;
+    this.repeatY = 1;
   } // constructor
 
   enablePaintWithVisibility() {
@@ -52,6 +54,9 @@ export class SpriteEntity  extends AbstractEntity {
       this.directionsCount = 1;
       this.app.layout.newDrawingCache(this, 0);
     } else {
+      if (this.directionsCount == 0) {
+        this.directionsCount = 1;
+      }
       for (var s = 0; s < data.sprite.length; s++) {
         this.spriteData[s] = this.setOneFrameData(data.sprite[s]);
         this.app.layout.newDrawingCache(this, s);
@@ -116,16 +121,20 @@ export class SpriteEntity  extends AbstractEntity {
   drawEntity() {
     if (this.spriteData !== null) {
       var index = this.frame+this.direction*this.framesCount;
-      if (this.drawingCache[index].needToRefresh(this, this.width, this.height)) {
+      if (this.drawingCache[index].needToRefresh(this, this.width*this.repeatX, this.height*this.repeatY)) {
         if (this.bkColor != false) {
-          this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width, this.height, this.bkColor);
+          this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width*this.repeatX, this.height*this.repeatY, this.bkColor);
         }
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
           if ('penColor' in pixel) {
             color = pixel.color;
           }
-          this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x, pixel.y, 1, 1, color);
+          for (var x = 0; x < this.repeatX; x++) {
+            for (var y = 0; y < this.repeatY; y++) {
+              this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x+x*this.width, pixel.y+y*this.height, 1, 1, color);
+            }
+          }
         });  
       }
       
