@@ -23,6 +23,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.repeatY = 1;
     this.fixWidth = 0;
     this.fixHeight = 0;
+    this.colorsMap = false;
   } // constructor
 
   enablePaintWithVisibility() {
@@ -52,6 +53,10 @@ export class SpriteEntity  extends AbstractEntity {
     this.height = this.spriteHeight*value;
   } // setRepeatY
 
+  setColorsMap(colorsMap) {
+    this.colorsMap = colorsMap;
+  } // setColorsMap
+
   setGraphicsData(data) {
     if ('pen' in data) {
       this.penChar = data.pen;
@@ -70,7 +75,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.drawCacheCtx = [];
 
     if (this.framesCount == 0) {
-      this.spriteData[0] = this.setOneFrameData(data.sprite);
+      this.spriteData[0] = this.setOneFrameData(data.sprite, 0);
       this.framesCount = 1;
       this.directionsCount = 1;
       this.app.layout.newDrawingCache(this, 0);
@@ -79,7 +84,7 @@ export class SpriteEntity  extends AbstractEntity {
         this.directionsCount = 1;
       }
       for (var s = 0; s < data.sprite.length; s++) {
-        this.spriteData[s] = this.setOneFrameData(data.sprite[s]);
+        this.spriteData[s] = this.setOneFrameData(data.sprite[s], s);
         this.app.layout.newDrawingCache(this, s);
       }
     }
@@ -97,14 +102,24 @@ export class SpriteEntity  extends AbstractEntity {
     }
   } // setGraphicsData
 
-  setOneFrameData(frameData) {
+  setOneFrameData(frameData, sprite) {
     var spriteFrame = [];
     var spriteFrameWidth = 0;
     var spriteFrameHeight = 0;
     frameData.forEach((row, r) => {
       for (var col = 0; col < row.length; col++) {
-        if (row[col] == this.penChar) {
+        var isPixel = false;
+        if (this.colorsMap == false && row[col] == this.penChar) {
           spriteFrame.push({'x': col, 'y': r});
+          isPixel = true;
+        }
+        if (this.colorsMap != false) {
+          if (row[col] in this.colorsMap) {
+            spriteFrame.push({'x': col, 'y': r, 'c': row[col]});
+            isPixel = true;
+          }
+        }
+        if (isPixel) {
           if (col+1 > spriteFrameWidth) {
             spriteFrameWidth = col+1;
           }
@@ -127,12 +142,12 @@ export class SpriteEntity  extends AbstractEntity {
     return spriteFrame;
   } // setOneFrameData
 
-  setGraphicsDataFromHexStr(kind, str) {
+  setGraphicsDataFromHexStr(str) {
     var sprite = [];
     for (var x = 0; x < 8; x++) {
       sprite.push(this.app.hexToBin(str.substring(x*2, x*2+2)));
     }
-    this.setGraphicsData({'kind': kind, 'pen': '1', 'sprite': sprite});
+    this.setGraphicsData({'pen': '1', 'sprite': sprite});
   } // setGraphicsDataFromHexStr
 
   cloneSprite(sprite) {
@@ -181,8 +196,9 @@ export class SpriteEntity  extends AbstractEntity {
         }
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
-          if ('penColor' in pixel) {
-            color = pixel.color;
+          if ('c' in pixel) {
+            console.log(index);
+            color = this.colorsMap[pixel.c][index];
           }
           for (var x = 0; x < this.repeatX; x++) {
             for (var y = 0; y < this.repeatY; y++) {
