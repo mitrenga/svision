@@ -27,7 +27,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
   } // openChannel
 
   openProcessor() {
-    this.worker = new Worker(this.app.importPath+'/svision/js/audioScriptProcessorWorker.js');
+    this.worker = new Worker(this.app.importPath+'/svision/js/audioScriptProcessorWorker.js?ver='+window.srcVersion);
     this.worker.postMessage({'id': 'initProcessor', 'sampleRate': this.ctx.sampleRate});
     
     this.worker.onmessage = (event) => {
