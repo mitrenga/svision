@@ -197,7 +197,6 @@ export class SpriteEntity  extends AbstractEntity {
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
           if ('c' in pixel) {
-            console.log(index);
             color = this.colorsMap[pixel.c][index];
           }
           for (var x = 0; x < this.repeatX; x++) {
