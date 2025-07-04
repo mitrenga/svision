@@ -189,7 +189,11 @@ export class SpriteEntity  extends AbstractEntity {
 
   drawEntity() {
     if (this.spriteData !== null) {
-      var index = this.frame+this.direction*this.framesCount;
+      var d = this.direction;
+      if (this.directionsCount == 1) {
+        d = 0;
+      }
+      var index = this.frame+d*this.framesCount;
       if (this.drawingCache[index].needToRefresh(this, this.width, this.height)) {
         if (this.bkColor != false) {
           this.app.layout.paintRect(this.drawingCache[index].ctx, 0, 0, this.width, this.height, this.bkColor);
