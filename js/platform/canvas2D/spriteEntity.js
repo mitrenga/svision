@@ -203,9 +203,11 @@ export class SpriteEntity  extends AbstractEntity {
           if ('c' in pixel) {
             color = this.colorsMap[pixel.c][index];
           }
-          for (var x = 0; x < this.repeatX; x++) {
-            for (var y = 0; y < this.repeatY; y++) {
-              this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x+x*this.spriteWidth, pixel.y+y*this.spriteHeight, 1, 1, color);
+          if (color !== false) {
+            for (var x = 0; x < this.repeatX; x++) {
+              for (var y = 0; y < this.repeatY; y++) {
+                this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x+x*this.spriteWidth, pixel.y+y*this.spriteHeight, 1, 1, color);
+              }
             }
           }
         });  
