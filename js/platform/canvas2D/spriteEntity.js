@@ -11,8 +11,8 @@ export class SpriteEntity  extends AbstractEntity {
     super(parentEntity, x, y, 0, 0, penColor, bkColor);
     this.id = 'SpriteEntity';
 
-    this.framesCount = 0;
-    this.directionsCount = 0;
+    this.frames = 0;
+    this.directions = 0;
     this.frame = frame;
     this.penChar = '#';
     this.direction = direction;
@@ -58,14 +58,14 @@ export class SpriteEntity  extends AbstractEntity {
   } // setColorsMap
 
   setGraphicsData(data) {
-    if ('pen' in data) {
-      this.penChar = data.pen;
+    if ('penChar' in data) {
+      this.penChar = data.penChar;
     }
     if ('frames' in data) {
-      this.framesCount = data.frames;
+      this.frames = data.frames;
     }
     if ('directions' in data) {
-      this.directionsCount = data.directions;
+      this.directions = data.directions;
     }
     this.spriteData = [];
     this.spriteWidth = 0;
@@ -74,35 +74,24 @@ export class SpriteEntity  extends AbstractEntity {
     this.drawCacheRatio = [];
     this.drawCacheCtx = [];
 
-    if (this.framesCount == 0) {
-      this.spriteData[0] = this.setOneFrameData(data.sprite, 0);
-      this.framesCount = 1;
-      this.directionsCount = 1;
+    if (this.frames == 0) {
+      this.spriteData[0] = this.setOneFrameData(data.sprite);
+      this.frames = 1;
+      this.directions = 1;
       this.app.layout.newDrawingCache(this, 0);
     } else {
-      if (this.directionsCount == 0) {
-        this.directionsCount = 1;
+      if (this.directions == 0) {
+        this.directions = 1;
       }
       for (var s = 0; s < data.sprite.length; s++) {
-        this.spriteData[s] = this.setOneFrameData(data.sprite[s], s);
+        this.spriteData[s] = this.setOneFrameData(data.sprite[s]);
         this.app.layout.newDrawingCache(this, s);
       }
     }
-    if (this.fixWidth > 0) {
-      this.width = this.fixWidth*this.repeatX;
-      this.spriteWidth = this.fixWidth;
-    } else {
-      this.width = this.spriteWidth*this.repeatX;
-    }
-    if (this.fixHeight > 0) {
-      this.height = this.fixHeight*this.repeatY;
-      this.spriteHeight = this.fixHeight;
-    } else {
-      this.height = this.spriteHeight*this.repeatY;
-    }
+    this.setDimensions();
   } // setGraphicsData
 
-  setOneFrameData(frameData, sprite) {
+  setOneFrameData(frameData) {
     var spriteFrame = [];
     var spriteFrameWidth = 0;
     var spriteFrameHeight = 0;
@@ -147,16 +136,46 @@ export class SpriteEntity  extends AbstractEntity {
     for (var x = 0; x < 8; x++) {
       sprite.push(this.app.hexToBin(str.substring(x*2, x*2+2)));
     }
-    this.setGraphicsData({'pen': '1', 'sprite': sprite});
+    this.setGraphicsData({'penChar': '1', 'sprite': sprite});
   } // setGraphicsDataFromHexStr
 
-  cloneSprite(sprite) {
-    this.spriteData[this.framesCount] = Array(this.spriteData[sprite].length);
-    for (var s = 0; s < this.spriteData[sprite].length; s++) {
-      this.spriteData[this.framesCount][s] = {...this.spriteData[sprite][s]};
+  addGraphicsDataFromHexStr(str) {
+    var sprite = [];
+    for (var x = 0; x < 8; x++) {
+      sprite.push(this.app.hexToBin(str.substring(x*2, x*2+2)));
     }
-    this.app.layout.newDrawingCache(this, this.framesCount);
-    this.framesCount++;
+    if (this.directions == 0) {
+      this.directions = 1;
+    }
+    this.penChar = '1';
+    this.spriteData[this.frames] = this.setOneFrameData(sprite);
+    this.app.layout.newDrawingCache(this, this.frames);
+    this.frames++;
+    this.setDimensions();
+  } // addGraphicsDataFromHexStr
+
+  setDimensions() {
+    if (this.fixWidth > 0) {
+      this.width = this.fixWidth*this.repeatX;
+      this.spriteWidth = this.fixWidth;
+    } else {
+      this.width = this.spriteWidth*this.repeatX;
+    }
+    if (this.fixHeight > 0) {
+      this.height = this.fixHeight*this.repeatY;
+      this.spriteHeight = this.fixHeight;
+    } else {
+      this.height = this.spriteHeight*this.repeatY;
+    }
+  } // setDimensions
+
+  cloneSprite(sprite) {
+    this.spriteData[this.frames] = Array(this.spriteData[sprite].length);
+    for (var s = 0; s < this.spriteData[sprite].length; s++) {
+      this.spriteData[this.frames][s] = {...this.spriteData[sprite][s]};
+    }
+    this.app.layout.newDrawingCache(this, this.frames);
+    this.frames++;
   } // cloneSprite
 
   rotateSpriteRow(index, row, shift) {
@@ -174,15 +193,15 @@ export class SpriteEntity  extends AbstractEntity {
   } // rotateSpriteRow
 
   incFrame() {
-    this.frame = this.app.rotateInc(this.frame, 0, this.framesCount-1);
+    this.frame = this.app.rotateInc(this.frame, 0, this.frames-1);
   } // incFrame
 
   decFrame() {
-    this.frame = this.app.rotateDec(this.frame, 0, this.framesCount-1);
+    this.frame = this.app.rotateDec(this.frame, 0, this.frames-1);
   } // decFrame
 
   switchDirection() {
-    if (this.directionsCount == 2) {
+    if (this.directions == 2) {
       this.direction = 1-this.direction;
     }
   } // switchDirection
@@ -190,10 +209,10 @@ export class SpriteEntity  extends AbstractEntity {
   drawEntity() {
     if (this.spriteData !== null) {
       var d = this.direction;
-      if (this.directionsCount == 1) {
+      if (this.directions == 1) {
         d = 0;
       }
-      var index = this.frame+d*this.framesCount;
+      var index = this.frame+d*this.frames;
       if (this.drawingCache[index].needToRefresh(this, this.width, this.height)) {
         if (this.bkColor != false) {
           this.app.layout.paintRect(this.drawingCache[index].ctx, 0, 0, this.width, this.height, this.bkColor);
