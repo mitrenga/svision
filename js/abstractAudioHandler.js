@@ -18,7 +18,7 @@ export class AbstractAudioHandler {
 
   openChannel(channel) {
     if (this.waitForBusy('openAudioChannel')) {
-      return false;
+      return;
     }
     this.busy = true;
     this.error = false;
@@ -44,6 +44,14 @@ export class AbstractAudioHandler {
     }
     return false;
   } // waitForBusy
+
+  getSampleRate() {
+    return this.ctx.sampleRate;
+  } // getSampleRate
+
+  getState() {
+    return this.ctx.state;
+  } // getState
 
   stopChannel() {
   } // stopChannel

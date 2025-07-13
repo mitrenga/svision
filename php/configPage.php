@@ -64,7 +64,9 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '              version = {id: 14, text: "ECMAScript 2023", class: "ok"};';
     $this->data[] = '            if (Object.groupBy) {';
     $this->data[] = '              version = {id: 15, text: "ECMAScript 2024", class: "ok"};';
-    $this->data[] = '            }}}}}}}}}}}';
+    $this->data[] = '            if (RegExp.escape) {';
+    $this->data[] = '              version = {id: 16, text: "ECMAScript 2025", class: "ok"};';
+    $this->data[] = '            }}}}}}}}}}}}';
     $this->data[] = '            return version;';
     $this->data[] = '          } // getJSVersion';
     $this->data[] = '';

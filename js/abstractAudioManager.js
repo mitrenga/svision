@@ -44,7 +44,7 @@ export class AbstractAudioManager {
   
   refreshAllChannels() {
     Object.keys(this.channels).forEach(channel => {
-      if (this.channels[channel].ctx.state == 'suspended') {
+      if (this.channels[channel].getState() == 'suspended') {
         this.channels[channel].ctx.resume();
       }
     });
