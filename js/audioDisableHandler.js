@@ -22,7 +22,6 @@ export class AudioDisableHandler extends AbstractAudioHandler {
   } // closeChannel
 
   playSound(audioData, options) {
-    console.log(audioData.fragments);
     var timer = 0;
     for (var p = 0; p < audioData.pulses.length; p++) {
       if (p in audioData.events) {
