@@ -16,6 +16,7 @@ export class TextEntity  extends AbstractEntity {
     this.margin = 0; // left + top
     this.justify = 0; // 0 - left, 1 - right, 2 - center
     this.proportional = false;
+    this.penColorsMap = false;
     this.flashMask = false;
     this.cursorX = 0;
   } // constructor
@@ -87,6 +88,9 @@ export class TextEntity  extends AbstractEntity {
             }
           }
           for (var ch = 0; ch < this.getTextLength(); ch++) {
+            if ((this.penColorsMap !== false) && (ch in this.penColorsMap)) {
+              this.penColor = this.penColorsMap[ch];
+            }
             var penColor = this.penColor;
             if (this.getPenColorChar(ch) !== false) {
               penColor = this.getPenColorChar(ch);
@@ -110,6 +114,9 @@ export class TextEntity  extends AbstractEntity {
             this.cursorX++;
           }
           for (var ch = this.getTextLength(); ch > 0 ; ch--) {
+            if ((this.penColorsMap !== false) && ((ch-1) in this.penColorsMap)) {
+              this.penColor = this.penColorsMap[ch-1];
+            }
             var penColor = this.penColor;
             if (this.getPenColorChar(ch-1) !== false) {
               penColor = this.getPenColorChar(ch-1);

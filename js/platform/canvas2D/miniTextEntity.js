@@ -103,10 +103,6 @@ export class MiniTextEntity extends TextEntity {
     return this.text.length;
   } // getTextLength
 
-  getPenColorChar(position) {
-    return this.penColor;
-  } // getPenColorChar
-
   getCharData(char, bitMask) {
     var charObject = {};
     charObject.width = this.miniFonts[char].width*this.scale;
