@@ -85,7 +85,9 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
       if (available < 0) {
         available = available+this.bufferSize;
       }
+      if (this.worker) {
       this.worker.postMessage({'id': 'availableBuffer', 'value': this.bufferSize-available});
+      }
       this.readPtr = nextReadPtr;
     } // onaudioprocess
 
