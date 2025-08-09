@@ -12,6 +12,7 @@ export class AbstractAudioManager {
     this.id = 'AbstractAudioManager';
     this.channels = {};
     this.unsupportedAudioChannel = false;
+    this.audioDataCache = {};
   } // constructor
 
   createAudioHandler(channel) {
@@ -26,6 +27,7 @@ export class AbstractAudioManager {
         this.channels[channel] = audioHandler;
       }
     }
+    this.audioDataCache[channel] = {};
   } // openChannel
 
   closeChannel(channel) {
@@ -34,6 +36,7 @@ export class AbstractAudioManager {
         delete this.channels[channel];
       }
     }
+    this.audioDataCache[channel] = {};
   } // closeChannel
 
   closeAllChannels() {
@@ -93,6 +96,11 @@ export class AbstractAudioManager {
   } // playSound
 
   audioData(channel, sound, options) {
+    if (channel in this.audioDataCache) {
+      if (sound in this.audioDataCache[channel]) {
+        return this.audioDataCache[channel][sound];
+      }
+    }
     return false;
   } // audioData
 
