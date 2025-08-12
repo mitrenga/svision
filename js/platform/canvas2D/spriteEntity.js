@@ -192,6 +192,19 @@ export class SpriteEntity  extends AbstractEntity {
     });
   } // rotateSpriteRow
 
+  moveSpriteWithCrop(index, shiftX, shiftY, cropX, cropY) {
+    for (var p = 0; p < this.spriteData[index].length; ) {
+      var pixel = this.spriteData[index][p];
+      pixel.x += shiftX;
+      pixel.y += shiftY;
+      if (pixel.x < 0 || pixel.y < 0 || pixel.x >= cropX || pixel.y >= cropY) {        
+        this.spriteData[index].splice(p, 1);
+      } else {
+        p++;
+      }
+    }
+  } // moveSpriteWithCrop
+
   incFrame() {
     this.frame = this.app.rotateInc(this.frame, 0, this.frames-1);
   } // incFrame
