@@ -98,6 +98,9 @@ export class AbstractModel {
       case 'playSound':
         this.app.audioManager.playSound(event.channel, event.sound, event.options);
         return true;
+      case 'stopChannel':
+        this.app.audioManager.stopChannel(event.channel);
+        return true;
     }
 
     var result = false;
