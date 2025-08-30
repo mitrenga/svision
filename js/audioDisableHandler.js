@@ -22,15 +22,17 @@ export class AudioDisableHandler extends AbstractAudioHandler {
   } // closeChannel
 
   playSound(audioData, options) {
-    var timer = 0;
-    for (var p = 0; p < audioData.pulses.length; p++) {
-      if (p in audioData.events) {
-        this.app.model.sendEvent(Math.round(timer/44.1), {'id': audioData.events[p].id, 'data': audioData.events[p]});
+    if ('events' in audioData) {
+      var timer = 0;
+      for (var p = 0; p < audioData.pulses.length; p++) {
+        if (p in audioData.events) {
+          this.app.model.sendEvent(Math.round(timer/44.1), {'id': audioData.events[p].id, 'data': audioData.events[p]});
+        }
+        timer += audioData.fragments[audioData.pulses[p]];
       }
-      timer += audioData.fragments[audioData.pulses[p]];
-    }
-    if (audioData.pulses.length in audioData.events) {
-      this.app.model.sendEvent(Math.round(timer/44.1), {'id': audioData.events[audioData.pulses.length].id, 'data': audioData.events[audioData.pulses.length]});
+      if (audioData.pulses.length in audioData.events) {
+        this.app.model.sendEvent(Math.round(timer/44.1), {'id': audioData.events[audioData.pulses.length].id, 'data': audioData.events[audioData.pulses.length]});
+      }
     }
   } // playSound
 
