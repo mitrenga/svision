@@ -233,7 +233,13 @@ export class SpriteEntity  extends AbstractEntity {
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
           if ('c' in pixel) {
-            color = this.colorsMap[pixel.c][index];
+            if (color == false) {
+              color = this.colorsMap[pixel.c][index];
+            } else {
+              if (pixel.c != this.penChar) {
+                color = false;
+              }
+            }
           }
           if (color !== false) {
             for (var x = 0; x < this.repeatX; x++) {
@@ -270,6 +276,20 @@ export class SpriteEntity  extends AbstractEntity {
       }
     }
   } // drawEntity
+
+  setPenColor(color) {
+    this.penColor = color;
+    this.colorsMap = false;
+    this.cleanCache();
+  }
+
+  cleanCache() {
+    var d = this.direction;
+    if (this.directions == 1) {
+      d = 0;
+    }
+    this.drawingCache[this.frame+d*this.frames].cleanCache();
+  } // cleanCache
 
 } // class SpriteEntity
 

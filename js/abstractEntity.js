@@ -185,6 +185,21 @@ export class AbstractEntity {
     }
     return false;
   }
+
+  setPenColor(color) {
+    this.penColor = color;
+    this.cleanCache();
+  } // setPenColor
+
+  setBkColor(color) {
+    this.bkColor = color;
+    this.cleanCache();
+  } // setBkColor
+
+  cleanCache() {
+    
+  } // cleanCache
+
 } // class AbstractEntity
 
 export default AbstractEntity;
