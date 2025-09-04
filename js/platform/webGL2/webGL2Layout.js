@@ -148,7 +148,7 @@ export class WebGL2Layout extends AbstractLayout {
   createProgram(ctx, shaders) {
     var program = ctx.createProgram();
     var shader;
-    for(var idx in shaders){
+    for(var idx in shaders) {
       shader = shaders[idx];
       ctx.attachShader(program, shader);
     }
