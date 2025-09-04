@@ -90,6 +90,9 @@ export class AbstractModel {
       case 'stopAudioChannel':
         this.app.audioManager.stopChannel(event.channel);
         return true;
+      case 'stopAllAudioChannels':
+        this.app.audioManager.stopAllChannels();
+        return true;
       case 'unsupportedAudioChannel':
         this.app.audioManager.unsupportedAudioChannel = this.app.audioManager.channels[event.channel].id;
         this.sendEvent(50, {'id': 'closeAudioChannel', 'channel': event.channel});
@@ -97,9 +100,6 @@ export class AbstractModel {
         return true;
       case 'playSound':
         this.app.audioManager.playSound(event.channel, event.sound, event.options);
-        return true;
-      case 'stopChannel':
-        this.app.audioManager.stopChannel(event.channel);
         return true;
     }
 
