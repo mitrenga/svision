@@ -53,8 +53,16 @@ export class SpriteEntity  extends AbstractEntity {
     this.height = this.spriteHeight*value;
   } // setRepeatY
 
+  setPenColor(color) {
+    this.penColor = color;
+    this.colorsMap = false;
+    this.cleanCache();
+  }
+
   setColorsMap(colorsMap) {
     this.colorsMap = colorsMap;
+    this.penColor = false;
+    this.cleanCache();
   } // setColorsMap
 
   setGraphicsData(data) {
@@ -240,6 +248,10 @@ export class SpriteEntity  extends AbstractEntity {
                 color = false;
               }
             }
+          } else {
+            if (this.colorsMap !== false) {
+              color = this.colorsMap[this.penChar][index];
+            }
           }
           if (color !== false) {
             for (var x = 0; x < this.repeatX; x++) {
@@ -277,18 +289,12 @@ export class SpriteEntity  extends AbstractEntity {
     }
   } // drawEntity
 
-  setPenColor(color) {
-    this.penColor = color;
-    this.colorsMap = false;
-    this.cleanCache();
-  }
-
   cleanCache() {
-    var d = this.direction;
-    if (this.directions == 1) {
-      d = 0;
+    for (var d = 0; d < this.directions; d++) {
+      for (var f = 0; f < this.frames; f++) {
+        this.drawingCache[f+d*this.frames].cleanCache();
+      }
     }
-    this.drawingCache[this.frame+d*this.frames].cleanCache();
   } // cleanCache
 
 } // class SpriteEntity
