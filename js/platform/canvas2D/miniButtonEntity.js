@@ -11,6 +11,7 @@ export class MiniButtonEntity extends MiniTextEntity {
     super(parentEntity, x, y, width, height, text, penColor, bkColor, scale, margin);
     this.id = 'MiniButtonEntity';
 
+    this.justify = 2;
     this.eventID = eventID;
     this.hotKeys = hotKeys;
   } // constructor
