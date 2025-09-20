@@ -84,7 +84,7 @@ export class TextEntity  extends AbstractEntity {
               textLength += this.getCharData(this.getTextChar(ch), '1').width;
             }
             if (textLength < this.width) {
-              this.cursorX = Math.floor(this.width/2-textLength/2);
+              this.cursorX = Math.floor(this.width/2-textLength/2-this.margin/4*3);
             }
           }
           for (var ch = 0; ch < this.getTextLength(); ch++) {
