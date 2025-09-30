@@ -13,7 +13,7 @@ export class AbstractFonts {
     this.app = app;
   } // constructor
 
-  getCharData(char, bitMask, justify, scale) {
+  getCharData(char, bitMask, align, scale) {
     return {width: 0};
   } // getCharData
 

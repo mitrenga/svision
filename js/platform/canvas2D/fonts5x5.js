@@ -87,7 +87,7 @@ export class Fonts5x5 extends AbstractFonts {
     }
   } // constructor
 
-  getCharData(char, bitMask, justify, scale) {
+  getCharData(char, bitMask, align, scale) {
     var validChar = char;
     if (!(char in this.fontsData)) {
       validChar = '?';
@@ -98,7 +98,7 @@ export class Fonts5x5 extends AbstractFonts {
     charObject.data = [];
     for (var x = 0; x < this.fontsData[validChar].data.length; x++) {
       var piece = this.fontsData[validChar].data[x];
-      if (justify == 'left') {
+      if (align == 'left') {
           charObject.data.push([(piece[0]+1)*scale, piece[1]*scale, piece[2]*scale, piece[3]*scale]);
       } else {
           charObject.data.push([piece[0]*scale, piece[1]*scale, piece[2]*scale, piece[3]*scale]);

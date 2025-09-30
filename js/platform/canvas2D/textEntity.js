@@ -15,7 +15,7 @@ export class TextEntity  extends AbstractEntity {
     this.text = text;
 
     this.options = {
-      justify: 'left',        // left, right, center
+      align: 'left',        // left, right, center
       margin: 0,              // left + top
       scale: 1,               // 1, 2, 3 ...
       animationMode: false,   // flashReverseColors, flashPenColor
@@ -69,14 +69,14 @@ export class TextEntity  extends AbstractEntity {
       if (this.bkColor != false) {
         this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width, this.height, this.bkColor);
       }
-      switch (this.options.justify) {
+      switch (this.options.align) {
         case 'left': 
         case 'center': 
           this.cursorX = 0;
           var textLength = 0;
-          if (this.options.justify == 'center') {
+          if (this.options.align == 'center') {
             for (var ch = 0; ch < this.text.length; ch++) {
-              textLength += this.fonts.getCharData(this.text[ch], '1', this.options.justify, this.options.scale).width;
+              textLength += this.fonts.getCharData(this.text[ch], '1', this.options.align, this.options.scale).width;
             }
             if (textLength < this.width) {
               this.cursorX = Math.floor(this.width/2)-Math.floor(textLength/2)-this.options.margin;
@@ -100,7 +100,7 @@ export class TextEntity  extends AbstractEntity {
                 bitMask = '0';
               }
             }
-            var charData = this.fonts.getCharData(this.text[ch], bitMask, this.options.justify, this.options.scale);
+            var charData = this.fonts.getCharData(this.text[ch], bitMask, this.options.align, this.options.scale);
             for (var x = 0; x < charData.data.length; x++) {
               this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+this.options.margin+charData.data[x][0], this.options.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
             }
@@ -127,7 +127,7 @@ export class TextEntity  extends AbstractEntity {
                 bitMask = '0';
               }
             }
-            var charData = this.fonts.getCharData(this.text[ch-1], bitMask, this.options.justify, this.options.scale);
+            var charData = this.fonts.getCharData(this.text[ch-1], bitMask, this.options.align, this.options.scale);
             this.cursorX -= charData.width;
             for (var x = 0; x < charData.data.length; x++) {
               this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX-this.options.margin+charData.data[x][0], this.options.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);

@@ -42,7 +42,7 @@ export class KeyboardEntity extends AbstractEntity {
             s = this.layout.options.buttons[this.layout.keys[0][row][key]].space;
           }
         }
-        this.addEntity(new ButtonEntity(this, this.fonts, x, y, w, h, this.layout.keys[0][row][key], 'virtualKey'+this.layout.keys[0][row][key], [], this.app.platform.colorByName('black'), this.app.platform.colorByName('brightWhite'), {justify: 'center', margin: 4}));
+        this.addEntity(new ButtonEntity(this, this.fonts, x, y, w, h, this.layout.keys[0][row][key], 'virtualKey'+this.layout.keys[0][row][key], [], this.app.platform.colorByName('black'), this.app.platform.colorByName('brightWhite'), {align: 'center', margin: 4}));
         x += w + s;
       }
       y += h + this.layout.options.buttons.default.space;
