@@ -1,20 +1,53 @@
 /**/
-const { TextEntity } = await import('./textEntity.js?ver='+window.srcVersion);
+const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
+const { ButtonEntity } = await import('./buttonEntity.js?ver='+window.srcVersion);
 /*/
-import TextEntity from './textEntity.js';
+import AbstractEntity from '../../abstractEntity.js';
+import ButtonEntity from './buttonEntity.js';
 /**/
 // begin code
 
-export class MiniButtonEntity extends MiniTextEntity {
+export class KeyboardEntity extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height, text, eventID, hotKeys, penColor, bkColor, scale, margin) {
-    super(parentEntity, x, y, width, height, text, penColor, bkColor, scale, margin);
-    this.id = 'MiniButtonEntity';
+  constructor(parentEntity, fonts, x, y, width, height, layout, bkColor) {
+    super(parentEntity, x, y, width, height, false, bkColor);
+    this.id = 'KeyboardEntity';
 
-    this.justify = 2;
-    this.eventID = eventID;
-    this.hotKeys = hotKeys;
+    this.fonts = fonts;
+    this.layout = layout;
   } // constructor
+
+  init() {
+    super.init();
+
+    var y = 0;
+    for (var row = 0; row < this.layout.keys[0].length; row++) {
+      var x = this.layout.options.rows[row].shift;
+      for (var key = 0; key < this.layout.keys[0][row].length; key++) {
+        var w = this.layout.options.buttons.default.width;
+        if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
+          if ('width' in this.layout.options.buttons[this.layout.keys[0][row][key]]) {
+            w = this.layout.options.buttons[this.layout.keys[0][row][key]].width;
+          }
+        } 
+        var h = this.layout.options.buttons.default.height;
+        if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
+          if ('height' in this.layout.options.buttons[this.layout.keys[0][row][key]]) {
+            h = this.layout.options.buttons[this.layout.keys[0][row][key]].height;
+          }
+        }
+        var s = this.layout.options.buttons.default.space;
+        if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
+          if ('space' in this.layout.options.buttons[this.layout.keys[0][row][key]]) {
+            s = this.layout.options.buttons[this.layout.keys[0][row][key]].space;
+          }
+        }
+        this.addEntity(new ButtonEntity(this, this.fonts, x, y, w, h, this.layout.keys[0][row][key], 'virtualKey'+this.layout.keys[0][row][key], [], this.app.platform.colorByName('black'), this.app.platform.colorByName('brightWhite'), {justify: 'center', margin: 4}));
+        x += w + s;
+      }
+      y += h + this.layout.options.buttons.default.space;
+    }
+  } // init
 
   handleEvent(event) {
     var result = super.handleEvent(event);
@@ -22,23 +55,15 @@ export class MiniButtonEntity extends MiniTextEntity {
       return true;
     }
 
-    switch (event.id) {
-      case 'keyPress':
-        if (this.hotKeys.indexOf(event.key) >= 0) {
-          this.sendEvent(-1, 0, {'id': this.eventID});
-          return true;
-        }
-        break;
-      case 'mouseClick':
-        if ((event.key == 'left') && (this.pointOnEntity(event))) {
-          this.sendEvent(-1, 0, {'id': this.eventID});
-          return true;
-        }
-        break;
+    if (event.id.substr(0, 10) == 'virtualKey') {
+      if (this.fonts.validChar(event.id.substr(10, 1))) {
+        this.sendEvent(-1, 0, {'id': 'keyPress', 'key': event.id.substr(10, 1)});
+        return true;
+      }
     }
     return false;
   } // handleEvent
 
-} // class MiniButtonEntity
+} // class KeyboardEntity
 
-export default MiniButtonEntity;
+export default KeyboardEntity;

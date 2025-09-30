@@ -79,7 +79,7 @@ export class TextEntity  extends AbstractEntity {
               textLength += this.fonts.getCharData(this.text[ch], '1', this.options.justify, this.options.scale).width;
             }
             if (textLength < this.width) {
-              this.cursorX = Math.floor(this.width/2-textLength/2-this.options.margin/4*3);
+              this.cursorX = Math.floor(this.width/2)-Math.floor(textLength/2)-this.options.margin;
             }
           }
           for (var ch = 0; ch < this.text.length; ch++) {
