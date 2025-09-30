@@ -1,26 +1,17 @@
 /**/
-const { TextEntity } = await import('./textEntity.js?ver='+window.srcVersion);
+const { AbstractFonts } = await import('../../abstractFonts.js?ver='+window.srcVersion);
 /*/
-import TextEntity from './textEntity.js';
+import AbstractFonts from '../../abstractFonts.js';
 /**/
 // begin code
 
-export class MiniTextEntity extends TextEntity {
+export class Fonts3x3 extends AbstractFonts {
 
-  constructor(parentEntity, x, y, width, height, text, penColor, bkColor, scale, margin) {
-    super(parentEntity, x, y, width, height);
-    this.id = 'MiniTextEntity';
+  constructor(app) {
+    super(app);
+    this.id = 'Fonts3x3';
     
-    this.proportional = true;
-    this.justify = 0;
-    this.animateState = 0;
-    this.text = text;
-    this.scale = scale;
-    this.penColor = penColor;
-    this.bkColor = bkColor;
-    this.margin = margin;
-
-    this.miniFonts = {
+    this.fontData = {
       '`': {width: 1, data: [[]]},
       ' ': {width: 3, data: [[]]},
       '!': {width: 2, data: [[0,0,1,3], [0,4,1,1]]},
@@ -91,31 +82,39 @@ export class MiniTextEntity extends TextEntity {
       '|': {width: 0, data: [[]]},
       '}': {width: 0, data: [[]]},
       '~': {width: 0, data: [[]]},
-      '©': {width: 7, data: [[1,0,4,1], [0,1,2,3], [1,4,4,1], [4,1,2,3], [3,2,1,1]]}
+      '©': {width: 7, data: [[1,0,4,1], [0,1,2,3], [1,4,4,1], [4,1,2,3], [3,2,1,1]]},
+      '‗': {width: 4, data: [[0,4,3,1]]}
     }
   } // constructor
 
-  getTextChar(position) {
-    return this.text[position];
-  } // getTextChar
-
-  getTextLength() {
-    return this.text.length;
-  } // getTextLength
-
-  getCharData(char, bitMask) {
+  getCharData(char, bitMask, justify, scale) {
+    var validChar = char;
+    if (!(char in this.fontsData)) {
+      validChar = '?';
+    }
     var charObject = {};
-    charObject.width = this.miniFonts[char].width*this.scale;
+    charObject.width = this.fontsData[validChar].width*scale;
 
     charObject.data = [];
-    for (var x = 0; x < this.miniFonts[char].data.length; x++) {
-      var piece = this.miniFonts[char].data[x];
-      charObject.data.push([piece[0]*this.scale, piece[1]*this.scale, piece[2]*this.scale, piece[3]*this.scale]);
+    for (var x = 0; x < this.fontsData[validChar].data.length; x++) {
+      var piece = this.fontsData[validChar].data[x];
+      if (justify == 'left') {
+          charObject.data.push([(piece[0]+1)*scale, piece[1]*scale, piece[2]*scale, piece[3]*scale]);
+      } else {
+          charObject.data.push([piece[0]*scale, piece[1]*scale, piece[2]*scale, piece[3]*scale]);
+      }
     }
 
     return charObject;
   } // getCharData
 
-} // class MiniTextEntity
+  validChar(char) {
+    if (char in this.fontsData) {
+      return true;
+    }
+    return false;
+  } // validChar
 
-export default MiniTextEntity;
+} // class Fonts3x3
+
+export default Fonts3x3;

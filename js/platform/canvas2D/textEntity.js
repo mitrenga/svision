@@ -7,17 +7,32 @@ import AbstractEntity from '../../abstractEntity.js';
 
 export class TextEntity  extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height) {
-    super(parentEntity, x, y, width, height, false, false);
+  constructor(parentEntity, fonts, x, y, width, height, text, penColor, bkColor, options) {
+    super(parentEntity, x, y, width, height, penColor, bkColor);
     this.id = 'TextEntity';
 
-    this.app.layout.newDrawingCache(this, 0);
+    this.fonts = fonts;
+    this.text = text;
 
-    this.margin = 0; // left + top
-    this.justify = 0; // 0 - left, 1 - right, 2 - center
-    this.proportional = false;
-    this.penColorsMap = false;
-    this.flashMask = false;
+    this.options = {
+      justify: 'left',        // left, right, center
+      margin: 0,              // left + top
+      scale: 1,               // 1, 2, 3 ...
+      animationMode: false,   // flashReverseColors, flashPenColor
+      flashColor: false,      // for flashPenColor
+      flashMask: false,       // like '   ##   '
+      penColorsMap: false     // like {0: color, 1: color, ...}
+    };
+    Object.keys(options).forEach(key => {
+      if (key in this.options) {
+        this.options[key] = options[key];
+      } else {
+        console.error('Invalid option -> '+key+':'+options[key]);
+        console.trace();
+      }
+    });
+
+    this.app.layout.newDrawingCache(this, 0);
     this.cursorX = 0;
   } // constructor
 
@@ -41,101 +56,87 @@ export class TextEntity  extends AbstractEntity {
   handleEvent(event) {
     switch (event.id) {
       case 'changeFlashState':
-        if (this.flashMask) {
+        if (this.options.animationMode !== false) {
           this.drawingCache[0].cleanCache();
         }
         break;
     }
     return super.handleEvent(event);
   } // handleEvent
-
-  getTextChar(position) {
-    return ' ';
-  } // getTextChar
-
-  getTextLength() {
-    return 1;
-  } // getTextLength
-
-  getPenColorChar(position) {
-    return false;
-  } // getPenColorChar
-
-  getCharData(char, bitMask) {
-    var charObject = {'width': 8, 'height': 8, 'data': ['00110011', '00110011', '11001100', '11001100', '00110011', '00110011', '11001100', '11001100']};
-    return charObject;
-  } // getCharData
   
   drawEntity() {
     if (this.drawingCache[0].needToRefresh(this, this.width, this.height)) {
       if (this.bkColor != false) {
         this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width, this.height, this.bkColor);
       }
-      switch (this.justify) {
-        case 0: 
-        case 2: 
+      switch (this.options.justify) {
+        case 'left': 
+        case 'center': 
           this.cursorX = 0;
-          if (this.proportional == true) {
-            this.cursorX++;
-          }
           var textLength = 0;
-          if (this.justify == 2) {
+          if (this.options.justify == 'center') {
             for (var ch = 0; ch < this.text.length; ch++) {
-              textLength += this.getCharData(this.getTextChar(ch), '1').width;
+              textLength += this.fonts.getCharData(this.text[ch], '1', this.options.justify, this.options.scale).width;
             }
             if (textLength < this.width) {
-              this.cursorX = Math.floor(this.width/2-textLength/2-this.margin/4*3);
+              this.cursorX = Math.floor(this.width/2-textLength/2-this.options.margin/4*3);
             }
           }
-          for (var ch = 0; ch < this.getTextLength(); ch++) {
-            if ((this.penColorsMap !== false) && (ch in this.penColorsMap)) {
-              this.penColor = this.penColorsMap[ch];
-            }
+          for (var ch = 0; ch < this.text.length; ch++) {
             var penColor = this.penColor;
-            if (this.getPenColorChar(ch) !== false) {
-              penColor = this.getPenColorChar(ch);
+            switch (this.options.animationMode) {
+              case 'flashPenColor':
+                if (this.app.stack.flashState) {
+                  penColor = this.options.flashColor;
+                }
+                break;
+            }
+            if ((this.options.penColorsMap !== false) && (ch in this.options.penColorsMap)) {
+              penColor = this.options.penColorsMap[ch];
             }
             var bitMask = '1';
-            if (this.flashMask !== false) {
-              if ((this.flashMask[ch] == '#') && (this.app.stack.flashState == true)) {
+            if (this.options.animationMode == 'flashReverseColors') {
+              if ((this.options.flashMask === false || this.options.flashMask[ch] == '#') && this.app.stack.flashState == true) {
                 bitMask = '0';
               }
             }
-            var charData = this.getCharData(this.getTextChar(ch), bitMask);
+            var charData = this.fonts.getCharData(this.text[ch], bitMask, this.options.justify, this.options.scale);
             for (var x = 0; x < charData.data.length; x++) {
-              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+this.margin+charData.data[x][0], this.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+this.options.margin+charData.data[x][0], this.options.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
             }
             this.cursorX += charData.width;
           }
           break;
-        case 1: 
+        case 'right': 
           this.cursorX = this.width;
-          if (this.proportional == true) {
-            this.cursorX++;
-          }
-          for (var ch = this.getTextLength(); ch > 0 ; ch--) {
-            if ((this.penColorsMap !== false) && ((ch-1) in this.penColorsMap)) {
-              this.penColor = this.penColorsMap[ch-1];
-            }
+          for (var ch = this.text.length; ch > 0 ; ch--) {
             var penColor = this.penColor;
-            if (this.getPenColorChar(ch-1) !== false) {
-              penColor = this.getPenColorChar(ch-1);
+            switch (this.options.animationMode) {
+              case 'flashPenColor':
+                if (this.app.stack.flashState) {
+                  penColor = this.options.flashColor;
+                }
+                break;
+            }
+            if ((this.options.penColorsMap !== false) && ((ch-1) in this.options.penColorsMap)) {
+              penColor = this.options.penColorsMap[ch-1];
             }
             var bitMask = '1';
-            if (this.flashMask !== false) {
-              if ((this.flashMask[ch] == '#') && (this.app.stack.flashState == true)) {
+            if (this.options.animationMode == 'flashReverseColors') {
+              if ((this.options.flashMask === false || this.options.flashMask[ch] == '#') && this.app.stack.flashState == true) {
                 bitMask = '0';
               }
             }
-            var charData = this.getCharData(this.getTextChar(ch-1), bitMask);
+            var charData = this.fonts.getCharData(this.text[ch-1], bitMask, this.options.justify, this.options.scale);
             this.cursorX -= charData.width;
             for (var x = 0; x < charData.data.length; x++) {
-              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX-this.margin+charData.data[x][0], this.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX-this.options.margin+charData.data[x][0], this.options.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
             }
           }
           break;
       }
     }
+
     this.app.layout.paintCache(this, 0);
   } // drawEntity
 

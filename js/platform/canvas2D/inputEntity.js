@@ -1,23 +1,20 @@
 /**/
-const { ZXTextEntity } = await import('./zxTextEntity.js?ver='+window.srcVersion);
+const { TextEntity } = await import('./textEntity.js?ver='+window.srcVersion);
 /*/
-import ZXTextEntity from './zxTextEntity.js';
+import TextEntity from './textEntity.js';
 /**/
 // begin code
 
-export class ZXInputLineEntity extends ZXTextEntity {
+export class InputEntity extends TextEntity {
 
-  constructor(app, parentEntity, x, y, width, height, value, penColor, bkColor, fontType, proportional, maxLength) {
-    super(parentEntity, x, y, width, height, '', penColor, bkColor, fontType, proportional);
-    this.id = 'ZXInputLineEntity';
+  constructor(parentEntity, fonts, x, y, width, height, value, penColor, bkColor, maxLength, options) {
+    super(parentEntity, fonts, x, y, width, height, '', penColor, bkColor, options);
+    this.id = 'InputEntity';
 
-    this.app = app;
-    this.cursorChar = '¨';
+    this.cursorChar = '‗';
     this.text = value+this.cursorChar;
     this.value = value;
     this.cursor = value.length;
-    this.textColor = penColor;
-    this.inputColor = bkColor;
     this.maxLength = maxLength;
   } // constructor
   
@@ -27,14 +24,15 @@ export class ZXInputLineEntity extends ZXTextEntity {
   } // init
 
   setInputLineColors() {
-    this.penColorsMap = {};
-    for (var ch = 0; ch < this.getTextLength(); ch++) {
+    var colorsMap = {};
+    for (var ch = 0; ch < this.text.length; ch++) {
       if (this.app.stack.flashState && ch == this.cursor) {
-        this.penColorsMap[ch] = this.inputColor;
+        colorsMap[ch] = this.bkColor;
       } else {
-        this.penColorsMap[ch] = this.textColor;
+        colorsMap[ch] = this.penColor;
       }
     }
+    this.options.penColorsMap = colorsMap;
     this.drawingCache[0].cleanCache();
   } // setInputLineColors
 
@@ -84,7 +82,7 @@ export class ZXInputLineEntity extends ZXTextEntity {
             this.drawingCache[0].cleanCache();
             return true;
           default:
-            if (this.value.length < this.maxLength && event.key.length == 1 && this.zxFonts.chars.indexOf(event.key) >= 0) {
+            if (this.value.length < this.maxLength && event.key.length == 1 && this.fonts.validChar(event.key)) {
               this.text = this.value.substring(0, this.cursor)+event.key+this.cursorChar+this.value.substring(this.cursor);
               this.value = this.value.substring(0, this.cursor)+event.key+this.value.substring(this.cursor);
               this.cursor++;
@@ -103,6 +101,6 @@ export class ZXInputLineEntity extends ZXTextEntity {
     return super.handleEvent(event);
   } // handleEvent
 
-} // class ZXInputLineEntity
+} // class InputEntity
 
-export default ZXInputLineEntity;
+export default InputEntity;

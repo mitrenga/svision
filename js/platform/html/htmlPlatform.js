@@ -24,7 +24,7 @@ export class HTMLPlatform extends AbstractPlatform {
     app.element.id = 'canvasApp';
     app.element.classList.add('canvasApp');
     app.parentElement.appendChild(app.element);
-    app.stac.containerType = 'html';
+    app.stack.containerType = 'html';
   } // initCanvasElement
 
   initEntity(entity) {

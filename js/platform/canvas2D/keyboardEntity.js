@@ -1,16 +1,17 @@
 /**/
-const { ZXTextEntity } = await import('./zxTextEntity.js?ver='+window.srcVersion);
+const { TextEntity } = await import('./textEntity.js?ver='+window.srcVersion);
 /*/
-import ZXTextEntity from './zxTextEntity.js';
+import TextEntity from './textEntity.js';
 /**/
 // begin code
 
-export class ZXButtonEntity extends ZXTextEntity {
+export class MiniButtonEntity extends MiniTextEntity {
 
-  constructor(parentEntity, x, y, width, height, text, eventID, hotKeys, penColor, bkColor, fontType, proportional) {
-    super(parentEntity, x, y, width, height, text, penColor, bkColor, fontType, proportional);
-    this.id = 'ButtonEntity';
+  constructor(parentEntity, x, y, width, height, text, eventID, hotKeys, penColor, bkColor, scale, margin) {
+    super(parentEntity, x, y, width, height, text, penColor, bkColor, scale, margin);
+    this.id = 'MiniButtonEntity';
 
+    this.justify = 2;
     this.eventID = eventID;
     this.hotKeys = hotKeys;
   } // constructor
@@ -38,6 +39,6 @@ export class ZXButtonEntity extends ZXTextEntity {
     return false;
   } // handleEvent
 
-} // class ZXButtonEntity
+} // class MiniButtonEntity
 
-export default ZXButtonEntity;
+export default MiniButtonEntity;

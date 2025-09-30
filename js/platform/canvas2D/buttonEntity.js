@@ -1,17 +1,16 @@
 /**/
-const { MiniTextEntity } = await import('./miniTextEntity.js?ver='+window.srcVersion);
+const { TextEntity } = await import('./textEntity.js?ver='+window.srcVersion);
 /*/
-import MiniTextEntity from './miniTextEntity.js';
+import TextEntity from './textEntity.js';
 /**/
 // begin code
 
-export class MiniButtonEntity extends MiniTextEntity {
+export class ButtonEntity extends TextEntity {
 
-  constructor(parentEntity, x, y, width, height, text, eventID, hotKeys, penColor, bkColor, scale, margin) {
-    super(parentEntity, x, y, width, height, text, penColor, bkColor, scale, margin);
-    this.id = 'MiniButtonEntity';
+  constructor(parentEntity, fonts, x, y, width, height, text, eventID, hotKeys, penColor, bkColor, options) {
+    super(parentEntity, fonts, x, y, width, height, text, penColor, bkColor, options);
+    this.id = 'ButtonEntity';
 
-    this.justify = 2;
     this.eventID = eventID;
     this.hotKeys = hotKeys;
   } // constructor
@@ -39,6 +38,6 @@ export class MiniButtonEntity extends MiniTextEntity {
     return false;
   } // handleEvent
 
-} // class MiniButtonEntity
+} // class ButtonEntity
 
-export default MiniButtonEntity;
+export default ButtonEntity;
