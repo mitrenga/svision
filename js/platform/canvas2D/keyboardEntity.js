@@ -24,28 +24,16 @@ export class KeyboardEntity extends AbstractEntity {
     for (var row = 0; row < this.layout.keys[0].length; row++) {
       var x = this.layout.options.rows[row].shift;
       for (var key = 0; key < this.layout.keys[0][row].length; key++) {
-        var w = this.layout.options.buttons.default.width;
+        var options = {...this.layout.options.buttons.default};
         if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
-          if ('width' in this.layout.options.buttons[this.layout.keys[0][row][key]]) {
-            w = this.layout.options.buttons[this.layout.keys[0][row][key]].width;
-          }
-        } 
-        var h = this.layout.options.buttons.default.height;
-        if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
-          if ('height' in this.layout.options.buttons[this.layout.keys[0][row][key]]) {
-            h = this.layout.options.buttons[this.layout.keys[0][row][key]].height;
-          }
+          Object.keys(this.layout.options.buttons[this.layout.keys[0][row][key]]).forEach(option => {
+            options[option] = this.layout.options.buttons[this.layout.keys[0][row][key]][option];
+          });
         }
-        var s = this.layout.options.buttons.default.space;
-        if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
-          if ('space' in this.layout.options.buttons[this.layout.keys[0][row][key]]) {
-            s = this.layout.options.buttons[this.layout.keys[0][row][key]].space;
-          }
-        }
-        this.addEntity(new ButtonEntity(this, this.fonts, x, y, w, h, this.layout.keys[0][row][key], 'virtualKey'+this.layout.keys[0][row][key], [], this.app.platform.colorByName('black'), this.app.platform.colorByName('brightWhite'), {align: 'center', margin: 4}));
-        x += w + s;
+        this.addEntity(new ButtonEntity(this, this.fonts, x, y, options.width, options.height, this.layout.keys[0][row][key], 'virtualKey'+this.layout.keys[0][row][key], [], options.penColor, options.bkColor, {align: 'center', margin: options.margin}));
+        x += options.width + options.space;
       }
-      y += h + this.layout.options.buttons.default.space;
+      y += options.height + this.layout.options.buttons.default.space;
     }
   } // init
 
