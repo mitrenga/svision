@@ -12,8 +12,8 @@ export class Fonts5x5 extends AbstractFonts {
     this.id = 'Fonts5x5';
     
     this.fontsData = {
-      '`': {width: 1, data: [[]]},
-      ' ': {width: 3, data: [[]]},
+      '`': {width: 1, data: []},
+      ' ': {width: 3, data: []},
       '!': {width: 2, data: [[0,0,1,3], [0,4,1,1]]},
       '"': {width: 4, data: [[0,0,1,2], [2,0,1,2]]},
       '#': {width: 0, data: [[]]},
