@@ -27,6 +27,7 @@ export class AbstractModel {
     this.desktopHeight = this.app.platform.desktop(this.app).height;
 
     this.events = [];
+    this.autorepeatKeys = true;
     this.timer = false;
   } // constructor
 
