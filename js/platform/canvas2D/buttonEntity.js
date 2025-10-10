@@ -23,13 +23,13 @@ export class ButtonEntity extends TextEntity {
 
     switch (event.id) {
       case 'keyPress':
-        if (this.hotKeys.indexOf(event.key) >= 0) {
+        if (!this.hide && this.hotKeys.indexOf(event.key) >= 0) {
           this.sendEvent(-1, 0, {'id': this.eventID});
           return true;
         }
         break;
       case 'mouseClick':
-        if ((event.key == 'left') && (this.pointOnEntity(event))) {
+        if (!this.hide && (event.key == 'left') && (this.pointOnEntity(event))) {
           this.sendEvent(-1, 0, {'id': this.eventID});
           return true;
         }
