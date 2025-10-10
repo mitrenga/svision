@@ -9,32 +9,50 @@ import ButtonEntity from './buttonEntity.js';
 
 export class KeyboardEntity extends AbstractEntity {
 
-  constructor(parentEntity, fonts, x, y, width, height, layout, bkColor) {
+  constructor(parentEntity, x, y, width, height, layout, bkColor) {
     super(parentEntity, x, y, width, height, false, bkColor);
     this.id = 'KeyboardEntity';
 
-    this.fonts = fonts;
     this.layout = layout;
+    this.shiftLayout = ' ';
   } // constructor
 
   init() {
     super.init();
 
-    var y = 0;
-    for (var row = 0; row < this.layout.keys[0].length; row++) {
-      var x = this.layout.options.rows[row].shift;
-      for (var key = 0; key < this.layout.keys[0][row].length; key++) {
-        var options = {...this.layout.options.buttons.default};
-        if (this.layout.keys[0][row][key] in this.layout.options.buttons) {
-          Object.keys(this.layout.options.buttons[this.layout.keys[0][row][key]]).forEach(option => {
-            options[option] = this.layout.options.buttons[this.layout.keys[0][row][key]][option];
-          });
+    var layouts = Object.keys(this.layout.keys);
+    layouts.forEach((layoutId) => {
+      var y = 0;
+      for (var row = 0; row < this.layout.keys[layoutId].length; row++) {
+        var x = this.layout.options.rows[row].shift;
+        for (var key = 0; key < this.layout.keys[layoutId][row].length; key++) {
+          var options = {...this.layout.options.buttons.default};
+          if (this.layout.keys[layoutId][row][key] in this.layout.options.buttons) {
+            Object.keys(this.layout.options.buttons[this.layout.keys[layoutId][row][key]]).forEach(option => {
+              options[option] = this.layout.options.buttons[this.layout.keys[layoutId][row][key]][option];
+            });
+          }
+          var eventPrefix = 'virtualKey';
+          if (layouts.indexOf(this.layout.keys[layoutId][row][key]) > 0) {
+            eventPrefix = 'shiftKey';
+          }
+
+          var keyEntity = new ButtonEntity(
+            this, options.fonts, x, y, options.width, options.height,
+            this.layout.keys[layoutId][row][key],
+            eventPrefix+this.layout.keys[layoutId][row][key], [],
+            options.penColor, options.bkColor, options
+          ); 
+          keyEntity.group = layoutId;
+          if (layoutId != ' ') {
+            keyEntity.hide = true;
+          }
+          this.addEntity(keyEntity);
+          x += options.width + options.keySpacing;
         }
-        this.addEntity(new ButtonEntity(this, this.fonts, x, y, options.width, options.height, this.layout.keys[0][row][key], 'virtualKey'+this.layout.keys[0][row][key], [], options.penColor, options.bkColor, {align: 'center', margin: options.margin}));
-        x += options.width + options.space;
+        y += options.height + this.layout.options.buttons.default.keySpacing;
       }
-      y += options.height + this.layout.options.buttons.default.space;
-    }
+    });
   } // init
 
   handleEvent(event) {
@@ -44,11 +62,29 @@ export class KeyboardEntity extends AbstractEntity {
     }
 
     if (event.id.substr(0, 10) == 'virtualKey') {
-      if (this.fonts.validChar(event.id.substr(10, 1))) {
-        this.sendEvent(-1, 0, {'id': 'keyPress', 'key': event.id.substr(10, 1)});
-        return true;
-      }
+      this.sendEvent(-1, 0, {'id': 'keyPress', 'key': event.id.substr(10, 1)});
+      return true;
     }
+
+    if (event.id.substr(0, 8) == 'shiftKey') {
+      var shiftKey = event.id.substr(8,1);
+      if (this.shiftLayout == shiftKey) {
+        this.shiftLayout = ' ';
+      } else {
+        this.shiftLayout = shiftKey;
+      }
+      this.entities.forEach ((entity) => {
+        if (entity.group.length) {
+          if (entity.group == this.shiftLayout) {
+            entity.hide = false;
+          } else {
+            entity.hide = true;
+          }
+        }
+      });
+      return true;
+    }
+
     return false;
   } // handleEvent
 
