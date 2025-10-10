@@ -39,15 +39,6 @@ export class AbstractApp {
       this.model.resizeModel();
     }
   } // resizeApp
-
-
-  // events
-  
-  eventBlurWindow(event) {
-  } // eventBlurWindow
-
-  eventFocusWindow(event) {
-  } // eventFocusWindow
   
   eventResizeWindow(event) {
     this.resizeApp();
