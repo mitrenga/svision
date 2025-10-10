@@ -15,8 +15,12 @@ export class TextEntity  extends AbstractEntity {
     this.text = text;
 
     this.options = {
-      align: 'left',        // left, right, center
-      margin: 0,              // left + top
+      align: 'left',          // left, right, center
+      margin: 0,              // global margins -> sets leftMargin, rightMargin, topMargin, bottomMargin
+      leftMargin: 0,          // left margin
+      rightMargin: 0,         // right margin
+      topMargin: 0,           // vertical margin
+      bottomMargin: 0,        // bottom margin
       scale: 1,               // 1, 2, 3 ...
       animationMode: false,   // flashReverseColors, flashPenColor
       flashColor: false,      // for flashPenColor
@@ -26,11 +30,14 @@ export class TextEntity  extends AbstractEntity {
     Object.keys(options).forEach(key => {
       if (key in this.options) {
         this.options[key] = options[key];
-      } else {
-        console.error('Invalid option -> '+key+':'+options[key]);
-        console.trace();
       }
     });
+    if (this.options.margin != 0) {
+      this.options.leftMargin = this.options.margin;
+      this.options.rightMargin = this.options.margin;
+      this.options.topMargin = this.options.margin;
+      this.options.bottomMargin = this.options.margin;
+    }
 
     this.app.layout.newDrawingCache(this, 0);
     this.cursorX = 0;
@@ -76,10 +83,13 @@ export class TextEntity  extends AbstractEntity {
           var textLength = 0;
           if (this.options.align == 'center') {
             for (var ch = 0; ch < this.text.length; ch++) {
-              textLength += this.fonts.getCharData(this.text[ch], '1', this.options.align, this.options.scale).width;
+              if (ch > 0) {
+                textLength += this.fonts.charsSpacing;
+              }
+              textLength += this.fonts.getCharData(this.text[ch], '1', this.options.scale).width;
             }
             if (textLength < this.width) {
-              this.cursorX = Math.floor(this.width/2)-Math.floor(textLength/2)-this.options.margin;
+              this.cursorX = Math.floor(this.width/2)-Math.floor(textLength/2)-this.options.leftMargin;
             }
           }
           for (var ch = 0; ch < this.text.length; ch++) {
@@ -100,11 +110,11 @@ export class TextEntity  extends AbstractEntity {
                 bitMask = '0';
               }
             }
-            var charData = this.fonts.getCharData(this.text[ch], bitMask, this.options.align, this.options.scale);
+            var charData = this.fonts.getCharData(this.text[ch], bitMask, this.options.scale);
             for (var x = 0; x < charData.data.length; x++) {
-              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+this.options.margin+charData.data[x][0], this.options.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+this.options.leftMargin+charData.data[x][0], this.options.topMargin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
             }
-            this.cursorX += charData.width;
+            this.cursorX += charData.width+this.fonts.charsSpacing;
           }
           break;
         case 'right': 
@@ -127,10 +137,13 @@ export class TextEntity  extends AbstractEntity {
                 bitMask = '0';
               }
             }
-            var charData = this.fonts.getCharData(this.text[ch-1], bitMask, this.options.align, this.options.scale);
+            var charData = this.fonts.getCharData(this.text[ch-1], bitMask, this.options.scale);
             this.cursorX -= charData.width;
+            if (ch < this.text.length) {
+              this.cursorX -= this.fonts.charsSpacing;
+            }
             for (var x = 0; x < charData.data.length; x++) {
-              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX-this.options.margin+charData.data[x][0], this.options.margin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+              this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX-this.options.rightMargin+charData.data[x][0], this.options.topMargin+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
             }
           }
           break;
