@@ -13,6 +13,7 @@ export class Fonts5x5 extends AbstractFonts {
 
     this.charsSpacing = 1;
     this.lineSpacing = 1;
+    this.charsHeight = 5; 
     
     this.fontsData = {
       '`': {width: 0, data: []},

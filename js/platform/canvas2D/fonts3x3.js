@@ -12,7 +12,8 @@ export class Fonts3x3 extends AbstractFonts {
     this.id = 'Fonts3x3';
     
     this.charsSpacing = 1;
-    this.lineSpacing = 1;
+    this.lineSpacing = 2;
+    this.charsHeight = 3; 
 
     this.fontsData = {
       '`': {width: 0, data: []},

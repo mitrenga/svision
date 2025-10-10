@@ -12,6 +12,7 @@ export class ZXFonts8x8 extends AbstractFonts {
     this.id = 'ZXFonts8x8';
 
     this.proportional = proportional;
+    this.charsHeight = 8; 
     if (proportional) {
       this.charsSpacing = 2;
     }
