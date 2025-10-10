@@ -129,7 +129,6 @@ export class TextEntity  extends AbstractEntity {
             partText = '';
             if (textPos < this.text.length) {
               this.cursorY += (this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale;
-              console.log(textPos);
               partText = this.text.substr(textPos);
               nlPos = partText.indexOf('\n');
               if (nlPos >= 0) {
