@@ -32,7 +32,10 @@ export class KeyboardEntity extends AbstractEntity {
               options[option] = this.layout.options.buttons[this.layout.keys[layoutId][row][key]][option];
             });
           }
-          var eventPrefix = 'virtualKey';
+          var eventPrefix = 'blankKey';
+          if (this.layout.keys[layoutId][row][key] != this.layout.options.specialKeys.blank) {
+            eventPrefix = 'virtualKey';
+          }
           if (layouts.indexOf(this.layout.keys[layoutId][row][key]) > 0) {
             eventPrefix = 'shiftKey';
           }
@@ -71,6 +74,10 @@ export class KeyboardEntity extends AbstractEntity {
   handleEvent(event) {
     var result = super.handleEvent(event);
     if (result == true) {
+      return true;
+    }
+
+    if (event.id.substr(0, 8) == 'blankKey') {
       return true;
     }
 
