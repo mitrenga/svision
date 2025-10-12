@@ -11,12 +11,12 @@ export class Fonts3x3 extends AbstractFonts {
     super(app);
     this.id = 'Fonts3x3';
     
+    this.charsHeight = 3; 
     this.charsSpacing = 1;
     this.lineSpacing = 2;
-    this.charsHeight = 3; 
+    this.paragraphSpacing = 5;
 
     this.fontsData = {
-      '`': {width: 0, data: []},
       ' ': {width: 1, data: []},
       '\'': {width: 1, data: [0,0,1,2]},
       '+': {width: 3, data: [[1,0,1,1], [0,1,3,1], [1,2,1,1]]},
@@ -70,6 +70,7 @@ export class Fonts3x3 extends AbstractFonts {
       ']': {width: 2, data: [[0,0,1,1], [0,2,1,1], [1,0,1,3]]},
       '^': {width: 3, data: [[0,1,1,1], [1,0,1,1], [2,1,1,1]]},
       '_': {width: 3, data: [[0,2,3,1]]},
+      ' ': {width: 1, data: []},
       '‗': {width: 2, data: [[0,2,2,1]]}
     }
   } // constructor

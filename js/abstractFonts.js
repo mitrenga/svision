@@ -11,9 +11,10 @@ export class AbstractFonts {
     this.id = 'AbstractFonts';
 
     this.app = app;
+    this.charsHeight = 0; 
     this.charsSpacing = 0;
     this.lineSpacing = 0;
-    this.charsHeight = 0; 
+    this.paragraphSpacing = 0;
   } // constructor
 
   getCharData(char, bitMask, scale) {

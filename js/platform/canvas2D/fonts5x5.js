@@ -11,12 +11,12 @@ export class Fonts5x5 extends AbstractFonts {
     super(app);
     this.id = 'Fonts5x5';
 
-    this.charsSpacing = 1;
-    this.lineSpacing = 1;
     this.charsHeight = 5; 
+    this.charsSpacing = 1;
+    this.lineSpacing = 2;
+    this.paragraphSpacing = 7;
     
     this.fontsData = {
-      '`': {width: 0, data: []},
       ' ': {width: 2, data: []},
       '!': {width: 1, data: [[0,0,1,3], [0,4,1,1]]},
       '"': {width: 3, data: [[0,0,1,2], [2,0,1,2]]},
@@ -87,6 +87,7 @@ export class Fonts5x5 extends AbstractFonts {
       '}': {width: 0, data: [[]]},
       '~': {width: 0, data: [[]]},
       '©': {width: 6, data: [[1,0,4,1], [0,1,2,3], [1,4,4,1], [4,1,2,3], [3,2,1,1]]},
+      ' ': {width: 2, data: []},
       '‗': {width: 3, data: [[0,4,3,1]]}
     }
   } // constructor
