@@ -24,7 +24,7 @@ export class KeyboardEntity extends AbstractEntity {
     layouts.forEach((layoutId) => {
       var y = 0;
       for (var row = 0; row < this.layout.keys[layoutId].length; row++) {
-        var x = this.layout.options.rows[row].shift;
+        var x = this.layout.options.rows[row].shiftX;
         for (var key = 0; key < this.layout.keys[layoutId][row].length; key++) {
           var options = {...this.layout.options.buttons.default};
           if (this.layout.keys[layoutId][row][key] in this.layout.options.buttons) {
@@ -42,9 +42,7 @@ export class KeyboardEntity extends AbstractEntity {
 
           var label = false;
           if (this.layout.keys[layoutId][row][key] in this.layout.options.buttons) {
-            if ('label' in this.layout.options.buttons[this.layout.keys[layoutId][row][key]]) {
-              label = this.layout.options.buttons[this.layout.keys[layoutId][row][key]].label;
-            }
+            label = this.layout.options.buttons[this.layout.keys[layoutId][row][key]].label || this.layout.keys[layoutId][row][key];
           }
           if (this.layout.keys[layoutId][row][key] == this.layout.options.specialKeys.blank) {
             label = '';
@@ -54,10 +52,17 @@ export class KeyboardEntity extends AbstractEntity {
             label = this.layout.keys[layoutId][row][key];
           }
 
+          var penColor = options.penColor;
+          var bkColor = options.bkColor;
+          if (layoutId == this.layout.keys[layoutId][row][key] && this.layout.keys[layoutId][row][key] in this.layout.options.shiftKeys) {
+            penColor = this.layout.options.shiftKeys[this.layout.keys[layoutId][row][key]].penColor || penColor; 
+            bkColor = this.layout.options.shiftKeys[this.layout.keys[layoutId][row][key]].activeBkColor || bkColor;
+          }
+
           var keyEntity = new ButtonEntity(
             this, options.fonts, x, y, options.width, options.height, label,
             eventPrefix+this.layout.keys[layoutId][row][key], [],
-            options.penColor, options.bkColor, options
+            penColor, bkColor, options
           ); 
           keyEntity.group = layoutId;
           if (layoutId != ' ') {
