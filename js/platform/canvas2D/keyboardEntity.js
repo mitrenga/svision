@@ -37,9 +37,22 @@ export class KeyboardEntity extends AbstractEntity {
             eventPrefix = 'shiftKey';
           }
 
+          var label = false;
+          if (this.layout.keys[layoutId][row][key] in this.layout.options.buttons) {
+            if ('label' in this.layout.options.buttons[this.layout.keys[layoutId][row][key]]) {
+              label = this.layout.options.buttons[this.layout.keys[layoutId][row][key]].label;
+            }
+          }
+          if (this.layout.keys[layoutId][row][key] == this.layout.options.specialKeys.blank) {
+            label = '';
+          }
+
+          if (label === false) {
+            label = this.layout.keys[layoutId][row][key];
+          }
+
           var keyEntity = new ButtonEntity(
-            this, options.fonts, x, y, options.width, options.height,
-            this.layout.keys[layoutId][row][key],
+            this, options.fonts, x, y, options.width, options.height, label,
             eventPrefix+this.layout.keys[layoutId][row][key], [],
             options.penColor, options.bkColor, options
           ); 
