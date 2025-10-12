@@ -7,12 +7,13 @@ import TextEntity from './textEntity.js';
 
 export class InputEntity extends TextEntity {
 
-  constructor(parentEntity, fonts, x, y, width, height, value, penColor, bkColor, maxLength, options) {
+  constructor(parentEntity, fonts, x, y, width, height, inputId, value, penColor, bkColor, maxLength, options) {
     super(parentEntity, fonts, x, y, width, height, '', penColor, bkColor, options);
     this.id = 'InputEntity';
 
     this.cursorChar = '‗';
     this.text = value+this.cursorChar;
+    this.inputId = inputId;
     this.value = value;
     this.cursor = value.length;
     this.maxLength = maxLength;
@@ -59,6 +60,7 @@ export class InputEntity extends TextEntity {
               this.cursor--;
               this.setInputLineColors();
               this.drawingCache[0].cleanCache();
+              this.sendEvent(0, 0, {'id': 'changeInputValue', 'inputId': this.inputId});
             }
             return true;
           case 'Delete':
@@ -67,6 +69,7 @@ export class InputEntity extends TextEntity {
               this.value = this.value.substring(0, this.cursor)+this.value.substring(this.cursor+1);
               this.setInputLineColors();
               this.drawingCache[0].cleanCache();
+              this.sendEvent(0, 0, {'id': 'changeInputValue', 'inputId': this.inputId});
             }
             return true;
           case 'Home':
@@ -88,6 +91,7 @@ export class InputEntity extends TextEntity {
               this.cursor++;
               this.setInputLineColors();
               this.drawingCache[0].cleanCache();
+              this.sendEvent(0, 0, {'id': 'changeInputValue', 'inputId': this.inputId});
               return true;
             }
           }
