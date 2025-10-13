@@ -20,48 +20,49 @@ export class KeyboardEntity extends AbstractEntity {
   init() {
     super.init();
 
-    var layouts = Object.keys(this.layout.keys);
+    var layouts = Object.keys(this.layout.keymap);
     layouts.forEach((layoutId) => {
       var y = 0;
-      for (var row = 0; row < this.layout.keys[layoutId].length; row++) {
+      for (var row = 0; row < this.layout.keymap[layoutId].length; row++) {
         var x = this.layout.options.rows[row].shiftX;
-        for (var key = 0; key < this.layout.keys[layoutId][row].length; key++) {
+        for (var key = 0; key < this.layout.keymap[layoutId][row].length; key++) {
           var options = {...this.layout.options.buttons.default};
-          if (this.layout.keys[layoutId][row][key] in this.layout.options.buttons) {
-            Object.keys(this.layout.options.buttons[this.layout.keys[layoutId][row][key]]).forEach(option => {
-              options[option] = this.layout.options.buttons[this.layout.keys[layoutId][row][key]][option];
+          if (this.layout.keymap[layoutId][row][key] in this.layout.options.buttons) {
+            Object.keys(this.layout.options.buttons[this.layout.keymap[layoutId][row][key]]).forEach(option => {
+              options[option] = this.layout.options.buttons[this.layout.keymap[layoutId][row][key]][option];
             });
           }
           var eventPrefix = 'blankKey';
-          if (this.layout.keys[layoutId][row][key] != this.layout.options.specialKeys.blank) {
-            eventPrefix = 'virtualKey';
-          }
-          if (layouts.indexOf(this.layout.keys[layoutId][row][key]) > 0) {
+          if (this.layout.keymap[layoutId][row][key] in this.layout.options.shiftKeys) {
             eventPrefix = 'shiftKey';
+          } else if (!(this.layout.keymap[layoutId][row][key] in this.layout.options.fnKeys)) {
+            eventPrefix = 'virtualKey';
+          } else if (this.layout.options.fnKeys[this.layout.keymap[layoutId][row][key]] !== false) {
+            eventPrefix = 'fnKey';
           }
 
           var label = false;
-          if (this.layout.keys[layoutId][row][key] in this.layout.options.buttons) {
-            label = this.layout.options.buttons[this.layout.keys[layoutId][row][key]].label || this.layout.keys[layoutId][row][key];
+          if (this.layout.keymap[layoutId][row][key] in this.layout.options.buttons) {
+            label = this.layout.options.buttons[this.layout.keymap[layoutId][row][key]].label || this.layout.keymap[layoutId][row][key];
           }
-          if (this.layout.keys[layoutId][row][key] == this.layout.options.specialKeys.blank) {
+          if (eventPrefix == 'blankKey') {
             label = '';
           }
 
           if (label === false) {
-            label = this.layout.keys[layoutId][row][key];
+            label = this.layout.keymap[layoutId][row][key];
           }
 
           var penColor = options.penColor;
           var bkColor = options.bkColor;
-          if (layoutId == this.layout.keys[layoutId][row][key] && this.layout.keys[layoutId][row][key] in this.layout.options.shiftKeys) {
-            penColor = this.layout.options.shiftKeys[this.layout.keys[layoutId][row][key]].penColor || penColor; 
-            bkColor = this.layout.options.shiftKeys[this.layout.keys[layoutId][row][key]].activeBkColor || bkColor;
+          if (layoutId == this.layout.keymap[layoutId][row][key] && this.layout.keymap[layoutId][row][key] in this.layout.options.shiftKeys) {
+            penColor = this.layout.options.shiftKeys[this.layout.keymap[layoutId][row][key]].penColor || penColor; 
+            bkColor = this.layout.options.shiftKeys[this.layout.keymap[layoutId][row][key]].activeBkColor || bkColor;
           }
 
           var keyEntity = new ButtonEntity(
             this, options.fonts, x, y, options.width, options.height, label,
-            eventPrefix+this.layout.keys[layoutId][row][key], [],
+            eventPrefix+this.layout.keymap[layoutId][row][key], [],
             penColor, bkColor, options
           ); 
           keyEntity.group = layoutId;
@@ -86,11 +87,6 @@ export class KeyboardEntity extends AbstractEntity {
       return true;
     }
 
-    if (event.id.substr(0, 10) == 'virtualKey') {
-      this.sendEvent(-1, 0, {'id': 'keyPress', 'key': event.id.substr(10, 1)});
-      return true;
-    }
-
     if (event.id.substr(0, 8) == 'shiftKey') {
       var shiftKey = event.id.substr(8,1);
       if (this.shiftLayout == shiftKey) {
@@ -107,6 +103,16 @@ export class KeyboardEntity extends AbstractEntity {
           }
         }
       });
+      return true;
+    }
+
+    if (event.id.substr(0, 10) == 'virtualKey') {
+      this.sendEvent(-1, 0, {'id': 'keyPress', 'key': event.id.substr(10, 1)});
+      return true;
+    }
+
+    if (event.id.substr(0, 5) == 'fnKey') {
+      this.sendEvent(-1, 0, {'id': 'keyPress', 'key': this.layout.options.fnKeys[event.id.substr(5)]});
       return true;
     }
 
