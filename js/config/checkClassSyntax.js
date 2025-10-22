@@ -4,7 +4,7 @@ class Config_LibClassSyntax {
       this.libLoaded = true;
     } // constructor
   
-} // class Config_LibClassSyntax
+} // Config_LibClassSyntax
   
 var config_libClassSyntax = new Config_LibClassSyntax();
 

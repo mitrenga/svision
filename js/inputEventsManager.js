@@ -11,15 +11,16 @@ export class InputEventsManager {
     this.app = app;
 
     this.keysPressMap = { key: {} };
+    this.gamepads = {};
     this.blurWindow = false;
   } // constructor
 
   eventKeyDown(event) {
     if (this.app.model.autorepeatKeys || !(event.key in this.keysPressMap.key)) {
-      this.keysPressMap.key[event.key] = { press: 'Press', release: 'Release' };
+      this.keysPressMap.key[event.key] = {press: 'Press', release: 'Release'};
       if (this.app.model) {
         if (!this.blurWindow) {
-          this.app.model.sendEvent(0, { 'id': 'keyPress', 'key': event.key });
+          this.app.model.sendEvent(0, {id: 'keyPress', key: event.key});
         }
       }
     }
@@ -30,21 +31,21 @@ export class InputEventsManager {
       delete this.keysPressMap.key[event.key];
     }
     if (this.app.model) {
-      this.app.model.sendEvent(0, { 'id': 'keyRelease', 'key': event.key });
+      this.app.model.sendEvent(0, {id: 'keyRelease', key: event.key});
     }
   } // eventKeyUp
 
   eventClick(event) {
     event.preventDefault();
     if (this.app.model) {
-      this.app.model.sendEvent(0, { 'id': 'mouseClick', 'key': 'left', 'x': this.app.layout.convertClientCoordinateX(event.clientX), 'y': this.app.layout.convertClientCoordinateY(event.clientY) });
+      this.app.model.sendEvent(0, {id: 'mouseClick', key: 'left', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
     }
   } // eventClick
 
   eventContextMenu(event) {
     event.preventDefault();
     if (this.app.model) {
-      this.app.model.sendEvent(0, { 'id': 'mouseClick', 'key': 'right', 'x': this.app.layout.convertClientCoordinateX(event.clientX), 'y': this.app.layout.convertClientCoordinateY(event.clientY) });
+      this.app.model.sendEvent(0, {id: 'mouseClick', key: 'right', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
     }
   } // eventContextMenu
 
@@ -56,7 +57,7 @@ export class InputEventsManager {
           this.keysPressMap.key['MouseButton'+(1<<b)] = { press: 'Press', release: 'Release' };
           if (this.app.model) {
             if (!this.blurWindow) {
-              this.app.model.sendEvent(0, { 'id': 'keyPress', 'key': 'MouseButton'+(1<<b) });
+              this.app.model.sendEvent(0, {id: 'keyPress', key: 'MouseButton'+(1<<b)});
             }
           }
         }
@@ -72,7 +73,7 @@ export class InputEventsManager {
         if ('MouseButton'+(1<<b) in this.keysPressMap.key) {
           delete this.keysPressMap.key['MouseButton'+(1<<b)];
           if (this.app.model) {
-            this.app.model.sendEvent(0, { 'id': 'keyRelease', 'key': 'MouseButton'+(1<<b) });
+            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'MouseButton'+(1<<b)});
           }
         }
       }
@@ -86,7 +87,7 @@ export class InputEventsManager {
   eventTouchStart(event) {
     event.preventDefault();
     if (this.app.model) {
-      this.app.model.sendEvent(0, { 'id': 'mouseClick', 'key': 'left', 'x': this.app.layout.convertClientCoordinateX(event.touches[0].clientX), 'y': this.app.layout.convertClientCoordinateY(event.touches[0].clientY) });
+      this.app.model.sendEvent(0, {id: 'mouseClick', key: 'left', x: this.app.layout.convertClientCoordinateX(event.touches[0].clientX), y: this.app.layout.convertClientCoordinateY(event.touches[0].clientY)});
     }
   } // eventTouchStart
 
@@ -119,7 +120,7 @@ export class InputEventsManager {
   eventBlurWindow(event) {
     this.blurWindow = true;
     this.sendEventsActiveKeys('release');
-    this.app.model.sendEvent(0, { id: 'blurWindow' });
+    this.app.model.sendEvent(0, {id: 'blurWindow'});
   } // eventOnBlurWindow
 
   eventFocusWindow(event) {
@@ -129,11 +130,11 @@ export class InputEventsManager {
   sendEventsActiveKeys(type) {
     Object.keys(this.keysPressMap).forEach((eventType) => {
       Object.keys(this.keysPressMap[eventType]).forEach((key) => {
-        this.app.model.sendEvent(0, { 'id': eventType + this.keysPressMap[eventType][key][type], 'key': key });
+        this.app.model.sendEvent(0, {id: eventType+this.keysPressMap[eventType][key][type], key: key});
       });
     });
   } // sendEventsActiveKeys
 
-} // class InputEventsManager
+} // InputEventsManager
 
 export default InputEventsManager;

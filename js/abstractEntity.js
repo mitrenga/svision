@@ -59,7 +59,7 @@ export class AbstractEntity {
   } // addModalEntity
 
   destroy() {
-    this.sendEvent(0, 1, {'id': 'destroy', 'entity': this});
+    this.sendEvent(0, 1, {id: 'destroy', entity: this});
   } // destroy
 
   shutdown() {
@@ -130,12 +130,12 @@ export class AbstractEntity {
         return true;
       }
     }
-    if ((this.modal == true) && (['keyPress', 'mouseClick'].indexOf(event.id) >= 0)) {
-      return true;
-    }
     return false;
   } // handleEvent
   
+  loopEntity(timestamp) {
+  } // loopEntity
+
   setData(data) {
     for (var v = 0; v < this.entities.length; v++) {
       this.entities[v].setData(data);
@@ -201,6 +201,6 @@ export class AbstractEntity {
     
   } // cleanCache
 
-} // class AbstractEntity
+} // AbstractEntity
 
 export default AbstractEntity;

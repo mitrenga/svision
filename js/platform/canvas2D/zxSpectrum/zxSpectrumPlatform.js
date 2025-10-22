@@ -18,22 +18,22 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     ]; // zxColorsName
 
     this.zxColorsRGB = {
-      'black': '#000000',
-      'blue': '#1435b2',
-      'red': '#b6391e',
-      'magenta': '#b442b4',
-      'green': '#41a329',
-      'cyan': '#4cb7a7',
-      'yellow': '#dcb533',
-      'white': '#b8b8b8',
-      'brightBlack': '#000000',
-      'brightBlue': '#1e48f7',
-      'brightRed': '#fc3b34',
-      'brightMagenta': '#fb6ee9',
-      'brightGreen': '#53d734',
-      'brightCyan': '#4ddcfc',
-      'brightYellow': '#ffe15a',
-      'brightWhite': '#ffffff',
+      black: '#000000',
+      blue: '#1435b2',
+      red: '#b6391e',
+      magenta: '#b442b4',
+      green: '#41a329',
+      cyan: '#4cb7a7',
+      yellow: '#dcb533',
+      white: '#b8b8b8',
+      brightBlack: '#000000',
+      brightBlue: '#1e48f7',
+      brightRed: '#fc3b34',
+      brightMagenta: '#fb6ee9',
+      brightGreen: '#53d734',
+      brightCyan: '#4ddcfc',
+      brightYellow: '#ffe15a',
+      brightWhite: '#ffffff',
     }; // zxColorsRGB
   } // constructor
 
@@ -46,11 +46,11 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
   } // newLayout
 
   desktop(app) {
-    return {'width': 256, 'height': 192, 'defaultColor': this.colorByName('white')};
+    return {width: 256, height: 192, defaultColor: this.colorByName('white')};
   } // desktop
 
   border(app) {
-    return {'minimal': 8, 'defaultColor': this.colorByName('white')};
+    return {minimal: 8, defaultColor: this.colorByName('white')};
   } // border
 
   colorByName(colorName) {
@@ -82,6 +82,6 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     return this.zxColorByAttr(attr, 56, 8);
   } // bkColorByAttr
 
-} // class ZXSpectrumPlatform
+} // ZXSpectrumPlatform
 
 export default ZXSpectrumPlatform;

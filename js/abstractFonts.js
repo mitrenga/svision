@@ -25,6 +25,6 @@ export class AbstractFonts {
     return false;
   } // validChar
 
-} // class AbstractFonts
+} // AbstractFonts
 
 export default AbstractFonts;

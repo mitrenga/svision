@@ -26,7 +26,7 @@ export class AbstractPlatform {
   } // newLayout
 
   desktop(app) {
-    return {'width': 0, 'height': 0, 'defaultColor': false};
+    return {width: 0, height: 0, defaultColor: false};
   } // resolution
 
   border(app) {
@@ -46,6 +46,6 @@ export class AbstractPlatform {
     return 'rgba(' + [r, g, b, a].join(',') + ')';
   } // color
 
-} // class AbstractPlatform
+} // AbstractPlatform
 
 export default AbstractPlatform;

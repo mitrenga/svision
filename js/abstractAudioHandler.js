@@ -23,7 +23,7 @@ export class AbstractAudioHandler {
     this.busy = true;
     this.error = false;
     this.channel = channel;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)({'sampleRate':44100, 'latencyHint': 'interactive'});
+    this.ctx = new (window.AudioContext || window.webkitAudioContext)({sampleRate:44100, latencyHint: 'interactive'});
   } // openChannel
 
   closeChannel() {
@@ -39,7 +39,7 @@ export class AbstractAudioHandler {
 
   waitForBusy(operation) {
     if (this.busy == true) {
-      this.app.model.sendEvent(100, {'id': operation, 'channel': this.channel});
+      this.app.model.sendEvent(100, {id: operation, channel: this.channel});
       return true;
     }
     return false;
@@ -65,6 +65,6 @@ export class AbstractAudioHandler {
   playSound(audioData, options) {
   } // playSound
   
-} // class AbstractAudioHandler
+} // AbstractAudioHandler
 
 export default AbstractAudioHandler;

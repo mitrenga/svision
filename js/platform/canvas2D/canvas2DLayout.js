@@ -150,6 +150,6 @@ export class Canvas2DLayout extends AbstractLayout {
     return this.app.element.height/this.app.element.clientHeight*clientY;
   } // convertClientCoordinateY
 
-} // class Canvas2DLayout
+} // Canvas2DLayout
 
 export default Canvas2DLayout;

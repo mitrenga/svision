@@ -103,6 +103,6 @@ export class Fonts3x3 extends AbstractFonts {
     return false;
   } // validChar
 
-} // class Fonts3x3
+} // Fonts3x3
 
 export default Fonts3x3;

@@ -11,7 +11,6 @@ export class AbstractModel {
     this.app = app;
     this.id = 'AbstractModel';
 
-    this.gameMode = false;
     this.prevTimestamp = 0;
 
     this.borderEntity = null;
@@ -68,7 +67,7 @@ export class AbstractModel {
     if (timing == 0) {
       this.handleEvent(event);
     } else {
-      this.events.push({'id': event.id, 'timing': this.app.now+timing, 'event': event});
+      this.events.push({id: event.id, timing: this.app.now+timing, event: event});
     }
   } // sendEvent
 
@@ -96,8 +95,8 @@ export class AbstractModel {
         return true;
       case 'unsupportedAudioChannel':
         this.app.audioManager.unsupportedAudioChannel = this.app.audioManager.channels[event.channel].id;
-        this.sendEvent(50, {'id': 'closeAudioChannel', 'channel': event.channel});
-        this.sendEvent(100, {'id': 'openAudioChannel', 'channel': event.channel});
+        this.sendEvent(50, {id: 'closeAudioChannel', channel: event.channel});
+        this.sendEvent(100, {id: 'openAudioChannel', channel: event.channel});
         return true;
       case 'playSound':
         this.app.audioManager.playSound(event.channel, event.sound, event.options);
@@ -149,6 +148,6 @@ export class AbstractModel {
     this.desktopEntity.drawEntity();
   } // drawModel
 
-} // class AbstractModel
+} // AbstractModel
 
 export default AbstractModel;

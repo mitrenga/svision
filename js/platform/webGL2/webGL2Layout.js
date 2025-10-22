@@ -13,7 +13,7 @@ export class WebGL2Layout extends AbstractLayout {
 } // constructor
 
   canvas() {
-    return {'width': this.app.element.clientWidth, 'height': this.app.element.clientHeight};
+    return {width: this.app.element.clientWidth, height: this.app.element.clientHeight};
   } // canvas
 
   resizeModel(model) {
@@ -354,6 +354,6 @@ export class WebGL2Layout extends AbstractLayout {
     return dst;
   } // multiplyMatrix
 
-} // class WebGL2Layout
+} // WebGL2Layout
 
 export default WebGL2Layout;

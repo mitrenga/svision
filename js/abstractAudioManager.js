@@ -104,6 +104,6 @@ export class AbstractAudioManager {
     return false;
   } // audioData
 
-} // class AbstractAudioManager
+} // AbstractAudioManager
 
 export default AbstractAudioManager;

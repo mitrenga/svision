@@ -40,6 +40,13 @@ export class TextEntity  extends AbstractEntity {
       this.options.bottomMargin = this.options.margin;
     }
 
+    if ('group' in options) {
+      this.group = options.group;
+    }
+    if ('hide' in options) {
+      this.hide = options.hide;
+    }
+
     this.app.layout.newDrawingCache(this, 0);
     this.cursorX = 0;
     this.cursorY = 0;
@@ -48,25 +55,29 @@ export class TextEntity  extends AbstractEntity {
   setText(text) {
     if (this.text != text) {
       this.text = text;
-      this.drawingCache[0].cleanCache();
+    this.cleanCache();
     }
   } // setText
 
   setPenColor(color) {
     this.penColor = color;
-    this.drawingCache[0].cleanCache();
+    this.cleanCache();
   } // setPenColor
 
   setBkColor(color) {
     this.bkColor = color;
-    this.drawingCache[0].cleanCache();
+    this.cleanCache();
   } // setBkColor
+
+  cleanCache() {
+    this.drawingCache[0].cleanCache();
+  } // cleanCache
 
   handleEvent(event) {
     switch (event.id) {
       case 'changeFlashState':
         if (this.options.animationMode !== false) {
-          this.drawingCache[0].cleanCache();
+          this.cleanCache();
         }
         break;
     }
@@ -279,6 +290,6 @@ export class TextEntity  extends AbstractEntity {
     this.app.layout.paintCache(this, 0);
   } // drawEntity
 
-} // class TextEntity
+} // TextEntity
 
 export default TextEntity;

@@ -39,7 +39,7 @@ class Label {
         }
     } // draw
 
-} // class Label
+} // Label
 
 class Player {
 
@@ -60,7 +60,7 @@ class Player {
         ctx.fillRect(this.posX-5, this.posY-20, 10, 40);
     } // draw
 
-} // class Player
+} // Player
 
 
 class Ball {
@@ -85,7 +85,7 @@ class Ball {
         ctx.fillRect(this.posX-5, this.posY-5, 10, 10);
     } // draw
 
-} // class Ball
+} // Ball
 
 
 export class Canvas {
@@ -180,6 +180,6 @@ export class Canvas {
         }
     } // loop
 
-} // class Canvas
+} // Canvas
 
 export default Canvas;

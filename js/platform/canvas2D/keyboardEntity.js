@@ -107,18 +107,18 @@ export class KeyboardEntity extends AbstractEntity {
     }
 
     if (event.id.substr(0, 10) == 'virtualKey') {
-      this.sendEvent(-1, 0, {'id': 'keyPress', 'key': event.id.substr(10, 1)});
+      this.sendEvent(-1, 0, {id: 'keyPress', key: event.id.substr(10, 1)});
       return true;
     }
 
     if (event.id.substr(0, 5) == 'fnKey') {
-      this.sendEvent(-1, 0, {'id': 'keyPress', 'key': this.layout.options.fnKeys[event.id.substr(5)]});
+      this.sendEvent(-1, 0, {id: 'keyPress', key: this.layout.options.fnKeys[event.id.substr(5)]});
       return true;
     }
 
     return false;
   } // handleEvent
 
-} // class KeyboardEntity
+} // KeyboardEntity
 
 export default KeyboardEntity;

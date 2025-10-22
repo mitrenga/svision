@@ -37,9 +37,9 @@ export class WebGL2Platform extends AbstractPlatform {
   } // newLayout
 
   desktop(app) {
-    return {'width': app.element.clientWidth, 'height': app.element.clientHeight, 'defaultColor': false};
+    return {width: app.element.clientWidth, height: app.element.clientHeight, defaultColor: false};
   } // desktop
 
-} // class WebGL2Platform
+} // WebGL2Platform
 
 export default WebGL2Platform;

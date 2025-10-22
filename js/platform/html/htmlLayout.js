@@ -84,6 +84,6 @@ export class HTMLLayout extends AbstractLayout {
     }
   } // drawEntity
 
-} // class HTMLLayout
+} // HTMLLayout
 
 export default HTMLLayout;

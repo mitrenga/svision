@@ -60,7 +60,7 @@ export class InputEntity extends TextEntity {
               this.cursor--;
               this.setInputLineColors();
               this.drawingCache[0].cleanCache();
-              this.sendEvent(0, 0, {'id': 'changeInputValue', 'inputId': this.inputId});
+              this.sendEvent(0, 0, {id: 'changeInputValue', inputId: this.inputId});
             }
             return true;
           case 'Delete':
@@ -69,7 +69,7 @@ export class InputEntity extends TextEntity {
               this.value = this.value.substring(0, this.cursor)+this.value.substring(this.cursor+1);
               this.setInputLineColors();
               this.drawingCache[0].cleanCache();
-              this.sendEvent(0, 0, {'id': 'changeInputValue', 'inputId': this.inputId});
+              this.sendEvent(0, 0, {id: 'changeInputValue', inputId: this.inputId});
             }
             return true;
           case 'Home':
@@ -91,7 +91,7 @@ export class InputEntity extends TextEntity {
               this.cursor++;
               this.setInputLineColors();
               this.drawingCache[0].cleanCache();
-              this.sendEvent(0, 0, {'id': 'changeInputValue', 'inputId': this.inputId});
+              this.sendEvent(0, 0, {id: 'changeInputValue', inputId: this.inputId});
               return true;
             }
           }
@@ -105,6 +105,6 @@ export class InputEntity extends TextEntity {
     return super.handleEvent(event);
   } // handleEvent
 
-} // class InputEntity
+} // InputEntity
 
 export default InputEntity;

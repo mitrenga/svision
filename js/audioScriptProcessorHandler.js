@@ -54,7 +54,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
               this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
               if (this.events != false) {
                 if (this.readPtr in this.events) {
-                  this.app.model.sendEvent(1, {'id': this.events[this.readPtr].id, 'data': this.events[this.readPtr]});
+                  this.app.model.sendEvent(1, {id: this.events[this.readPtr].id, data: this.events[this.readPtr]});
                 }
               }
             }
@@ -73,7 +73,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
           if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
             if (this.events != false) {
               if (this.readPtr in this.events) {
-                this.app.model.sendEvent(1, {'id': this.events[this.readPtr].id, 'data': this.events[this.readPtr]});
+                this.app.model.sendEvent(1, {id: this.events[this.readPtr].id, data: this.events[this.readPtr]});
               }
             }
             if (this.repeat) {
@@ -137,6 +137,6 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     }
   } // playSound
 
-} // class AudioScriptProcessorHandler
+} // AudioScriptProcessorHandler
 
 export default AudioScriptProcessorHandler;

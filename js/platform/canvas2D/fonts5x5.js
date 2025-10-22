@@ -120,6 +120,6 @@ export class Fonts5x5 extends AbstractFonts {
     return false;
   } // validChar
 
-} // class Fonts5x5
+} // Fonts5x5
 
 export default Fonts5x5;

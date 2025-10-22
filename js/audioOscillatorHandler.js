@@ -36,6 +36,6 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     }
   } // playSound
 
-} // class AudioOscillatorHandler
+} // AudioOscillatorHandler
 
 export default AudioOscillatorHandler;

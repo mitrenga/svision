@@ -34,6 +34,6 @@ export class AbstractLayout {
     return clientY;
   } // convertClientCoordinateY
 
-} // class AbstractLayout
+} // AbstractLayout
 
 export default AbstractLayout;

@@ -62,6 +62,6 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
     return this.app.element.height/this.ratio/this.app.element.clientHeight*clientY;
   } // convertClientCoordinateY
 
-} // class ZXSpectrumLayout
+} // ZXSpectrumLayout
 
 export default ZXSpectrumLayout;

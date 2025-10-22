@@ -30,7 +30,7 @@ export class DrawingCache {
   } // cleanCache
 
   needToRefresh(entity, width, height) {
-    if (this.ratio != this.app.layout.ratio) {
+    if (this.ratio != this.app.layout.ratio || this.canvas.width != width*this.ratio || this.canvas.height != height*this.ratio) {
       this.init(width, height);
       return true;
     }
@@ -45,6 +45,6 @@ export class DrawingCache {
     this.app.layout.paintRect(this.ctx, x, y, width, height, color);
   } // paint
 
-} // class DrawingCache
+} // DrawingCache
 
 export default DrawingCache;

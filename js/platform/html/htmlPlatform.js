@@ -38,7 +38,7 @@ export class HTMLPlatform extends AbstractPlatform {
     element.id = entity.id;
     element.style.position = 'absolute';
     parentElement.appendChild(element);
-    return {'element': element};
+    return {element: element};
   } // initEntity
 
 
@@ -50,6 +50,6 @@ export class HTMLPlatform extends AbstractPlatform {
     return {width: 256, height: 192, defaultColor: this.colorByName('white')};
   } // desktop
 
-} // class HTMLPlatform
+} // HTMLPlatform
 
 export default HTMLPlatform;
