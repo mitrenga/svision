@@ -102,11 +102,19 @@ export class InputEventsManager {
     event.preventDefault();
   } // eventTouchMove
 
-  eventGamePadConnected(event) {
-  } // eventGamePadConnected
+  eventGamepadConnected(event) {
+    this.gamepads[event.gamepad.id] = event.gamepad;
+    if (this.app.model) {
+      this.app.model.sendEvent(0, {id: 'gamepadConnected'});
+    }
+  } // eventGamepadConnected
 
-  eventGamePadDisconnected(event) {
-  } // eventGamePadDisconnected
+  eventGamepadDisconnected(event) {
+    delete this.gamepads[event.gamepad.id];
+    if (this.app.model) {
+      this.app.model.sendEvent(0, {id: 'gamepadDisconnected'});
+    }
+  } // eventGamepadDisconnected
 
   eventBlurWindow(event) {
     this.blurWindow = true;
