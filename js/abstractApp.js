@@ -51,8 +51,8 @@ export class AbstractApp {
     return parseInt(hexNum, 16);
   } // hexToInt
 
-  intToHex(intNum) {
-    return intNum.toString(16);
+  intToHex(intNum, length) {
+    return intNum.toString(16).padStart(length, '0').toUpperCase();
   } // intToHex
 
   hexToBin(hexNum) {
@@ -92,6 +92,6 @@ export class AbstractApp {
     return defaultValue;
   } // getCookie
 
-} // class AbstractApp
+} // AbstractApp
 
 export default AbstractApp;
