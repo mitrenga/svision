@@ -38,6 +38,10 @@ export class InputEntity extends TextEntity {
   } // setInputLineColors
 
   handleEvent(event) {
+    if (super.handleEvent(event)) {
+      return true;
+    }
+
     switch (event.id) { 
       case 'keyPress':
         switch (event.key) {
@@ -102,7 +106,7 @@ export class InputEntity extends TextEntity {
         break;
     }
 
-    return super.handleEvent(event);
+    return false;
   } // handleEvent
 
 } // InputEntity

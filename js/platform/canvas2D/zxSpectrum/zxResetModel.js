@@ -43,6 +43,10 @@ export class ZXResetModel extends AbstractModel {
   } // init
 
   handleEvent(event) {
+    if (super.handleEvent(event)) {
+      return true;
+    }
+    
     switch (event.id) {
       case 'showReset':
         this.timer = this.app.now;
@@ -63,7 +67,8 @@ export class ZXResetModel extends AbstractModel {
         this.app.setGlobalData(event.data);
         return true;
     }
-    return super.handleEvent(event);
+
+    return false;
   } // handleEvent
 
   loopModel(timestamp) {

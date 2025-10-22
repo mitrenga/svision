@@ -74,6 +74,9 @@ export class TextEntity  extends AbstractEntity {
   } // cleanCache
 
   handleEvent(event) {
+    if (super.handleEvent(event)) {
+      return true;
+    }
     switch (event.id) {
       case 'changeFlashState':
         if (this.options.animationMode !== false) {
@@ -81,7 +84,7 @@ export class TextEntity  extends AbstractEntity {
         }
         break;
     }
-    return super.handleEvent(event);
+    return false;
   } // handleEvent
   
   wrapLine(text) {

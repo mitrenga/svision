@@ -78,8 +78,7 @@ export class KeyboardEntity extends AbstractEntity {
   } // init
 
   handleEvent(event) {
-    var result = super.handleEvent(event);
-    if (result == true) {
+    if (super.handleEvent(event)) {
       return true;
     }
 

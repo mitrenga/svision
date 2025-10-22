@@ -16,8 +16,7 @@ export class ButtonEntity extends TextEntity {
   } // constructor
 
   handleEvent(event) {
-    var result = super.handleEvent(event);
-    if (result == true) {
+    if (super.handleEvent(event)) {
       return true;
     }
 
@@ -35,6 +34,7 @@ export class ButtonEntity extends TextEntity {
         }
         break;
     }
+    
     return false;
   } // handleEvent
 
