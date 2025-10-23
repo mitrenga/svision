@@ -198,8 +198,11 @@ export class SpriteEntity  extends AbstractEntity {
           spriteData[0][h] = '';
           var w = 0;
           while (w < width) {
-            spriteData[0][h] += mask[maskValue];
-            counter--;
+            if (counter) {
+              spriteData[0][h] += mask[maskValue];
+              counter--;
+              w++;
+            }
             while (counter == 0) {
               if (pointer < data.length) {
                 counter = this.hexToInt(data.substring(pointer, pointer+2));
@@ -209,7 +212,6 @@ export class SpriteEntity  extends AbstractEntity {
                 counter = 1;
               }
             }
-            w++;
           }
           h++;
         }
@@ -236,8 +238,11 @@ export class SpriteEntity  extends AbstractEntity {
           spriteData[0][h] = '';
           var w = 0;
           while (w < width) {
-            spriteData[0][h] += mask[maskValue];
-            counter--;
+            if (counter > 0) {
+              spriteData[0][h] += mask[maskValue];
+              counter--;
+              w++;
+            }
             if (counter == 0) {
               if (pointer < data.length) {
                 counter = pulses[this.latinToInt(data.substring(pointer, pointer+1))];
@@ -247,7 +252,6 @@ export class SpriteEntity  extends AbstractEntity {
                 counter = 1;
               }
             }
-            w++;
           }
           h++;
         }
@@ -278,11 +282,11 @@ export class SpriteEntity  extends AbstractEntity {
     switch (method) {
 
       case 'hR2':
-        compressedData += this.intToHex(spriteData.width, 4)+this.intToHex(spriteData.height, 4);
+        compressedData += this.intToHex(this.width, 4)+this.intToHex(this.height, 4);
         var counter = 0;
         var spriteChar = '-';
-        for (var y = 0; y < spriteData.height; y++) {
-          for (var x = 0; x < spriteData.width; x++) {
+        for (var y = 0; y < this.height; y++) {
+          for (var x = 0; x < this.width; x++) {
             if (spriteData.sprite[0][y][x] != spriteChar) {
               while (counter > 255) {
                 compressedData += 'FF00';
@@ -304,15 +308,15 @@ export class SpriteEntity  extends AbstractEntity {
         break;
 
       case 'lP1':
-        compressedData += this.intToLatin(spriteData.width, 3)+this.intToLatin(spriteData.height, 3);
+        compressedData += this.intToLatin(this.width, 3)+this.intToLatin(this.height, 3);
         var pulses = [];
         var index = {};
         var counter = 0;
 
         // first phase - create pulses table with index
         var spriteChar = '-';
-        for (var y = 0; y < spriteData.height; y++) {
-          for (var x = 0; x < spriteData.width; x++) {
+        for (var y = 0; y < this.height; y++) {
+          for (var x = 0; x < this.width; x++) {
             if (spriteData.sprite[0][y][x] != spriteChar) {
               if (!(counter in index)) {
                 if (counter > 1296) {
@@ -340,16 +344,16 @@ export class SpriteEntity  extends AbstractEntity {
         }
 
         // second phase - output pulses table
-        console.log(pulses);
         compressedData += this.intToLatin(pulses.length, 2);
         pulses.forEach((pulse) => {
           compressedData += this.intToLatin(pulse, 2);
         });
 
         // third phase - output compressed data
+        spriteChar = '-';
         counter = 0;
-        for (var y = 0; y < spriteData.height; y++) {
-          for (var x = 0; x < spriteData.width; x++) {
+        for (var y = 0; y < this.height; y++) {
+          for (var x = 0; x < this.width; x++) {
             if (spriteData.sprite[0][y][x] != spriteChar) {
               compressedData += this.intToLatin(index[counter], 1);
               counter = 1;
