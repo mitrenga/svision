@@ -14,7 +14,7 @@ class AutoConfigPage extends AbstractPage {
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
-    $this->data[] = '    <title>Configuration</title>';
+    $this->data[] = '    <title>'.$GLOBALS['appName'].'</title>';
     $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$scriptsVersion.'">';
     $this->data[] = '  </head>';
 

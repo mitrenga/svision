@@ -14,7 +14,7 @@ class ForwardToConfigPage extends AbstractPage {
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
-    $this->data[] = '    <title>Configuration</title>';
+    $this->data[] = '    <title>'.$GLOBALS['appName'].'</title>';
     $this->data[] = '    <meta http-equiv="refresh" content="0; url=config">';
     $this->data[] = '  </head>';
 
