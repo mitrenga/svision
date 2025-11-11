@@ -19,9 +19,17 @@
   $webURL = substr($tmpURL, 0, -strlen('index.php'));
   $wsURL = $wsProtocol.'://'.$srvName.':'.$wsPort.'/'.$wsPage;
 
-  if (substr($_SERVER['QUERY_STRING'], -5) === '.data') {
+  if (substr($_SERVER['QUERY_STRING'], -5) === '.data' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     require_once 'dataPage.php';
     $page = new DataPage();
+  }
+  elseif (substr($_SERVER['QUERY_STRING'], -3) === '.db' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+    require_once 'dbPage.php';
+    $page = new DbPage();
+  }
+  elseif (substr($_SERVER['QUERY_STRING'], -5) === '.post' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+    require_once 'postPage.php';
+    $page = new PostPage();
   }
   elseif ($_SERVER['QUERY_STRING'] === 'config') {
     require_once 'configPage.php';
@@ -42,6 +50,5 @@
     require_once 'appPage.php';
     $page = new AppPage();
   }
-  $page->init($webURL, $wsURL);
   $page->createPage();
   $page->showPage();

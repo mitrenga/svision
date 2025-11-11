@@ -8,7 +8,7 @@ import AbstractEntity from '../../../abstractEntity.js';
 export class ZXResetEntity extends AbstractEntity {
 
   constructor(parentEntity, x, y, width, height) {
-    super(parentEntity, x, y, width, height);
+    super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXResetEntity';
 
     this.timeTrace = 0;

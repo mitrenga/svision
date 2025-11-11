@@ -4,15 +4,10 @@ require_once 'abstractPage.php';
 
 class ManifestPage extends AbstractPage {
 
-  public function init($webURL, $wsURL) {
-    parent::init($webURL, $wsURL);
-  } // init
-
-
   public function createPage() {
     $this->data['name'] = $GLOBALS['appName'];
     $this->data['short_name'] = $GLOBALS['appName'];
-    $this->data['start_url'] = $this->webURL;
+    $this->data['start_url'] = $GLOBALS['webURL'];
     $this->data['display'] = 'standalone';
     $this->data['background_color'] = '#000000';
     $this->data['theme_color'] = '#000000';
@@ -32,7 +27,6 @@ class ManifestPage extends AbstractPage {
     $icon['purpose'] = 'any maskable';
     $this->data['icons'][] = $icon;
   } // createPage
-
   
   public function showPage() {
 		header ("Content-type: application/manifest+json");

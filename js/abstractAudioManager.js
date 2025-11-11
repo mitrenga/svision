@@ -15,13 +15,13 @@ export class AbstractAudioManager {
     this.audioDataCache = {};
   } // constructor
 
-  createAudioHandler(channel) {
+  createAudioHandler(channel, options) {
     return false;
   } // createAudioHandler
   
-  openChannel(channel) {
+  openChannel(channel, options) {
     if (!(channel in this.channels)) {
-      var audioHandler = this.createAudioHandler(channel);
+      var audioHandler = this.createAudioHandler(channel, options);
       if (audioHandler != false) {
         audioHandler.openChannel(channel);
         this.channels[channel] = audioHandler;
@@ -90,8 +90,25 @@ export class AbstractAudioManager {
   } // continueAllChannels
 
   playSound(channel, sound, options) {
+    if (options === false) {
+      options = {attempts: 0};
+    }
+    if (!('attempts' in options)) {
+      options.attempts = 0;
+    }
+
     if (channel in this.channels) {
-      this.channels[channel].playSound(this.audioData(channel, sound, options), options);
+      if (this.channels[channel].getState() == 'suspended' && options.attempts < 64) {
+        options.attempts += 1;
+        this.app.model.sendEvent(1, {id: 'playSound', channel: channel, sound: sound, options: options});
+      } else {
+        if (this.channels[channel].channelIsReady()) {
+          this.channels[channel].playSound(this.audioData(channel, sound, options), options);
+        } else if (options.attempts < 64) {
+          options.attempts += 1;
+          this.app.model.sendEvent(1, {id: 'playSound', channel: channel, sound: sound, options: options});
+        }
+      }
     }
   } // playSound
 

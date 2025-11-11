@@ -3,11 +3,6 @@
 require_once 'abstractPage.php';
 
 class AppPage extends AbstractPage {
-
-  public function init($webURL, $wsURL) {
-    parent::init($webURL, $wsURL);
-  } // init
-
   
   public function createPage() {
     $srcVersion = md5(time());
@@ -24,12 +19,13 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <link rel="shortcut icon" sizes="256x256" href="images/app-icon-256x256.png" id="app-icon">';
     $this->data[] = '    <link rel="apple-touch-icon" sizes="192x192" href="images/app-icon-192x192.png">';
     $this->data[] = '    <meta name="theme-color" content="#000000">';
-    $this->data[] = '    <link rel="manifest" href="'.$this->webURL.'manifest.webmanifest">';
+    $this->data[] = '    <link rel="manifest" href="'.$GLOBALS['webURL'].'manifest.webmanifest">';
     $this->data[] = '    <meta http-equiv="X-UA-Compatible" content="IE=Edge; IE=11;" />';
     $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
     $this->data[] = '  <body id="bodyApp">';
-    $this->data[] = '    <script>var wsURL = "'.$this->wsURL.'";</script>';
+    $this->data[] = '    <script>var appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
+    $this->data[] = '    <script>var wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
     $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
     
     if ($_COOKIE['libImportMethod'] == 'await-import') {

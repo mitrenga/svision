@@ -38,6 +38,8 @@ export class AbstractEntity {
     this.drawingCropCache = null;
     this.stack = {};
     this.entities = [];
+
+    this.fetchDataId = '';
   } // constructor
   
   init() {
@@ -136,11 +138,19 @@ export class AbstractEntity {
   loopEntity(timestamp) {
   } // loopEntity
 
+  fetchData(url, storage, data) {
+    this.fetchDataId = this.app.fetchData(url, storage, data, this);
+  } // fetchData
+
   setData(data) {
     for (var v = 0; v < this.entities.length; v++) {
       this.entities[v].setData(data);
     }
   } // setData
+
+  errorData(error) {
+    this.app.showErrorMessage(error.message);
+  } // errorData
 
   drawEntity() {
     if (this.hide == true) {
@@ -197,10 +207,30 @@ export class AbstractEntity {
     this.cleanCache();
   } // setBkColor
 
-  cleanCache() {
-    
+  cleanCache() {    
   } // cleanCache
 
+  topModalEntity() {
+    if (this.modalEntity == null) {
+      return this;
+    }
+    return this.modalEntity.topModalEntity();
+  } // topModalEntity
+
+  absoluteX() {
+    if (this.parentEntity == null) {
+      return 0;
+    }    
+    return this.parentEntity.absoluteX()+this.x;
+  } // absolutePosX
+
+  absoluteY() {
+    if (this.parentEntity == null) {
+      return 0;
+    }    
+    return this.parentEntity.absoluteY()+this.y;
+  } // absolutePosY
+  
 } // AbstractEntity
 
 export default AbstractEntity;

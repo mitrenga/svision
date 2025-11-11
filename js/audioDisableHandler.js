@@ -21,6 +21,10 @@ export class AudioDisableHandler extends AbstractAudioHandler {
     return true;
   } // closeChannel
 
+  getState() {
+    return 'running';
+  } // getState
+
   playSound(audioData, options) {
     if ('events' in audioData) {
       var timer = 0;

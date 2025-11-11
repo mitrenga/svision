@@ -16,18 +16,6 @@ export class ZXResetModel extends AbstractModel {
     this.id = 'ZXResetModel';
     this.resetEntity = null;
     this.inputLineEntity = null;
-
-    const http = new XMLHttpRequest();
-    http.responser = this;
-    http.open('GET', 'global.data');
-    http.send();
-
-    http.onreadystatechange = function () {
-      if (this.readyState == 4 && this.status == 200) {
-        var data = JSON.parse(http.responseText);
-        this.responser.sendEvent(1, {id: 'setGlobalData', data: data});
-      }
-    }
   } // constructor
 
   init() {
@@ -40,7 +28,13 @@ export class ZXResetModel extends AbstractModel {
     this.inputLineEntity.hide = true;
     this.desktopEntity.addEntity(this.inputLineEntity);
     this.sendEvent(500, {id: 'showReset'});
+
+    this.fetchData('appData.db', false, {});
   } // init
+
+  setData(data) {
+    this.app.setGlobalData(data);
+  } // setData
 
   handleEvent(event) {
     if (super.handleEvent(event)) {
@@ -62,9 +56,6 @@ export class ZXResetModel extends AbstractModel {
         return true;
       case 'setMenuModel':
         this.app.setModel('MenuModel');
-        return true;
-      case 'setGlobalData':
-        this.app.setGlobalData(event.data);
         return true;
     }
 

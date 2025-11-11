@@ -3,10 +3,6 @@
 require_once 'abstractPage.php';
 
 class ForwardToConfigPage extends AbstractPage {
-
-  public function init($webURL, $wsURL) {
-    parent::init($webURL, $wsURL);
-  } // init
   
   public function createPage() {
     $scriptsVersion = md5(time());

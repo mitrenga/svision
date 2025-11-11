@@ -3,10 +3,6 @@
 require_once 'abstractPage.php';
 
 class ConfigPage extends AbstractPage {
-
-  public function init($webURL, $wsURL) {
-    parent::init($webURL, $wsURL);
-  } // init
   
   public function createPage() {
     $srcVersion = md5(time());
@@ -21,7 +17,7 @@ class ConfigPage extends AbstractPage {
 	  $this->data[] = '';
 
     $this->data[] = '  <body>';
-    $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
+    $this->data[] = '    <script>var srcVersion = "'.$GLOBALS['srcVersion'].'";</script>';
 
     $this->data[] = '    <h1>Configuration</h1>';
     $this->data[] = '    <h2>Browser</h2>';
@@ -178,26 +174,26 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      document.write("</span>");';
     $this->data[] = '';
     $this->data[] = '      function refreshTime() {';
-    $this->data[] = '        var xhttp = new XMLHttpRequest();';
-    $this->data[] = '        xhttp.onreadystatechange = function() {';
-    $this->data[] = '          if (this.readyState == 4 && this.status == 200) {';
-    $this->data[] = '            document.getElementById("server-time").innerHTML = xhttp.responseText;';
-    $this->data[] = '          }';
-    $this->data[] = '          if (this.readyState == 4 && this.status == 0) {';
-    $this->data[] = '            document.getElementById("server-time").innerHTML = "<li><b><span class=\"error\">ERROR: server down</span></b></li>";';
-    $this->data[] = '          }';
-    $this->data[] = '          if (this.readyState == 4 && this.status != 0 && this.status != 200) {';
-    $this->data[] = '            document.getElementById("server-time").innerHTML = "<li><b><span class=\"error\">ERROR: "+this.status+"</span></b></li>";';
-    $this->data[] = '          }';
-    $this->data[] = '        };';
-    $this->data[] = '        xhttp.open("GET", "app/svision/php/serverTime.php", true);';
-    $this->data[] = '        xhttp.send();';
+    $this->data[] = '        fetch("app/svision/php/serverTime.php")';
+    $this->data[] = '          .then((response) => {';
+    $this->data[] = '            if (response.ok) {';
+    $this->data[] = '              return response.text();';
+    $this->data[] = '            }';
+    $this->data[] = '            throw new Error (response.status);';
+    $this->data[] = '          })';
+    $this->data[] = '          .then((text) => {';
+    $this->data[] = '            document.getElementById("server-time").innerHTML = text;';
+    $this->data[] = '          })';
+    $this->data[] = '          .catch((error) => {';
+    $this->data[] = '            document.getElementById("server-time").innerHTML = "ERROR: "+error.message;';
+    $this->data[] = '          })';
+    $this->data[] = '';
     $this->data[] = '        var newTimeStr = "<li>date: "+new Date().toLocaleDateString("en-US", {weekday: "long", month: "short", day: "numeric", year: "numeric"})+"</li>";';
     $this->data[] = '        newTimeStr += "<li>time: "+new Date().toLocaleTimeString("en-US", {hour12: false, hour: "numeric", minute: "numeric", second: "numeric"})+"</li>";';
     $this->data[] = '        newTimeStr += "<li>time zone: "+Intl.DateTimeFormat().resolvedOptions().timeZone+"</li>";';
     $this->data[] = '        var elementDeviceTime = document.getElementById("device-time");';
     $this->data[] = '        elementDeviceTime.innerHTML = newTimeStr';
-    $this->data[] = '        setTimeout(refreshTime, 2000);';
+    $this->data[] = '        setTimeout(refreshTime, 200);';
     $this->data[] = '      } // refreshTime';
     $this->data[] = '';
     $this->data[] = '      refreshTime();';

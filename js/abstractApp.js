@@ -22,6 +22,20 @@ export class AbstractApp {
     this.layout = platform.newLayout(this);
     this.wsURL = wsURL;
     this.webSocket = false;
+
+    this.controls = {
+      keyboard: {
+      },
+      mouse: {
+        enable: false
+      },
+      gamepad: {
+        supported: false
+      },
+      touchscreen: {
+        supported: false
+      }
+    }
   } // constructor
 
   loopApp(timestamp) {
@@ -44,6 +58,76 @@ export class AbstractApp {
     this.resizeApp();
   } // eventResizeWindow
 
+  fetchData(url, storage, data, receiver) {
+    var connectionStatus = 'offline';
+    if (navigator.onLine) {
+      connectionStatus = 'online';
+    }
+
+    if (storage !== false) {
+      if ('key' in storage) {
+        if ('when' in storage) {
+          if (storage.when == 'required' || storage.when == connectionStatus) {
+            if (localStorage.key(window.appPrefix+'.'+storage.key)) {
+              try {
+                var dataJSON = localStorage.getItem(window.appPrefix+'.'+storage.key);
+              } catch (error) {
+                receiver.errorData(error);
+              } finally {
+                var data = {source: 'storage', data: JSON.parse(dataJSON)};
+                receiver.setData(data);
+                return;
+              }
+            }
+          }
+        } else {
+          console.error('the storage object for key:\''+storage.key+'\' does not have a parameter \'when\'');
+        }
+      } else {
+        console.error('the storage object for url:\''+url+'\' does not have a parameter \'key\'');
+      }
+    } else {
+      if (connectionStatus == 'offline') {
+        return;
+      }
+    }
+
+    var fetchDataId = receiver.id+Date.now().toString();
+    var options = {
+      method: 'POST',
+      url: url,
+      body: JSON.stringify(data),
+      dataType: 'json',
+      headers: {fetchDataId: fetchDataId},
+    }
+    fetch(url, options)
+      .then((response) => {
+        if (response.ok) {
+          return response.json();
+        }
+        throw new Error (response.status);
+      })
+      .then((data) => {
+        if ('error' in data) {
+          receiver.errorData(data.error);
+        } else {
+          if (receiver.fetchDataId == data.fetchDataId) {
+            receiver.setData(data);
+          }
+        }
+      })
+      .catch((error) => receiver.errorData(error));
+      
+    return fetchDataId;
+  } // fetchData
+
+  saveDataToStorage(key, data) {
+    localStorage.setItem(window.appPrefix+'.'+key, JSON.stringify(data));
+  } // saveDataToStorage
+
+  showErrorMessage(message) {
+    console.error('ERROR: '+message);
+  } // showErrorMessage
 
   // tools
 
@@ -80,7 +164,7 @@ export class AbstractApp {
   } // rotateDec
 
   setCookie(name, value) {
-    document.cookie=name+'='+value+';max-age=31536000;path=/';
+    document.cookie = name+'='+value+';max-age=31536000;path=/';
   } // setCookie
 
   getCookie(name, defaultValue) {

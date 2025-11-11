@@ -62,6 +62,10 @@ export class AbstractAudioHandler {
   continueChannel() {
   } // continueChannel
 
+  channelIsReady() {
+    return true;
+  } // channelIsReady
+
   playSound(audioData, options) {
   } // playSound
   

@@ -28,6 +28,8 @@ export class AbstractModel {
     this.events = [];
     this.autorepeatKeys = true;
     this.timer = false;
+
+    this.fetchDataId = '';
   } // constructor
 
   newDesktopEntity() {
@@ -60,7 +62,6 @@ export class AbstractModel {
   } // init
 
   shutdown() {
-    this.app.audioManager.closeAllChannels();
   } // shutdown
 
   sendEvent(timing, event) {
@@ -82,7 +83,7 @@ export class AbstractModel {
   handleEvent(event) {
     switch (event.id) {
       case 'openAudioChannel':
-        this.app.audioManager.openChannel(event.channel);
+        this.app.audioManager.openChannel(event.channel, event.options);
         return true;
       case 'closeAudioChannel':
         this.app.audioManager.closeChannel(event.channel);
@@ -96,7 +97,7 @@ export class AbstractModel {
       case 'unsupportedAudioChannel':
         this.app.audioManager.unsupportedAudioChannel = this.app.audioManager.channels[event.channel].id;
         this.sendEvent(50, {id: 'closeAudioChannel', channel: event.channel});
-        this.sendEvent(100, {id: 'openAudioChannel', channel: event.channel});
+        this.sendEvent(100, {id: 'openAudioChannel', channel: event.channel, options: {}});
         return true;
       case 'playSound':
         this.app.audioManager.playSound(event.channel, event.sound, event.options);
@@ -113,6 +114,10 @@ export class AbstractModel {
     return result;
   } // handleEvent
 
+  fetchData(url, storage, data) {
+    this.fetchDataId = this.app.fetchData(url, storage, data, this);
+  } // fetchData
+
   setData(data) {
     if (this.borderEntity != null) {
       this.borderEntity.setData(data);
@@ -120,6 +125,10 @@ export class AbstractModel {
     this.desktopEntity.setData(data);
     this.drawModel();
   } // setData
+
+  errorData(error) {
+    this.app.showErrorMessage(error.message);
+  } // errorData
 
   loopModel(timestamp) {
     for (var m = 0; m < this.events.length; m++) {
