@@ -1,8 +1,11 @@
+/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
+const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
+import ButtonEntity from '../buttonEntity.js';
 /**/
 // begin code
 
@@ -13,8 +16,16 @@ import TextEntity from '../textEntity.js';
 
 
 // ************************ SMAZAT *************************
-const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
+//const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 // ************************ SMAZAT *************************
+
+
+
+
+
+
+
+
 
 export class ZXSelectingGamepadEntity extends AbstractEntity {
 
