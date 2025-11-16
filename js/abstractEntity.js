@@ -149,7 +149,7 @@ export class AbstractEntity {
   } // setData
 
   errorData(error) {
-    this.app.showErrorMessage(error.message);
+    this.app.showErrorMessage(error.message, 'restart');
   } // errorData
 
   drawEntity() {

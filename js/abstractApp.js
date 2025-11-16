@@ -125,7 +125,7 @@ export class AbstractApp {
     localStorage.setItem(window.appPrefix+'.'+key, JSON.stringify(data));
   } // saveDataToStorage
 
-  showErrorMessage(message) {
+  showErrorMessage(message, action) {
     console.error('ERROR: '+message);
   } // showErrorMessage
 

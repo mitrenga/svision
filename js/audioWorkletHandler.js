@@ -20,9 +20,10 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
 
   async openProcessor() {
     try {
-      await this.ctx.audioWorklet.addModule(this.app.importPath+'/svision/js/audioProcessor.js').catch(error => {
-        this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: this.channel});
-      });
+      await this.ctx.audioWorklet.addModule(this.app.importPath+'/svision/js/audioProcessor.js')
+        .catch(error => {
+          this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: this.channel});
+        });
       this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor');
       this.node.connect(this.ctx.destination);
     } catch(error) {

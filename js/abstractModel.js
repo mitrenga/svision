@@ -88,6 +88,9 @@ export class AbstractModel {
       case 'closeAudioChannel':
         this.app.audioManager.closeChannel(event.channel);
         return true;
+      case 'closeAllAudioChannels':
+        this.app.audioManager.closeAllChannels();
+        return true;
       case 'stopAudioChannel':
         this.app.audioManager.stopChannel(event.channel);
         return true;
@@ -127,7 +130,7 @@ export class AbstractModel {
   } // setData
 
   errorData(error) {
-    this.app.showErrorMessage(error.message);
+    this.app.showErrorMessage(error.message, 'restart');
   } // errorData
 
   loopModel(timestamp) {

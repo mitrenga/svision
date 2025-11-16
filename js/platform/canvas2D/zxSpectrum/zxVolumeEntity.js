@@ -21,6 +21,7 @@ export class ZXVolumeEntity extends AbstractEntity {
     this.cookie = cookie;
     this.sampleSound = sampleSound;
     this.cursorEntity = null;
+    this.driverEntity = null;
   } // constructor
 
   init() {
@@ -61,6 +62,9 @@ export class ZXVolumeEntity extends AbstractEntity {
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 67, 90, 67, 13, 'PLAY SAMPLE', 'playSample', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {margin: 4}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeVolume', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
+
+    this.driverEntity = new TextEntity(this, this.app.fonts.fonts5x5, 3, this.height-8, this.width-6, 5, '', this.app.platform.colorByName('brightRed'), false, {});
+    this.addEntity(this.driverEntity);
   } // init
 
   changeVolume(volume) {
@@ -86,7 +90,20 @@ export class ZXVolumeEntity extends AbstractEntity {
         return true;
       case 'playSample':
         this.sendEvent(0, 0, {id: 'openAudioChannel', channel: this.channel, options: {audioDisableHandler: 'disable'}});
+        if (this.app.audioManager.volume[this.channel] == 0.0) {
+          this.driverEntity.setText('NOTE: AUDIO DRIVER IS OFF');
+        } else {
+          if (this.app.audioManager.channels[this.channel].id == 'AudioWorkletHandler') {
+            this.driverEntity.setText('');
+          } else {
+            this.driverEntity.setText('WARNING: DRIVER IS DEPRECATED!');
+          }
+        }
         this.sendEvent(0, 0, {id: 'playSound', sound: this.sampleSound, channel: this.channel, options: false});
+        return true;
+      case 'errorAudioChannel':
+        this.driverEntity.setText(event.error.toUpperCase());
+        this.app.showErrorMessage(event.error, 'reopen');
         return true;
       case 'closeVolume':
         this.sendEvent(0, 0, {id: 'closeAudioChannel', channel: this.channel});

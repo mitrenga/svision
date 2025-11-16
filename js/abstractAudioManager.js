@@ -43,12 +43,19 @@ export class AbstractAudioManager {
     while (Object.keys(this.channels).length > 0) {
       this.closeChannel(Object.keys(this.channels)[0]);
     }
+    this.closeCounter++;
   } // closeAllChannels
   
   refreshAllChannels() {
     Object.keys(this.channels).forEach(channel => {
-      if (this.channels[channel].getState() == 'suspended') {
-        this.channels[channel].ctx.resume();
+      if (this.channels[channel].getState() != 'running') {
+        this.channels[channel].ctx.resume()
+          .then(() => {
+          })
+          .catch(error => {
+            console.error('AudioContext error: '+error.message);
+            this.channels[channel].error = error.message;
+          });
       }
     });
   } // refreshAllChannels
@@ -98,9 +105,21 @@ export class AbstractAudioManager {
     }
 
     if (channel in this.channels) {
-      if (this.channels[channel].getState() == 'suspended' && options.attempts < 64) {
-        options.attempts += 1;
-        this.app.model.sendEvent(1, {id: 'playSound', channel: channel, sound: sound, options: options});
+      if (this.channels[channel].getState() != 'running' && options.attempts < 64) {
+        if (this.channels[channel].error === false) {
+          this.channels[channel].ctx.resume()
+            .then(() => {
+              this.channels[channel].error = false;
+            })
+            .catch(error => {
+              console.error('AudioContext error: '+error.message);
+              this.channels[channel].error = error.message;
+            });
+          options.attempts += 1;
+          this.app.model.sendEvent(1, {id: 'playSound', channel: channel, sound: sound, options: options});
+        } else {
+          this.app.model.sendEvent(1, {id: 'errorAudioChannel', channel: channel, sound: sound, options: options, error: this.channels[channel].error});
+        }
       } else {
         if (this.channels[channel].channelIsReady()) {
           this.channels[channel].playSound(this.audioData(channel, sound, options), options);

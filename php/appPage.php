@@ -24,6 +24,7 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
     $this->data[] = '  <body id="bodyApp">';
+    $this->data[] = '    <script>var appName = "'.$GLOBALS['appName'].'";</script>';
     $this->data[] = '    <script>var appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
     $this->data[] = '    <script>var wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
     $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
