@@ -55,11 +55,11 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
   } // paintRect
 
   convertClientCoordinateX(clientX) {
-    return this.app.element.width/this.ratio/this.app.element.clientWidth*clientX;
+    return Math.round(this.app.element.width/this.ratio/this.app.element.clientWidth*clientX);
   } // convertClientCoordinateX
 
   convertClientCoordinateY(clientY) {
-    return this.app.element.height/this.ratio/this.app.element.clientHeight*clientY;
+    return Math.round(this.app.element.height/this.ratio/this.app.element.clientHeight*clientY);
   } // convertClientCoordinateY
 
 } // ZXSpectrumLayout
