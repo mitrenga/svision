@@ -44,10 +44,6 @@ export class AudioDisableHandler extends AbstractAudioHandler {
     return 44100;
   } // getSampleRate
 
-  getState() {
-    return 'disable';
-  } // getState
-
 } // AudioDiableHandler
 
 export default AudioDisableHandler;
