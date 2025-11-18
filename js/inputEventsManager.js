@@ -153,8 +153,9 @@ export class InputEventsManager {
   updateGamepadsStates() {
     Object.keys(this.app.controls.gamepads).forEach((id) => {
       if (id in this.app.inputEventsManager.gamepads) {
+        // buttons
         for (var b = 0; b < this.app.controls.gamepads[id].buttons.length; b++) {
-          var buttonId = id+b.toString().padStart(2, '0');
+          var buttonId = 'B'+id+b.toString().padStart(2, '0');
           if (this.app.inputEventsManager.gamepads[id].buttons[this.app.controls.gamepads[id].buttons[b].id].pressed) {
             if (!(buttonId in this.gamepadsMap)) {
               this.gamepadsMap[buttonId] = this.app.controls.gamepads[id].buttons[b].event;
@@ -164,6 +165,24 @@ export class InputEventsManager {
             if ((buttonId in this.gamepadsMap)) {
               delete this.gamepadsMap[buttonId];
               this.app.model.sendEvent(0, {id: 'keyRelease', key: this.app.controls.gamepads[id].buttons[b].event});
+            }
+          }
+        }
+        // axes
+        for (var a = 0; a < this.app.controls.gamepads[id].axes.length; a++) {
+          var axisId = 'A'+id+a.toString().padStart(2, '0');
+          if (
+            this.app.inputEventsManager.gamepads[id].axes[this.app.controls.gamepads[id].axes[a].id] >= this.app.controls.gamepads[id].axes[a].min &&
+            this.app.inputEventsManager.gamepads[id].axes[this.app.controls.gamepads[id].axes[a].id] <= this.app.controls.gamepads[id].axes[a].max
+          ) {
+            if (!(axisId in this.gamepadsMap)) {
+              this.gamepadsMap[axisId] = this.app.controls.gamepads[id].axes[a].event;
+              this.app.model.sendEvent(0, {id: 'keyPress', key: this.app.controls.gamepads[id].axes[a].event});
+            }
+          } else {
+            if ((axisId in this.gamepadsMap)) {
+              delete this.gamepadsMap[axisId];
+              this.app.model.sendEvent(0, {id: 'keyRelease', key: this.app.controls.gamepads[id].axes[a].event});
             }
           }
         }
