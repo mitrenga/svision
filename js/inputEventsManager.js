@@ -12,6 +12,7 @@ export class InputEventsManager {
 
     this.keysMap = {};
     this.touchesMap = {};
+    this.gamepadsMap = {};
     this.gamepads = {};
     this.blurWindow = false;
   } // constructor
@@ -153,10 +154,17 @@ export class InputEventsManager {
     Object.keys(this.app.controls.gamepads).forEach((id) => {
       if (id in this.app.inputEventsManager.gamepads) {
         for (var b = 0; b < this.app.controls.gamepads[id].buttons.length; b++) {
+          var buttonId = id+b.toString().padStart(2, '0');
           if (this.app.inputEventsManager.gamepads[id].buttons[this.app.controls.gamepads[id].buttons[b].id].pressed) {
-            this.app.model.sendEvent(0, {id: 'keyPress', key: this.app.controls.gamepads[id].buttons[b].event});
+            if (!(buttonId in this.gamepadsMap)) {
+              this.gamepadsMap[buttonId] = this.app.controls.gamepads[id].buttons[b].event;
+              this.app.model.sendEvent(0, {id: 'keyPress', key: this.app.controls.gamepads[id].buttons[b].event});
+            }
           } else {
-            this.app.model.sendEvent(0, {id: 'keyRelease', key: this.app.controls.gamepads[id].buttons[b].event});
+            if ((buttonId in this.gamepadsMap)) {
+              delete this.gamepadsMap[buttonId];
+              this.app.model.sendEvent(0, {id: 'keyRelease', key: this.app.controls.gamepads[id].buttons[b].event});
+            }
           }
         }
       }
@@ -180,9 +188,13 @@ export class InputEventsManager {
     Object.keys(this.touchesMap).forEach((identification) => {
       this.app.model.sendEvent(0, {id: 'key'+type, key: this.touchesMap[identification]});
     });
+    Object.keys(this.gamepadsMap).forEach((buttonId) => {
+      this.app.model.sendEvent(0, {id: 'key'+type, key: this.gamepadsMap[buttonId]});
+    });
     if (type == 'Release') {
       this.keysMap = {};
       this.touchesMap = {};
+      this.gamepadsMap = {};
     }
   } // sendEventsActiveKeys
 
