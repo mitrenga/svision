@@ -54,11 +54,11 @@ export class InputEventsManager {
     var buttons = event.buttons;
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 1) {
-        if (!('MouseButton'+(1<<b) in this.keysMap)) {
-          this.keysMap['MouseButton'+(1<<b)] = true;
+        if (!('Mouse'+(1<<b) in this.keysMap)) {
+          this.keysMap['Mouse'+(1<<b)] = true;
           if (this.app.model) {
             if (!this.blurWindow) {
-              this.app.model.sendEvent(0, {id: 'keyPress', key: 'MouseButton'+(1<<b)});
+              this.app.model.sendEvent(0, {id: 'keyPress', key: 'Mouse'+(1<<b)});
             }
           }
         }
@@ -71,10 +71,10 @@ export class InputEventsManager {
     var buttons = event.buttons;
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 0) {
-        if ('MouseButton'+(1<<b) in this.keysMap) {
-          delete this.keysMap['MouseButton'+(1<<b)];
+        if ('Mouse'+(1<<b) in this.keysMap) {
+          delete this.keysMap['Mouse'+(1<<b)];
           if (this.app.model) {
-            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'MouseButton'+(1<<b)});
+            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Mouse'+(1<<b)});
           }
         }
       }
@@ -94,13 +94,13 @@ export class InputEventsManager {
           var touchY = this.app.layout.convertClientCoordinateY(event.touches[t].clientY);
           var key = false;
           if (touchX < this.app.model.borderEntity.width/2) {
-            key = 'TouchArea4';
+            key = 'Touch4';
           }
           if (touchX > this.app.model.borderEntity.width/2 && touchX < this.app.model.borderEntity.width/4*3) {
-            key = 'TouchArea1';
+            key = 'Touch1';
           }
           if (touchX > this.app.model.borderEntity.width/4*3) {
-            key = 'TouchArea2';
+            key = 'Touch2';
           }
           if (key !== false) {
             this.app.model.sendEvent(0, {id: 'keyPress', key: key});
@@ -148,6 +148,20 @@ export class InputEventsManager {
       this.app.model.sendEvent(0, {id: 'gamepadDisconnected'});
     }
   } // eventGamepadDisconnected
+
+  updateGamepadsStates() {
+    Object.keys(this.app.controls.gamepads).forEach((id) => {
+      if (id in this.app.inputEventsManager.gamepads) {
+        for (var b = 0; b < this.app.controls.gamepads[id].buttons.length; b++) {
+          if (this.app.inputEventsManager.gamepads[id].buttons[this.app.controls.gamepads[id].buttons[b].id].pressed) {
+            this.app.model.sendEvent(0, {id: 'keyPress', key: this.app.controls.gamepads[id].buttons[b].event});
+          } else {
+            this.app.model.sendEvent(0, {id: 'keyRelease', key: this.app.controls.gamepads[id].buttons[b].event});
+          }
+        }
+      }
+    });
+  } // updateGamepadsStates
 
   eventBlurWindow(event) {
     this.blurWindow = true;

@@ -134,6 +134,7 @@ export class AbstractModel {
   } // errorData
 
   loopModel(timestamp) {
+    this.app.inputEventsManager.updateGamepadsStates();
     for (var m = 0; m < this.events.length; m++) {
       if (this.events[m].timing <= timestamp) {
         this.sendEvent(0, this.events[m].event);
