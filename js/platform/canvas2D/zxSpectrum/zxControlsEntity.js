@@ -165,27 +165,6 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(this.controlsEntites.tsChange = new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 82, 64, 13, 'CHANGE', 'touchscreenChange', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'touchscreen.supported', hide: true}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeAbout', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
-
-// ************************ SMAZAT *************************
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 0, this.height-3, 7, 3, '1', 'addController1', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 8, this.height-3, 7, 3, '2', 'addController2', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 16, this.height-3, 7, 3, '3', 'addController3', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 24, this.height-3, 7, 3, '4', 'addController4', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 32, this.height-3, 7, 3, '5', 'addController5', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 40, this.height-3, 7, 3, '6', 'addController6', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 48, this.height-3, 7, 3, '7', 'addController7', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 56, this.height-3, 7, 3, '8', 'addController8', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 64, this.height-3, 7, 3, '9', 'addController9', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 72, this.height-3, 7, 3, '1', 'delController1', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 80, this.height-3, 7, 3, '2', 'delController2', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 88, this.height-3, 7, 3, '3', 'delController3', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 96, this.height-3, 7, 3, '4', 'delController4', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 104, this.height-3, 7, 3, '5', 'delController5', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 112, this.height-3, 7, 3, '6', 'delController6', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 120, this.height-3, 7, 3, '7', 'delController7', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 128, this.height-3, 7, 3, '8', 'delController8', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts3x3, 136, this.height-3, 7, 3, '9', 'delController9', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center'}));
-// ************************ SMAZAT *************************
   } // init
 
   refreshDevices() {
@@ -228,7 +207,7 @@ export class ZXControlsEntity extends AbstractEntity {
         break;
 
       case 'gamepad':
-        if (!this.app.controls.gamepad.supported) {
+        if (!this.app.controls.gamepads.supported) {
             group += '.notFound.unsupported';
         } else {
           if (!Object.keys(this.app.inputEventsManager.gamepads).length) {
