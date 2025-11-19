@@ -35,7 +35,7 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
       this.menuEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 2, 2+y*8, this.width-4, 9, '', false, false, {margin: 1});
       this.addEntity(this.menuEntities[y]);
     }
-    this.setMenuItems();s
+    this.setMenuItems();
   } // init
 
   setMenuItems() {

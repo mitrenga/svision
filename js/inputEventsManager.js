@@ -154,7 +154,7 @@ export class InputEventsManager {
     if (!this.app.controls.gamepads.supported) {
       return;
     }
-    
+
     Object.keys(this.app.controls.gamepads.devices).forEach((id) => {
       if (id in this.app.inputEventsManager.gamepads) {
         var cfgDevice = this.app.controls.gamepads.devices[id];
@@ -179,7 +179,7 @@ export class InputEventsManager {
         for (var a = 0; a < cfgDevice.axes.length; a++) {
           var axisId = 'A'+id+a.toString().padStart(2, '0');
           var axis = cfgDevice.axes[a];
-          if (connectedDevice.axes[axis.id] >= axis.min && connectedDevice.axes[axis.id] <= axis.max) {
+          if (connectedDevice.axes[axis.id]*axis.direction > 0.2) {
             if (!(axisId in this.gamepadsMap)) {
               this.gamepadsMap[axisId] = axis.event;
               this.app.model.sendEvent(0, {id: 'keyPress', key: axis.event});

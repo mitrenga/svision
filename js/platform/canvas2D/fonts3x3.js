@@ -75,7 +75,8 @@ export class Fonts3x3 extends AbstractFonts {
       '←': {width: 2, data: [[0,1,1,1], [1,0,1,3]]},
       '↓': {width: 3, data: [[0,1,3,1], [1,2,1,1]]},
       '↑': {width: 3, data: [[1,0,1,1], [0,1,3,1]]},
-      '➔': {width: 2, data: [[0,0,1,3], [1,1,1,1]]}
+      '➔': {width: 2, data: [[0,0,1,3], [1,1,1,1]]},
+      '█': {width: 2, data: [[0,0,2,3]]}
     }
   } // constructor
 
