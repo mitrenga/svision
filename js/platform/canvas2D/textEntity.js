@@ -58,18 +58,22 @@ export class TextEntity  extends AbstractEntity {
   setText(text) {
     if (this.text != text) {
       this.text = text;
-    this.cleanCache();
+      this.cleanCache();
     }
   } // setText
 
   setPenColor(color) {
-    this.penColor = color;
-    this.cleanCache();
+    if (color != this.penColor) {
+      this.penColor = color;
+      this.cleanCache();
+    }
   } // setPenColor
 
   setBkColor(color) {
-    this.bkColor = color;
-    this.cleanCache();
+    if (color != this.bkColor) {
+      this.bkColor = color;
+      this.cleanCache();
+    }
   } // setBkColor
 
   cleanCache() {
