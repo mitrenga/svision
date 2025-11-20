@@ -31,14 +31,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 30, 18+12*k, 74, 9, this.keysMap.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-62, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.keysMap.keys[k].action}));
     }
-    this.sendEvent(1, 0, {
-      id: 'updateEntity',
-      member: this.keysMap.keys[0].action,
-      penColor: this.app.platform.colorByName('brightWhite'),
-      bkColor: this.app.platform.colorByName('brightBlue'),
-      text: this.cursorText(),
-      hide: false
-    });
+    this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[0].action, penColor: this.app.platform.colorByName('brightWhite'), bkColor: this.app.platform.colorByName('brightBlue'), text: this.cursorText(), hide: false});
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
   } // init
@@ -77,29 +70,17 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         }
         if (newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) {
           this.newKeys.push({action: this.keysMap.keys[this.position].action, key: newKey});
-          this.sendEvent(1, 0, {
-            id: 'updateEntity',
-            member: this.keysMap.keys[this.position].action,
-            penColor: this.app.platform.colorByName('brightBlue'),
-            bkColor: false,
-            text: this.parentEntity.prettyKey(newKey)
-          });
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.parentEntity.prettyKey(newKey)});
           this.position++;
           if (this.position == this.keysMap.keys.length) {
             this.newKeys.forEach((newKey) => {
+              this.sendEvent(-1, 0, {id: 'updateEntity', member: this.keysMap.device+'.'+newKey.action, text: this.parentEntity.prettyKey(newKey.key)});
               this.app.controls[this.keysMap.device][newKey.action] = newKey.key;
             });
             this.destroy();
             return true;
           }
-          this.sendEvent(1, 0, {
-            id: 'updateEntity',
-            member: this.keysMap.keys[this.position].action,
-            penColor: this.app.platform.colorByName('brightWhite'),
-            bkColor: this.app.platform.colorByName('brightBlue'),
-            text: this.cursorText(),
-            hide: false
-          });
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightWhite'), bkColor: this.app.platform.colorByName('brightBlue'), text: this.cursorText(), hide: false});
         }
         break;
     }
