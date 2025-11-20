@@ -80,6 +80,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
               this.sendEvent(-1, 0, {id: 'updateEntity', member: this.keysMap.device+'.'+newKey.action, text: this.parentEntity.prettyKey(newKey.key)});
               this.app.controls[this.keysMap.device][newKey.action] = newKey.key;
             });
+            this.app.setCookie(this.keysMap.device, JSON.stringify(this.app.controls[this.keysMap.device]));
             this.destroy();
             return true;
           }

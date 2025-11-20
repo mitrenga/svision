@@ -73,9 +73,9 @@ export class AbstractModel {
   } // sendEvent
 
   cancelEvent(id) {
-    for (var m = 0; m < this.events.length; m++) {
-      if (id == this.events[m].id) {
-        this.events.splice(m, 1);
+    for (var e = 0; e < this.events.length; e++) {
+      if (id == this.events[e].id) {
+        this.events.splice(e, 1);
       }
     }
   } // cancelEvent

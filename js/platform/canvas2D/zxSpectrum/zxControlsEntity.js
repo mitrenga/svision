@@ -326,12 +326,18 @@ export class ZXControlsEntity extends AbstractEntity {
         return true;
 
       case 'mouseEnable':
+        this.app.controls.mouse = this.app.getControls('mouse', false);
         this.app.controls.mouse.enable = true;
+        this.app.setCookie('mouse', JSON.stringify(this.app.controls.mouse));
+        this.options.mouse.keys.forEach((key) => {
+          this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: this.prettyKey(this.app.controls.mouse[key.action])});
+        });
         this.changeGroup(this.selectedDevice);
         return true;
 
       case 'mouseDisable':
         this.app.controls.mouse.enable = false;
+        this.app.setCookie('mouse', JSON.stringify({enable: false}));
         this.changeGroup(this.selectedDevice);
         return true;
 
