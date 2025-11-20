@@ -40,6 +40,9 @@ export class TextEntity  extends AbstractEntity {
       this.options.bottomMargin = this.options.margin;
     }
 
+    if ('member' in options) {
+      this.member = options.member;
+    }
     if ('group' in options) {
       this.group = options.group;
     }
@@ -292,6 +295,33 @@ export class TextEntity  extends AbstractEntity {
 
     this.app.layout.paintCache(this, 0);
   } // drawEntity
+
+  handleEvent(event) {
+    if (super.handleEvent(event)) {
+      return true;
+    }
+
+    switch (event.id) {
+      case 'updateElement':
+        if ('member' in event && event.member == this.member.substr(0, event.member.length)) {
+          if ('text' in event) {
+            this.setText(event.text);
+          }
+          if ('penColor' in event) {
+            this.setPenColor(event.penColor);
+          }
+          if ('bkColor' in event) {
+            this.setBkColor(event.bkColor);
+          }
+          if ('hide' in event) {
+            this.hide = event.hide;
+          }
+          return true;
+        }
+        break;
+    }
+    return false;
+  } // handleEvent
 
 } // TextEntity
 

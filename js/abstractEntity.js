@@ -25,6 +25,7 @@ export class AbstractEntity {
     this.bkColor = bkColor;
     this.penColor = penColor;
     this.hide = false;
+    this.member = '';
     this.group = '';
     this.modal = false;
     this.modalEntity = null;
