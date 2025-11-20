@@ -17,8 +17,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
     this.keysMap = keysMap;
     this.newKeys = [];
-    this.keysEntities = [];
-    this.pos = 0;
+    this.position = 0;
     this.validFnKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace', 'Delete', 'Clear', 'Shift', 'Control', 'Meta', 'Alt'];
   } // constructor
 
@@ -30,13 +29,16 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
     for (var k = 0; k < this.keysMap.keys.length; k++) {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 30, 18+12*k, 74, 9, this.keysMap.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));
-      var keyEntity = new TextEntity(this, this.app.fonts.fonts5x5, this.width-62, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true});
-      this.addEntity(keyEntity);
-      this.keysEntities.push(keyEntity);
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-62, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.keysMap.keys[k].action}));
     }
-    this.keysEntities[0].setPenColor(this.app.platform.colorByName('brightWhite'));
-    this.keysEntities[0].setBkColor(this.app.platform.colorByName('brightBlue'));
-    this.keysEntities[0].hide = false;
+    this.sendEvent(1, 0, {
+      id: 'updateEntity',
+      member: this.keysMap.keys[0].action,
+      penColor: this.app.platform.colorByName('brightWhite'),
+      bkColor: this.app.platform.colorByName('brightBlue'),
+      text: this.cursorText(),
+      hide: false
+    });
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
   } // init
@@ -61,9 +63,9 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         return true;
 
       case 'changeFlashState':
-        this.keysEntities[this.pos].setText(this.cursorText());
+        this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, text: this.cursorText()});
         break;
-        
+
       case 'keyPress':
         var newKey = false;
         if (event.key.length == 1) {
@@ -74,21 +76,30 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           newKey = event.key;
         }
         if (newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) {
-          this.newKeys.push({variable: this.keysMap.keys[this.pos].variable, key: newKey});
-          this.keysEntities[this.pos].setPenColor(this.app.platform.colorByName('brightBlue'));
-          this.keysEntities[this.pos].setBkColor(false);
-          this.keysEntities[this.pos].setText(this.parentEntity.prettyKey(newKey));
-          this.pos++;
-          if (this.pos == this.keysMap.keys.length) {
+          this.newKeys.push({action: this.keysMap.keys[this.position].action, key: newKey});
+          this.sendEvent(1, 0, {
+            id: 'updateEntity',
+            member: this.keysMap.keys[this.position].action,
+            penColor: this.app.platform.colorByName('brightBlue'),
+            bkColor: false,
+            text: this.parentEntity.prettyKey(newKey)
+          });
+          this.position++;
+          if (this.position == this.keysMap.keys.length) {
             this.newKeys.forEach((newKey) => {
-              this.app.controls[this.keysMap.device][newKey.variable] = newKey.key;
+              this.app.controls[this.keysMap.device][newKey.action] = newKey.key;
             });
             this.destroy();
             return true;
           }
-          this.keysEntities[this.pos].setPenColor(this.app.platform.colorByName('brightWhite'));
-          this.keysEntities[this.pos].setBkColor(this.app.platform.colorByName('brightBlue'));
-          this.keysEntities[this.pos].hide = false;
+          this.sendEvent(1, 0, {
+            id: 'updateEntity',
+            member: this.keysMap.keys[this.position].action,
+            penColor: this.app.platform.colorByName('brightWhite'),
+            bkColor: this.app.platform.colorByName('brightBlue'),
+            text: this.cursorText(),
+            hide: false
+          });
         }
         break;
     }

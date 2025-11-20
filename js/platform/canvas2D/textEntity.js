@@ -302,7 +302,7 @@ export class TextEntity  extends AbstractEntity {
     }
 
     switch (event.id) {
-      case 'updateElement':
+      case 'updateEntity':
         if ('member' in event && event.member == this.member.substr(0, event.member.length)) {
           if ('text' in event) {
             this.setText(event.text);
@@ -316,7 +316,11 @@ export class TextEntity  extends AbstractEntity {
           if ('hide' in event) {
             this.hide = event.hide;
           }
-          return true;
+          if ('multiple' in event && event.multiple) {
+            return false;
+          } else {
+            return true;
+          }
         }
         break;
     }

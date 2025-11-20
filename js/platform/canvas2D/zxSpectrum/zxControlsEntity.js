@@ -40,19 +40,19 @@ export class ZXControlsEntity extends AbstractEntity {
       'keyboard': {
         device: 'keyboard',
         keys: [
-          {variable: 'left', label: 'WALKING LEFT'},
-          {variable: 'right', label: 'WALKING RIGHT'},
-          {variable: 'jump', label: 'JUMP'},
-          {variable: 'music', label: 'MUSIC ON/OFF'},
-          {variable: 'sounds', label: 'SOUNDS ON/OFF'}
+          {action: 'left', label: 'WALKING LEFT'},
+          {action: 'right', label: 'WALKING RIGHT'},
+          {action: 'jump', label: 'JUMP'},
+          {action: 'music', label: 'MUSIC ON/OFF'},
+          {action: 'sounds', label: 'SOUNDS ON/OFF'}
         ]
       },
       'mouse': {
         device: 'mouse',
         keys: [
-          {variable: 'left', label: 'WALKING LEFT'},
-          {variable: 'right', label: 'WALKING RIGHT'},
-          {variable: 'jump', label: 'JUMP'}
+          {action: 'left', label: 'WALKING LEFT'},
+          {action: 'right', label: 'WALKING RIGHT'},
+          {action: 'jump', label: 'JUMP'}
         ]
       }
     }
@@ -174,7 +174,7 @@ export class ZXControlsEntity extends AbstractEntity {
   addOptionsEntities(y, device, group, hide) {
     for (var k = 0; k < this.options[device].keys.length; k++) {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, y+12*k, 74, 9, this.options[device].keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2, group: group, hide: hide}));
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, y+12*k, 32, 9, this.prettyKey(this.app.controls[device][this.options[device].keys[k].variable]), this.app.platform.colorByName('brightBlue'), false, {margin: 2, align: 'center', group: group, hide: hide}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, y+12*k, 32, 9, this.prettyKey(this.app.controls[device][this.options[device].keys[k].action]), this.app.platform.colorByName('brightBlue'), false, {margin: 2, align: 'center', group: group, hide: hide}));
     }
   } // addOptionsEntities
 
