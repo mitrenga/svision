@@ -18,7 +18,10 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     this.keysMap = keysMap;
     this.newKeys = [];
     this.position = 0;
-    this.validFnKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace', 'Delete', 'Clear', 'Shift', 'Control', 'Meta', 'Alt'];
+    this.validFnKeys = {
+      keyboard: ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace', 'Delete', 'Clear', 'Shift', 'Control', 'Meta', 'Alt'],
+      mouse: ['Mouse1', 'Mouse2', 'Mouse4', 'Mouse8', 'Mouse16', 'Mouse32', 'Mouse64', 'Mouse128']
+    };
   } // constructor
 
   init() {
@@ -65,7 +68,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           if (event.key.toUpperCase() in this.app.fonts.fonts5x5.fontsData) {
             newKey = event.key.toUpperCase();
           }
-        } else if (this.validFnKeys.indexOf(event.key) >= 0) {
+        } else if (this.validFnKeys[this.keysMap.device].indexOf(event.key) >= 0) {
           newKey = event.key;
         }
         if (newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) {
