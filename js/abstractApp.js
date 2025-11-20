@@ -71,12 +71,11 @@ export class AbstractApp {
             if (localStorage.key(window.appPrefix+'.'+storage.key)) {
               try {
                 var dataJSON = localStorage.getItem(window.appPrefix+'.'+storage.key);
-              } catch (error) {
-                receiver.errorData(error);
-              } finally {
                 var data = {source: 'storage', data: JSON.parse(dataJSON)};
                 receiver.setData(data);
                 return;
+              } catch (error) {
+                receiver.errorData(error);
               }
             }
           }
