@@ -15,6 +15,7 @@ export class InputEventsManager {
     this.gamepadsMap = {};
     this.gamepads = {};
     this.blurWindow = false;
+    this.ignoreFirstClick = false;
   } // constructor
   
   eventKeyDown(event) {
@@ -39,6 +40,10 @@ export class InputEventsManager {
 
   eventClick(event) {
     event.preventDefault();
+    if (this.ignoreFirstClick) {
+      this.ignoreFirstClick = false;
+      return;
+    }
     if (this.app.model) {
       this.app.model.sendEvent(0, {id: 'mouseClick', key: 'left', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
     }
