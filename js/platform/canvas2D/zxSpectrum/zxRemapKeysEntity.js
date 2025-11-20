@@ -11,12 +11,15 @@ import TextEntity from '../textEntity.js';
 
 export class ZXRemapKeysEntity extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height, keys) {
+  constructor(parentEntity, x, y, width, height, keysMap) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXRemapKeysEntity';
 
-    this.keys = keys;
-    this.cursorEntity = null;
+    this.keysMap = keysMap;
+    this.newKeys = [];
+    this.keysEntities = [];
+    this.pos = 0;
+    this.validFnKeys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace', 'Delete', 'Clear', 'Shift', 'Control', 'Meta', 'Alt'];
   } // constructor
 
   init() {
@@ -25,15 +28,26 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, this.app.platform.colorByName('black')));
     this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, this.app.platform.colorByName('white')));
 
-    for (var k = 0; k < this.keys.keys.length; k++) {
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 30, 18+12*k, 74, 9, this.keys.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));
+    for (var k = 0; k < this.keysMap.keys.length; k++) {
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 30, 18+12*k, 74, 9, this.keysMap.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));
+      var keyEntity = new TextEntity(this, this.app.fonts.fonts5x5, this.width-62, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true});
+      this.addEntity(keyEntity);
+      this.keysEntities.push(keyEntity);
     }
-    this.addEntity(this.cursorEntity = new TextEntity(this, this.app.fonts.fonts5x5, this.width-62, 18, 32, 9, '', this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 2}));
-
+    this.keysEntities[0].setPenColor(this.app.platform.colorByName('brightWhite'));
+    this.keysEntities[0].setBkColor(this.app.platform.colorByName('brightBlue'));
+    this.keysEntities[0].hide = false;
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
   } // init
 
+  cursorText() {
+    var cursor = '';
+    if (this.app.stack.flashState) {
+      cursor = '█';
+    }
+    return cursor;
+  } // cursorText
 
   handleEvent(event) {
     if (super.handleEvent(event)) {
@@ -47,14 +61,35 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         return true;
 
       case 'changeFlashState':
-        if (this.app.stack.flashState) {
-          this.cursorEntity.setText('█');
-        } else {
-          this.cursorEntity.setText('');
-        }
+        this.keysEntities[this.pos].setText(this.cursorText());
         break;
         
       case 'keyPress':
+        var newKey = false;
+        if (event.key.length == 1) {
+          if (event.key.toUpperCase() in this.app.fonts.fonts5x5.fontsData) {
+            newKey = event.key.toUpperCase();
+          }
+        } else if (this.validFnKeys.indexOf(event.key) >= 0) {
+          newKey = event.key;
+        }
+        if (newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) {
+          this.newKeys.push({variable: this.keysMap.keys[this.pos].variable, key: newKey});
+          this.keysEntities[this.pos].setPenColor(this.app.platform.colorByName('brightBlue'));
+          this.keysEntities[this.pos].setBkColor(false);
+          this.keysEntities[this.pos].setText(this.parentEntity.prettyKey(newKey));
+          this.pos++;
+          if (this.pos == this.keysMap.keys.length) {
+            this.newKeys.forEach((newKey) => {
+              this.app.controls[this.keysMap.device][newKey.variable] = newKey.key;
+            });
+            this.destroy();
+            return true;
+          }
+          this.keysEntities[this.pos].setPenColor(this.app.platform.colorByName('brightWhite'));
+          this.keysEntities[this.pos].setBkColor(this.app.platform.colorByName('brightBlue'));
+          this.keysEntities[this.pos].hide = false;
+        }
         break;
     }
 

@@ -194,8 +194,16 @@ export class ZXControlsEntity extends AbstractEntity {
         return '↑';
       case 'ArrowDown':
         return '↓';
+      case 'Backspace':
+        return 'BACK';
+      case 'Delete':
+        return 'DEL';
+      case 'Clear':
+        return 'CLR';
+      case 'Control':
+        return 'CTRL';
     }
-    return key;
+    return key.toUpperCase();
   } // prettyKey
 
   refreshDevices() {
