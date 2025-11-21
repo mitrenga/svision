@@ -17,7 +17,7 @@ class ConfigPage extends AbstractPage {
 	  $this->data[] = '';
 
     $this->data[] = '  <body>';
-    $this->data[] = '    <script>var srcVersion = "'.$GLOBALS['srcVersion'].'";</script>';
+    $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
 
     $this->data[] = '    <h1>Configuration</h1>';
     $this->data[] = '    <h2>Browser</h2>';
@@ -88,7 +88,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">await import support:</span>")';
     $this->data[] = '        document.write("<span id=\"await-import\">...</span>")';
-    if ($_COOKIE['libImportMethod'] == 'await-import') {
+    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'await-import') {
       $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"enable\">enable</span>")';
     } else {
       $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"disable\">disable</span>")';
@@ -108,7 +108,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">import from support:</span>")';
     $this->data[] = '        document.write("<span id=\"import-from\">...</span>")';
-    if ($_COOKIE['libImportMethod'] == 'import-from') {
+    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'import-from') {
       $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"enable\">enable</span>")';
     } else {
       $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"disable\">disable</span>")';
@@ -126,20 +126,20 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      <script type="module" src="app/svision/js/config/checkImportFrom.js?ver='.$srcVersion.'"></script>';
     $this->data[] = '    </ul>';
   	$this->data[] = '';
-    if ($_COOKIE['libImportMethod'] != 'await-import') {
+    if (!isset($_COOKIE['libImportMethod']) || $_COOKIE['libImportMethod'] != 'await-import') {
       $this->data[] = '    <script>document.write("<button onclick=\"document.cookie=\'libImportMethod=await-import;max-age=31536000;path=/\';location.reload();\">Enable \'await import\'</button>");</script>';
     }
-    if ($_COOKIE['libImportMethod'] != 'import-from') {
+    if (!isset($_COOKIE['libImportMethod']) || $_COOKIE['libImportMethod'] != 'import-from') {
       $this->data[] = '    <script>document.write("<button onclick=\"document.cookie=\'libImportMethod=import-from;max-age=31536000;path=/\';location.reload();\">Enable \'import from\'</button>");</script>';
     }
   	$this->data[] = '';
     $this->data[] = '    <h2>Platform: <span id="platform"></span></h2>';
     $this->data[] = '    <div class="parentCanvas" id="parentCanvas"></div>';
     $this->data[] = '    <script> var canvasRunning = false; </script>';
-    if ($_COOKIE['libImportMethod'] == 'await-import') {
+    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'await-import') {
       $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-ai.js?ver='.$srcVersion.'"></script>';
     }
-    if ($_COOKIE['libImportMethod'] == 'import-from') {
+    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'import-from') {
       $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-if.js?ver='.$srcVersion.'"></script>';
     }
     $this->data[] = '    <script>';

@@ -5,21 +5,21 @@ require_once 'abstractPage.php';
 class AutoConfigPage extends AbstractPage {
   
   public function createPage() {
-    $scriptsVersion = md5(time());
+    $srcVersion = md5(time());
 
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
     $this->data[] = '    <title>'.$GLOBALS['appName'].'</title>';
-    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$scriptsVersion.'">';
+    $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
 
 	  $this->data[] = '';
 
     $this->data[] = '  <body>';
-    $this->data[] = '    <script>var srcVersion = "'.$scriptsVersion.'"</script>';
-    if ($_COOKIE['libImportMethod'] === 'false-await-import') {
-      $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgImportFrom.js?ver='.$scriptsVersion.'"></script>';
+    $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'"</script>';
+    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'false-await-import') {
+      $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgImportFrom.js?ver='.$srcVersion.'"></script>';
       $this->data[] = '';
       $this->data[] = '    <script>';
       $this->data[] = '      function checkImportFrom() {';
@@ -29,7 +29,7 @@ class AutoConfigPage extends AbstractPage {
       $this->data[] = '      setTimeout(checkImportFrom, 250);';
       $this->data[] = '    </script>';
     } else {
-      $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgAwaitImport.js?ver='.$scriptsVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgAwaitImport.js?ver='.$srcVersion.'"></script>';
       $this->data[] = '';
       $this->data[] = '    <script>';
       $this->data[] = '      function checkAwaitImport() {';
