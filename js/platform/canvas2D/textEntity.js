@@ -308,6 +308,18 @@ export class TextEntity  extends AbstractEntity {
     switch (event.id) {
       case 'updateEntity':
         if ('member' in event && event.member == this.member.substr(0, event.member.length)) {
+          if ('x' in event) {
+            this.x = event.x;
+          }
+          if ('y' in event) {
+            this.y = event.y;
+          }
+          if ('width' in event) {
+            this.width = event.width;
+          }
+          if ('height' in event) {
+            this.height = event.height;
+          }
           if ('text' in event) {
             this.setText(event.text);
           }

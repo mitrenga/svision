@@ -184,6 +184,8 @@ export class AbstractApp {
         return 'CLR';
       case 'Control':
         return 'CTRL';
+      case 'NoKey':
+        return 'OFF';
     }
     return key.toUpperCase();
   } // prettyKey

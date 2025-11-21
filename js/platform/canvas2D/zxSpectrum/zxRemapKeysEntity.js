@@ -19,8 +19,8 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     this.newKeys = [];
     this.position = 0;
     this.validFnKeys = {
-      keyboard: ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace', 'Delete', 'Clear', 'Shift', 'Control', 'Meta', 'Alt'],
-      mouse: ['Mouse1', 'Mouse2', 'Mouse4', 'Mouse8', 'Mouse16', 'Mouse32', 'Mouse64', 'Mouse128']
+      keyboard: ['NoKey', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Backspace', 'Delete', 'Clear', 'Shift', 'Control', 'Meta', 'Alt'],
+      mouse: ['NoKey', 'Mouse1', 'Mouse2', 'Mouse4', 'Mouse8', 'Mouse16', 'Mouse32', 'Mouse64', 'Mouse128']
     };
   } // constructor
 
@@ -29,12 +29,14 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, this.app.platform.colorByName('black')));
     this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, this.app.platform.colorByName('white')));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'REMAP '+this.keysMap.device.toUpperCase()+' KEYS', this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center', margin: 2}));
 
     for (var k = 0; k < this.keysMap.keys.length; k++) {
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 30, 18+12*k, 74, 9, this.keysMap.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-62, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.keysMap.keys[k].action}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 11, 18+12*k, 74, 9, this.keysMap.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-83, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.keysMap.keys[k].action}));
     }
     this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[0].action, penColor: this.app.platform.colorByName('brightWhite'), bkColor: this.app.platform.colorByName('brightBlue'), text: this.cursorText(), hide: false});
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-44, 18, 32, 9, 'SKIP', 'skipKey', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightRed'), {align: 'center', margin: 2, member: 'skipKey'}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
   } // init
@@ -59,9 +61,13 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         return true;
 
       case 'changeFlashState':
-        this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, text: this.cursorText()});
+        if (this.position < this.keysMap.keys.length) {
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, text: this.cursorText()});
+        }
         break;
 
+      case 'skipKey':
+        event.key = 'NoKey';
       case 'keyPress':
         var newKey = false;
         if (event.key.length == 1) {
@@ -71,9 +77,9 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         } else if (this.validFnKeys[this.keysMap.device].indexOf(event.key) >= 0) {
           newKey = event.key;
         }
-        if (newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) {
-          if (newKey == 'Mouse1') {
-            this.app.inputEventsManager.ignoreFirstClick = true;
+        if ((newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) || newKey == 'NoKey') {
+          if (newKey == 'Mouse1' && event.key != 'NoKey') {
+            //this.app.inputEventsManager.ignoreFirstClick = true;
           }
           this.newKeys.push({action: this.keysMap.keys[this.position].action, key: newKey});
           this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.app.prettyKey(newKey)});
@@ -88,6 +94,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
             return true;
           }
           this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightWhite'), bkColor: this.app.platform.colorByName('brightBlue'), text: this.cursorText(), hide: false});
+          this.sendEvent(1, 0, {id: 'updateEntity', member: 'skipKey', y: 18+12*this.position});
         }
         break;
     }

@@ -162,39 +162,58 @@ export class InputEventsManager {
 
     Object.keys(this.app.controls.gamepads.devices).forEach((id) => {
       if (id in this.app.inputEventsManager.gamepads) {
-        var cfgDevice = this.app.controls.gamepads.devices[id];
+        var controlsDevice = this.app.controls.gamepads.devices[id];
         var connectedDevice = this.app.inputEventsManager.gamepads[id];
         // buttons
-        for (var b = 0; b < cfgDevice.buttons.length; b++) {
-          var buttonId = 'B'+id+b.toString().padStart(2, '0');
-          var button = cfgDevice.buttons[b];
-          if (connectedDevice.buttons[button.id].pressed) {
-            if (!(buttonId in this.gamepadsMap)) {
-              this.gamepadsMap[buttonId] = button.event;
-              this.app.model.sendEvent(0, {id: 'keyPress', key: button.event});
+        if ('buttons' in controlsDevice) {
+          Object.keys(controlsDevice.buttons).forEach((b) => {
+            var buttonId = 'B'+id+b;
+            var button = controlsDevice.buttons[b];
+            if (connectedDevice.buttons[b].pressed) {
+              if (!(buttonId in this.gamepadsMap)) {
+                this.gamepadsMap[buttonId] = button.event;
+                this.app.model.sendEvent(0, {id: 'keyPress', key: button.event});
+              }
+            } else {
+              if ((buttonId in this.gamepadsMap)) {
+                delete this.gamepadsMap[buttonId];
+                this.app.model.sendEvent(0, {id: 'keyRelease', key: button.event});
+              }
             }
-          } else {
-            if ((buttonId in this.gamepadsMap)) {
-              delete this.gamepadsMap[buttonId];
-              this.app.model.sendEvent(0, {id: 'keyRelease', key: button.event});
-            }
-          }
+          });
         }
         // axes
-        for (var a = 0; a < cfgDevice.axes.length; a++) {
-          var axisId = 'A'+id+a.toString().padStart(2, '0');
-          var axis = cfgDevice.axes[a];
-          if (connectedDevice.axes[axis.id]*axis.direction > 0.2) {
-            if (!(axisId in this.gamepadsMap)) {
-              this.gamepadsMap[axisId] = axis.event;
-              this.app.model.sendEvent(0, {id: 'keyPress', key: axis.event});
-            }
-          } else {
-            if ((axisId in this.gamepadsMap)) {
-              delete this.gamepadsMap[axisId];
-              this.app.model.sendEvent(0, {id: 'keyRelease', key: axis.event});
-            }
-          }
+        if ('axes' in controlsDevice) {
+          Object.keys(controlsDevice.axes).forEach((a) => {
+            var axis = controlsDevice.axes[a];
+            Object.keys(axis).forEach((direction) => {
+              var axisId = 'A'+id+a+direction;
+              var pressed = false;
+              switch (direction) {
+                case '<':
+                  if (connectedDevice.axes[a] < -0.2) {
+                    pressed = true;
+                  }
+                  break;
+                case '>':
+                  if (connectedDevice.axes[a] > 0.2) {
+                    pressed = true;
+                  }
+                  break;
+              }
+              if (pressed) {
+                if (!(axisId in this.gamepadsMap)) {
+                  this.gamepadsMap[axisId] = axis[direction].event;
+                  this.app.model.sendEvent(0, {id: 'keyPress', key: axis[direction].event});
+                }
+              } else {
+                if ((axisId in this.gamepadsMap)) {
+                  delete this.gamepadsMap[axisId];
+                  this.app.model.sendEvent(0, {id: 'keyRelease', key: axis[direction].event});
+                }
+              }
+            });
+          });
         }
       }
     });
