@@ -76,11 +76,11 @@ export class ZXRemapKeysEntity extends AbstractEntity {
             this.app.inputEventsManager.ignoreFirstClick = true;
           }
           this.newKeys.push({action: this.keysMap.keys[this.position].action, key: newKey});
-          this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.parentEntity.prettyKey(newKey)});
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.app.prettyKey(newKey)});
           this.position++;
           if (this.position == this.keysMap.keys.length) {
             this.newKeys.forEach((newKey) => {
-              this.sendEvent(-1, 0, {id: 'updateEntity', member: this.keysMap.device+'.'+newKey.action, text: this.parentEntity.prettyKey(newKey.key)});
+              this.sendEvent(-1, 0, {id: 'updateEntity', member: this.keysMap.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
               this.app.controls[this.keysMap.device][newKey.action] = newKey.key;
             });
             this.app.setCookie(this.keysMap.device, JSON.stringify(this.app.controls[this.keysMap.device]));

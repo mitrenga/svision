@@ -128,8 +128,6 @@ export class AbstractApp {
     console.error('ERROR: '+message);
   } // showErrorMessage
 
-  // tools
-
   hexToInt(hexNum) {
     return parseInt(hexNum, 16);
   } // hexToInt
@@ -161,6 +159,34 @@ export class AbstractApp {
     }
     return result;
   } // rotateDec
+
+  prettyKey(key) {
+    if (key.substring(0, 5) == 'Mouse') {
+      return 'M'+key.substring(5);
+    }
+
+    switch (key) {
+      case ' ':
+        return 'SPACE';
+      case 'ArrowLeft':
+        return '←';
+      case 'ArrowRight':
+        return '➔';
+      case 'ArrowUp':
+        return '↑';
+      case 'ArrowDown':
+        return '↓';
+      case 'Backspace':
+        return 'BACK';
+      case 'Delete':
+        return 'DEL';
+      case 'Clear':
+        return 'CLR';
+      case 'Control':
+        return 'CTRL';
+    }
+    return key.toUpperCase();
+  } // prettyKey
 
   setCookie(name, value) {
     document.cookie = name+'='+value+';max-age=31536000;path=/';

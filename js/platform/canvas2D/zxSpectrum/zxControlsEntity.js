@@ -174,37 +174,9 @@ export class ZXControlsEntity extends AbstractEntity {
   addOptionsEntities(y, device, group, hide) {
     for (var k = 0; k < this.options[device].keys.length; k++) {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, y+12*k, 74, 9, this.options[device].keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2, group: group, hide: hide}));
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, y+12*k, 32, 9, this.prettyKey(this.app.controls[device][this.options[device].keys[k].action]), this.app.platform.colorByName('brightBlue'), false, {margin: 2, align: 'center', group: group, member: device+'.'+this.options[device].keys[k].action, hide: hide}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, y+12*k, 32, 9, this.app.prettyKey(this.app.controls[device][this.options[device].keys[k].action]), this.app.platform.colorByName('brightBlue'), false, {margin: 2, align: 'center', group: group, member: device+'.'+this.options[device].keys[k].action, hide: hide}));
     }
   } // addOptionsEntities
-
-  prettyKey(key) {
-    if (key.substring(0, 5) == 'Mouse') {
-      return 'M'+key.substring(5);
-    }
-
-    switch (key) {
-      case ' ':
-        return 'SPACE';
-      case 'ArrowLeft':
-        return '←';
-      case 'ArrowRight':
-        return '➔';
-      case 'ArrowUp':
-        return '↑';
-      case 'ArrowDown':
-        return '↓';
-      case 'Backspace':
-        return 'BACK';
-      case 'Delete':
-        return 'DEL';
-      case 'Clear':
-        return 'CLR';
-      case 'Control':
-        return 'CTRL';
-    }
-    return key.toUpperCase();
-  } // prettyKey
 
   refreshDevices() {
     for (var y = 0; y < this.devices.length; y++) {
@@ -330,7 +302,7 @@ export class ZXControlsEntity extends AbstractEntity {
         this.app.controls.mouse.enable = true;
         this.app.setCookie('mouse', JSON.stringify(this.app.controls.mouse));
         this.options.mouse.keys.forEach((key) => {
-          this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: this.prettyKey(this.app.controls.mouse[key.action])});
+          this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: this.app.prettyKey(this.app.controls.mouse[key.action])});
         });
         this.changeGroup(this.selectedDevice);
         return true;
