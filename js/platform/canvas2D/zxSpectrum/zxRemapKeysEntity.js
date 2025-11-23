@@ -78,9 +78,6 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           newKey = event.key;
         }
         if ((newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) || newKey == 'NoKey') {
-          if (newKey == 'Mouse1' && event.key != 'NoKey') {
-            //this.app.inputEventsManager.ignoreFirstClick = true;
-          }
           this.newKeys.push({action: this.keysMap.keys[this.position].action, key: newKey});
           this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.app.prettyKey(newKey)});
           this.position++;

@@ -22,15 +22,23 @@ export class ButtonEntity extends TextEntity {
 
     switch (event.id) {
       case 'keyPress':
-        if (!this.hide && this.hotKeys.indexOf(event.key) >= 0) {
-          this.sendEvent(-1, 0, {id: this.eventID});
-          return true;
+        if (!this.hide) {
+          if (this.hotKeys.indexOf(event.key) >= 0) {
+            this.sendEvent(-1, 0, {id: this.eventID});
+            return true;
+          }
+          if ((event.key == 'Mouse1' && this.pointOnEntity(event))) {
+            this.app.inputEventsManager.keysMap.Mouse1 = this;
+            return true;
+          }
         }
         break;
-      case 'mouseClick':
-        if (!this.hide && (event.key == 'left') && (this.pointOnEntity(event))) {
-          this.sendEvent(-1, 0, {id: this.eventID});
-          return true;
+      case 'keyRelease':
+        if (!this.hide) {
+          if ((event.key == 'Mouse1' && this.app.inputEventsManager.keysMap.Mouse1 === this && this.pointOnEntity(event))) {
+            this.sendEvent(-1, 0, {id: this.eventID});
+            return true;
+          }
         }
         break;
     }

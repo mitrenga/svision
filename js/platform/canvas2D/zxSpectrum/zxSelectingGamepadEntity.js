@@ -97,26 +97,42 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
           case 'ArrowUp':
             this.changeMenuItem(this.selectedItem-1);
             return true;
+          case 'Mouse1':
+            for (var i = 0; i < this.menuItems.length; i++) {
+              if (this.menuEntities[i].pointOnEntity(event)) {
+                this.app.inputEventsManager.keysMap.Mouse1 = this.menuEntities[i];
+                return true;
+              }
+            }
+            if (this.pointOnEntity(event)) {
+              this.app.inputEventsManager.keysMap.Mouse1 = this;
+              return true;
+            }
+            this.app.inputEventsManager.keysMap.Mouse1 = true;
+            return true;
           }
         break;
 
-      case 'mouseClick':
-        if (event.key == 'left') {
-          for (var i = 0; i < this.menuItems.length; i++) {
-            if (this.menuEntities[i].pointOnEntity(event)) {
-              this.changeMenuItem(i);
-              this.sendEvent(0, 0, {id: 'changeSelectedGamepad', selectedGamepad: this.selectedGamepad});
-              this.destroy();
-              return true;
+      case 'keyRelease':
+        switch (event.key) {
+          case 'Mouse1':
+            for (var i = 0; i < this.menuItems.length; i++) {
+              if (this.menuEntities[i].pointOnEntity(event) && this.app.inputEventsManager.keysMap.Mouse1 == this.menuEntities[i]) {
+                this.changeMenuItem(i);
+                this.sendEvent(0, 0, {id: 'changeSelectedGamepad', selectedGamepad: this.selectedGamepad});
+                this.destroy();
+                return true;
+              }
+              if (this.pointOnEntity(event) && this.app.inputEventsManager.keysMap.Mouse1 == this) {
+                return true;
+              }
+              if (this.app.inputEventsManager.keysMap.Mouse1 === false) {
+                this.destroy();
+                return true;
+              }
             }
-          }
-          if (this.pointOnEntity(event)) {
-            return true;
-          }
-          this.destroy();
-          return true;
+            break;
         }
-        break;
 
       case 'gamepadConnected':
       case 'gamepadDisconnected':

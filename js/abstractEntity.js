@@ -109,7 +109,7 @@ export class AbstractEntity {
   } // cancelEvent
 
   handleEvent(event) {
-    if ((this.modalEntity != null) && (['keyPress', 'mouseClick'].indexOf(event.id) >= 0)) {
+    if (this.modalEntity != null && event.id == 'keyPress') {
       this.modalEntity.handleEvent(event);
       return true;
     }

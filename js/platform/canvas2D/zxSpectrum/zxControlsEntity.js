@@ -341,17 +341,27 @@ export class ZXControlsEntity extends AbstractEntity {
           case 'ArrowUp':
             this.changeGroup(this.selectedDevice-1);
             return true;
+          case 'Mouse1':
+            for (var i = 0; i < this.devices.length; i++) {
+              if (this.devicesEntities[i].pointOnEntity(event)) {
+                this.app.inputEventsManager.keysMap.Mouse1 = this.devicesEntities[i];
+                return true;
+              }
+            }
+            break;
           }
         break;
 
-      case 'mouseClick':
-        if (event.key == 'left') {
-          for (var i = 0; i < this.devices.length; i++) {
-            if (this.devicesEntities[i].pointOnEntity(event)) {
-              this.changeGroup(i);
-              return true;
+      case 'keyRelease':
+        switch (event.key) {
+          case 'Mouse1':
+            for (var i = 0; i < this.devices.length; i++) {
+              if (this.devicesEntities[i].pointOnEntity(event) && this.app.inputEventsManager.keysMap.Mouse1 == this.devicesEntities[i]) {
+                this.changeGroup(i);
+                return true;
+              }
             }
-          }
+            break;
         }
         break;
 

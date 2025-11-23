@@ -15,7 +15,6 @@ export class InputEventsManager {
     this.gamepadsMap = {};
     this.gamepads = {};
     this.blurWindow = false;
-    this.ignoreFirstClick = false;
   } // constructor
   
   eventKeyDown(event) {
@@ -40,20 +39,10 @@ export class InputEventsManager {
 
   eventClick(event) {
     event.preventDefault();
-    if (this.ignoreFirstClick) {
-      this.ignoreFirstClick = false;
-      return;
-    }
-    if (this.app.model) {
-      this.app.model.sendEvent(0, {id: 'mouseClick', key: 'left', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
-    }
   } // eventClick
 
   eventContextMenu(event) {
     event.preventDefault();
-    if (this.app.model) {
-      this.app.model.sendEvent(0, {id: 'mouseClick', key: 'right', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
-    }
   } // eventContextMenu
 
   eventMouseDown(event) {
@@ -61,10 +50,10 @@ export class InputEventsManager {
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 1) {
         if (!('Mouse'+(1<<b) in this.keysMap)) {
-          this.keysMap['Mouse'+(1<<b)] = true;
+          this.keysMap['Mouse'+(1<<b)] = false;
           if (this.app.model) {
             if (!this.blurWindow) {
-              this.app.model.sendEvent(0, {id: 'keyPress', key: 'Mouse'+(1<<b)});
+              this.app.model.sendEvent(0, {id: 'keyPress', key: 'Mouse'+(1<<b), x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
             }
           }
         }
@@ -78,10 +67,10 @@ export class InputEventsManager {
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 0) {
         if ('Mouse'+(1<<b) in this.keysMap) {
-          delete this.keysMap['Mouse'+(1<<b)];
           if (this.app.model) {
-            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Mouse'+(1<<b)});
+            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Mouse'+(1<<b), x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
           }
+          delete this.keysMap['Mouse'+(1<<b)];
         }
       }
       buttons >>= 1;
