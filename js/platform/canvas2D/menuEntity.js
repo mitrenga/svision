@@ -50,8 +50,8 @@ export class MenuEntity  extends AbstractEntity {
 
   refreshMenu() {
     for (var y = 0; y < this.menuEntities.length; y++) {
-      this.menuEntities[y][0].setText(this.menuItems[y].label);
-      this.menuEntities[y][1].setText(this.menuParamValue(this.menuItems[y].event));
+      this.menuEntities[y][0].setText(this.onGetData(this.dataSender, 't1', y));
+      this.menuEntities[y][1].setText(this.onGetData(this.dataSender, 't2', y));
     }
   } // refreshMenu
 
