@@ -49,6 +49,12 @@ export class TextEntity  extends AbstractEntity {
     if ('hide' in options) {
       this.hide = options.hide;
     }
+    if ('hoverColor' in options) {
+      this.hoverColor = options.hoverColor;
+    }
+    if ('clickColor' in options) {
+      this.clickColor = options.clickColor;
+    }
 
     this.app.layout.newDrawingCache(this, 0);
     this.cursorX = 0;
@@ -79,20 +85,6 @@ export class TextEntity  extends AbstractEntity {
   cleanCache() {
     this.drawingCache[0].cleanCache();
   } // cleanCache
-
-  handleEvent(event) {
-    if (super.handleEvent(event)) {
-      return true;
-    }
-    switch (event.id) {
-      case 'changeFlashState':
-        if (this.options.animationMode !== false) {
-          this.cleanCache();
-        }
-        break;
-    }
-    return false;
-  } // handleEvent
   
   wrapLine(text) {
     var wrappedText = '';
@@ -124,10 +116,9 @@ export class TextEntity  extends AbstractEntity {
   } // wrapLine
   
   drawEntity() {
+    super.drawEntity();
+
     if (this.drawingCache[0].needToRefresh(this, this.width, this.height)) {
-      if (this.bkColor != false) {
-        this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.width, this.height, this.bkColor);
-      }
       this.cursorY = this.options.topMargin;
 
       var formattedText = this.text;
@@ -306,6 +297,20 @@ export class TextEntity  extends AbstractEntity {
     }
 
     switch (event.id) {
+      case 'changeFlashState':
+        if (this.options.animationMode !== false) {
+          this.cleanCache();
+        }
+        break;
+      case 'mouseHover':
+        if (!this.hide && this.hoverColor !== false) {
+          if (this.pointOnEntity(event)) {
+            this.app.inputEventsManager.mouseHover = this;
+            this.hoverState = true;
+            return true;
+          }
+        }
+        break;
       case 'updateEntity':
         if ('member' in event && event.member == this.member.substr(0, event.member.length)) {
           if ('x' in event) {

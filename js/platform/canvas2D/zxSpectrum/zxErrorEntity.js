@@ -35,7 +35,7 @@ export class ZXErrorEntity extends AbstractEntity {
         this.addEntity(new ButtonEntity(this, this.fonts, 88, 96, 80, 12, 'CONTINUE', 'ignoreAfterError', [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
         break;
     }
-    this.addEntity(new TextEntity(this, this.fonts, 16, 60, 28*8, 3*8, 'ERROR\n'+this.message, this.penColor, false, {align: 'center', textWrap: false}));
+    this.addEntity(new TextEntity(this, this.fonts, 16, 52, 28*8, 4*8, 'ERROR: '+this.message, this.penColor, false, {align: 'center', textWrap: true}));
   } // init
 
   handleEvent(event) {

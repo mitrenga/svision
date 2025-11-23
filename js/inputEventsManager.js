@@ -11,6 +11,7 @@ export class InputEventsManager {
     this.app = app;
 
     this.keysMap = {};
+    this.mouseHover = false;
     this.touchesMap = {};
     this.gamepadsMap = {};
     this.gamepads = {};
@@ -70,6 +71,9 @@ export class InputEventsManager {
           if (this.app.model) {
             this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Mouse'+(1<<b), x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
           }
+          if (this.keysMap['Mouse'+(1<<b)] !== false) {
+            this.keysMap['Mouse'+(1<<b)].clickState = false;
+          }
           delete this.keysMap['Mouse'+(1<<b)];
         }
       }
@@ -78,6 +82,21 @@ export class InputEventsManager {
   } // eventMouseUp
 
   eventMouseMove(event) {
+    if (this.mouseHover !== false) {
+      this.mouseHover.hoverState = false;
+    }
+
+    if (!('Mouse1' in this.keysMap)) {
+      this.app.model.sendEvent(0, {id: 'mouseHover', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
+    }
+
+    if ('Mouse1' in this.keysMap && this.keysMap.Mouse1 !== false) {
+      if (this.keysMap.Mouse1.pointOnEntity({x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)})) {
+        this.keysMap.Mouse1.clickState = true;
+      } else {
+        this.keysMap.Mouse1.clickState = false;
+      }
+    }
   } // eventMouseMove
 
   eventTouchStart(event) {

@@ -29,6 +29,7 @@ export class ButtonEntity extends TextEntity {
           }
           if ((event.key == 'Mouse1' && this.pointOnEntity(event))) {
             this.app.inputEventsManager.keysMap.Mouse1 = this;
+            this.clickState = true;
             return true;
           }
         }

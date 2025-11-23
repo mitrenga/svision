@@ -24,6 +24,10 @@ export class AbstractEntity {
     this.height = height;
     this.bkColor = bkColor;
     this.penColor = penColor;
+    this.hoverColor = false;
+    this.hoverState = false;
+    this.clickColor = false;
+    this.clickState = false;
     this.hide = false;
     this.member = '';
     this.group = '';
@@ -109,7 +113,7 @@ export class AbstractEntity {
   } // cancelEvent
 
   handleEvent(event) {
-    if (this.modalEntity != null && event.id == 'keyPress') {
+    if (this.modalEntity != null && ['keyPress', 'mouseHover'].indexOf(event.id) >= 0) {
       this.modalEntity.handleEvent(event);
       return true;
     }
@@ -158,8 +162,20 @@ export class AbstractEntity {
       return;
     }
 
-    if (this.bkColor != false) {
-      this.app.layout.paint(this, 0, 0, this.width, this.height, this.bkColor);
+    var color = this.bkColor;
+    if (this.hoverColor !== false && this.hoverState) {
+      color = this.hoverColor;
+    }
+
+    if (this.clickState) {
+      if (this.clickColor !== false) {
+        color = this.clickColor;
+      } else if (this.hoverColor !== false) {
+        color = this.hoverColor;
+      }
+    }
+    if (color != false) {
+      this.app.layout.paint(this, 0, 0, this.width, this.height, color);
     }
     this.drawSubEntities();
   } // drawEntity
