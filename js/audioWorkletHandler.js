@@ -54,6 +54,18 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
     }
   } // stopChannel
 
+  pauseChannel() {
+    if (this.node != null) {
+      this.node.port.postMessage({id: 'pause'});
+    }
+  } // pauseChannel
+
+  continueChannel() {
+    if (this.node != null) {
+      this.node.port.postMessage({id: 'continue'});
+    }
+  } // continueChannel
+
   channelIsReady() {
     return this.node != null;
   } // channelIsReady
@@ -61,7 +73,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   playSound(audioData, options) {
     this.node.port.postMessage({id: 'play', audioData: audioData, options: options});
   } // playSound
-
+  
 } // AudioWorkletHandler
 
 export default AudioWorkletHandler;

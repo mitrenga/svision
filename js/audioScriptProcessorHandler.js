@@ -36,57 +36,59 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.node = this.ctx.createScriptProcessor(0, 0, 1);
 
     this.node.onaudioprocess = (event) => {
-      for (var idChannel = 0; idChannel < event.outputBuffer.numberOfChannels; idChannel++) {
-        var channel = event.outputBuffer.getChannelData(idChannel);
-        var writePtr = 0;
-        while (writePtr < channel.length) {
-          if (this.oneReadPulse == 0) {
-            if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
-              if (this.infinityQuantity > 0) {
-                this.infinityQuantity--;
-                this.oneReadPulse = this.fragments[this.infinityFragment];
+      if ((!this.paused) && (this.pulses !== false)) {
+        for (var idChannel = 0; idChannel < event.outputBuffer.numberOfChannels; idChannel++) {
+          var channel = event.outputBuffer.getChannelData(idChannel);
+          var writePtr = 0;
+          while (writePtr < channel.length) {
+            if (this.oneReadPulse == 0) {
+              if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
+                if (this.infinityQuantity > 0) {
+                  this.infinityQuantity--;
+                  this.oneReadPulse = this.fragments[this.infinityFragment];
+                } else {
+                  this.infinityQuantity = this.infinityRndPulses.quantity-1;
+                  this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
+                  this.oneReadPulse = this.fragments[this.infinityFragment];
+                }
               } else {
-                this.infinityQuantity = this.infinityRndPulses.quantity-1;
-                this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
-                this.oneReadPulse = this.fragments[this.infinityFragment];
+                this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+                if (this.events != false) {
+                  if (this.readPtr in this.events) {
+                    this.app.model.sendEvent(1, {id: this.events[this.readPtr].id, data: this.events[this.readPtr]});
+                  }
+                }
               }
+            }
+            if (writePtr+this.oneReadPulse <= channel.length) {
+              channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
+              writePtr += this.oneReadPulse;
+              this.oneReadPulse = 0;
+              this.readPtr++;
+              this.outputBit = 1-this.outputBit;
             } else {
-              this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+              channel.fill(this.outputVolume[this.outputBit], writePtr);
+              this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
+              writePtr = channel.length;
+            }
+            if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
               if (this.events != false) {
                 if (this.readPtr in this.events) {
                   this.app.model.sendEvent(1, {id: this.events[this.readPtr].id, data: this.events[this.readPtr]});
                 }
               }
-            }
-          }
-          if (writePtr+this.oneReadPulse <= channel.length) {
-            channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
-            writePtr += this.oneReadPulse;
-            this.oneReadPulse = 0;
-            this.readPtr++;
-            this.outputBit = 1-this.outputBit;
-          } else {
-            channel.fill(this.outputVolume[this.outputBit], writePtr);
-            this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
-            writePtr = channel.length;
-          }
-          if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
-            if (this.events != false) {
-              if (this.readPtr in this.events) {
-                this.app.model.sendEvent(1, {id: this.events[this.readPtr].id, data: this.events[this.readPtr]});
+              if (this.repeat) {
+                this.readPtr = 0;
+              } else if (this.infinityRndPulses === false) {
+                channel.fill(0, writePtr);
+                this.fragments = false;
+                this.pulses = false;
+                this.events = false;
+                this.outputVolume = [0.0, 0.0];
+                this.outputBit = 0;
+                this.readPtr = 0;
+                this.oneReadPulse = 0;
               }
-            }
-            if (this.repeat) {
-              this.readPtr = 0;
-            } else if (this.infinityRndPulses === false) {
-              channel.fill(0, writePtr);
-              this.fragments = false;
-              this.pulses = false;
-              this.events = false;
-              this.outputVolume = [0.0, 0.0];
-              this.outputBit = 0;
-              this.readPtr = 0;
-              this.oneReadPulse = 0;
             }
           }
         }
@@ -111,6 +113,14 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.options = false;
     this.events = false;
   } // stopChannel
+
+  pauseChannel() {
+    this.paused = true;
+  } // pauseChannel
+
+  continueChannel() {
+    this.paused = false;
+  } // continueChannel
 
   playSound(audioData, options) {
     this.fragments = audioData.fragments;
