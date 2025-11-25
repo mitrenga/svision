@@ -126,7 +126,7 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
               if (this.pointOnEntity(event) && this.app.inputEventsManager.keysMap.Mouse1 == this) {
                 return true;
               }
-              if (this.app.inputEventsManager.keysMap.Mouse1 === false) {
+              if (this.app.inputEventsManager.keysMap.Mouse1 === true) {
                 this.destroy();
                 return true;
               }
