@@ -36,7 +36,7 @@ export class ZXControlsEntity extends AbstractEntity {
       {label: 'TOUCHSCREEN', type: 'touchscreen'}
     ];
 
-    this.deviceHoverColor = this.app.platform.colorByName('brightYellow');
+    this.deviceHoverColor = '#e6d644ff';
     this.deviceClickColor = '#adadadff';
 
     this.options = {
