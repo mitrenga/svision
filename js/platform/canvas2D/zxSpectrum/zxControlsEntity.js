@@ -37,7 +37,7 @@ export class ZXControlsEntity extends AbstractEntity {
     ];
 
     this.deviceHoverColor = '#e6d644ff';
-    this.deviceClickColor = '#adadadff';
+    this.deviceClickColor = '#7a7a7aff';
 
     this.options = {
       'keyboard': {
