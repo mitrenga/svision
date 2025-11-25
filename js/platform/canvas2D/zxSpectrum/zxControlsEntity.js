@@ -43,8 +43,8 @@ export class ZXControlsEntity extends AbstractEntity {
           {action: 'left', label: 'WALKING LEFT'},
           {action: 'right', label: 'WALKING RIGHT'},
           {action: 'jump', label: 'JUMP'},
-          {action: 'music', label: 'MUSIC ON/OFF'},
-          {action: 'sounds', label: 'SOUNDS ON/OFF'}
+          {action: 'music', label: 'MUTE MUSIC'},
+          {action: 'sounds', label: 'MUTE SOUNDS'}
         ]
       },
       'mouse': {
