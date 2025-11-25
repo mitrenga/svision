@@ -22,11 +22,11 @@ export class ZXControlsEntity extends AbstractEntity {
   constructor(parentEntity, x, y, width, height) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXControlsEntity';
-    this.selectedDevice = 0;
+    this.selectionDevice = 0;
     
-    this.devicesSelectedRow = null;
+    this.devicesSelectionEntity = null;
     this.penDeviceColor = this.app.platform.colorByName('black');
-    this.penSelectedDeviceColor = this.app.platform.colorByName('brightWhite');
+    this.penSelectionDeviceColor = this.app.platform.colorByName('brightWhite');
     this.devicesEntities = [];
 
     this.devices = [
@@ -35,6 +35,9 @@ export class ZXControlsEntity extends AbstractEntity {
       {label: 'GAMEPAD', type: 'gamepad'},
       {label: 'TOUCHSCREEN', type: 'touchscreen'}
     ];
+
+    this.deviceHoverColor = this.app.platform.colorByName('brightYellow');
+    this.deviceClickColor = '#adadadff';
 
     this.options = {
       'keyboard': {
@@ -86,15 +89,19 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'CONTROLS', this.app.platform.colorByName('brightWhite'), false, {align: 'center', topMargin: 2}));
     this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, this.app.platform.colorByName('yellow')));
 
-    this.devicesSelectedRow = new AbstractEntity(this, 8, 16+this.selectedDevice*16, 68, 9, false, this.app.platform.colorByName('brightBlue'));
-    this.addEntity(this.devicesSelectedRow);
+    this.devicesSelectionEntity = new AbstractEntity(this, 8, 16+this.selectionDevice*16, 68, 9, false, this.app.platform.colorByName('brightBlue'));
+    this.addEntity(this.devicesSelectionEntity);
 
     for (var y = 0; y < this.devices.length; y++) {
       var penColor = this.penDeviceColor;
-      if (y == this.selectedDevice) {
-        penColor = this.penSelectedDeviceColor;
+      var hoverColor = this.deviceHoverColor;
+      var clickColor = this.deviceClickColor;
+      if (y == this.selectionDevice) {
+        penColor = this.penSelectionDeviceColor;
+        hoverColor = false;
+        clickColor = false;
       }
-      this.devicesEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 8, 16+y*12, 68, 9, this.devices[y].label, penColor, false, {margin: 2, hoverColor: '#a9a9a9ff'});
+      this.devicesEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 8, 16+y*12, 68, 9, this.devices[y].label, penColor, false, {margin: 2, hoverColor: hoverColor, clickColor: clickColor});
       this.addEntity(this.devicesEntities[y]);
     }
 
@@ -239,13 +246,17 @@ export class ZXControlsEntity extends AbstractEntity {
     if (newDevice < 0 || newDevice >= this.devices.length) {
       return;
     }
-    if (newDevice != this.selectedDevice && newDevice == 2) {
+    if (newDevice != this.selectionDevice && newDevice == 2) {
       this.controlsEntites.gpLabel.resetAnimation();
     }
-    this.devicesEntities[this.selectedDevice].setPenColor(this.penDeviceColor);
-    this.selectedDevice = newDevice;
-    this.devicesEntities[this.selectedDevice].setPenColor(this.penSelectedDeviceColor);
-    this.devicesSelectedRow.y = 16+this.selectedDevice*12;
+    this.devicesEntities[this.selectionDevice].setPenColor(this.penDeviceColor);
+    this.devicesEntities[this.selectionDevice].hoverColor = this.deviceHoverColor;
+    this.devicesEntities[this.selectionDevice].clickColor = this.deviceClickColor;
+    this.selectionDevice = newDevice;
+    this.devicesEntities[this.selectionDevice].setPenColor(this.penSelectionDeviceColor);
+    this.devicesEntities[this.selectionDevice].hoverColor = false;
+    this.devicesEntities[this.selectionDevice].clickColor = false;
+    this.devicesSelectionEntity.y = 16+this.selectionDevice*12;
     this.entities.forEach ((entity) => {
       if (entity.group.length) {
         if (entity.group == this.getGroupPath().substring(0, entity.group.length)) {
@@ -258,7 +269,7 @@ export class ZXControlsEntity extends AbstractEntity {
   } // changeGroup
 
   getGroupPath() {
-    var group = this.devices[this.selectedDevice].type;
+    var group = this.devices[this.selectionDevice].type;
     switch (group) {
       case 'mouse':
         if (this.app.controls.mouse.enable) {
@@ -336,15 +347,16 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'keyPress':
         switch (event.key) {
           case 'ArrowDown':
-            this.changeGroup(this.selectedDevice+1);
+            this.changeGroup(this.selectionDevice+1);
             return true;
           case 'ArrowUp':
-            this.changeGroup(this.selectedDevice-1);
+            this.changeGroup(this.selectionDevice-1);
             return true;
           case 'Mouse1':
             for (var i = 0; i < this.devices.length; i++) {
               if (this.devicesEntities[i].pointOnEntity(event)) {
                 this.app.inputEventsManager.keysMap.Mouse1 = this.devicesEntities[i];
+                this.devicesEntities[i].clickState = true;
                 return true;
               }
             }
@@ -376,13 +388,13 @@ export class ZXControlsEntity extends AbstractEntity {
         this.options.mouse.keys.forEach((key) => {
           this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: this.app.prettyKey(this.app.controls.mouse[key.action])});
         });
-        this.changeGroup(this.selectedDevice);
+        this.changeGroup(this.selectionDevice);
         return true;
 
       case 'mouseDisable':
         this.app.controls.mouse.enable = false;
         this.app.setCookie('mouse', JSON.stringify({enable: false}));
-        this.changeGroup(this.selectedDevice);
+        this.changeGroup(this.selectionDevice);
         return true;
 
         case 'mouseRemapKeys':
@@ -394,7 +406,7 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'gamepadDisconnected':
         this.checkSelectedGamepad();
         this.controlsEntites.gpLabel.setText(this.selectedGamepadName().toUpperCase());
-        this.changeGroup(this.selectedDevice);
+        this.changeGroup(this.selectionDevice);
         return true;
 
       case 'selectGamepad':
@@ -405,7 +417,7 @@ export class ZXControlsEntity extends AbstractEntity {
         this.selectedGamepad = event.selectedGamepad;
         this.controlsEntites.gpLabel.setText(this.selectedGamepadName().toUpperCase());
         this.gamepadActionsUpdate();
-        this.changeGroup(this.selectedDevice);
+        this.changeGroup(this.selectionDevice);
         return true;
 
       case 'touchscreenChange':
