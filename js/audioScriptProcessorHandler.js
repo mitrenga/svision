@@ -16,7 +16,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.fragments = false;
     this.pulses = false;
     this.events = false;
-    this.outputVolume = [0.0, 0.0];
+    this.outputVolume = {false: [0.0, 0.0], true: [0.0, 0.0]};
     this.infinityRndPulses = false;
     this.infinityQuantity = 0;
     this.infinityFragment = 0;
@@ -25,10 +25,14 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.oneReadPulse = 0;
     this.repeat = false;
     this.paused = false;
+    this.muted = false;
   } // constructor
 
-  openChannel(channel) {
-    super.openChannel(channel);
+  openChannel(channel, options) {
+    super.openChannel(channel, options);
+    if ('muted' in options) {
+      this.muted = options.muted;
+    }
     this.openProcessor();
   } // openChannel
 
@@ -61,13 +65,13 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
               }
             }
             if (writePtr+this.oneReadPulse <= channel.length) {
-              channel.fill(this.outputVolume[this.outputBit], writePtr, writePtr+this.oneReadPulse);
+              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr, writePtr+this.oneReadPulse);
               writePtr += this.oneReadPulse;
               this.oneReadPulse = 0;
               this.readPtr++;
               this.outputBit = 1-this.outputBit;
             } else {
-              channel.fill(this.outputVolume[this.outputBit], writePtr);
+              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr);
               this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
               writePtr = channel.length;
             }
@@ -84,7 +88,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
                 this.fragments = false;
                 this.pulses = false;
                 this.events = false;
-                this.outputVolume = [0.0, 0.0];
+                this.outputVolume = {false: [0.0, 0.0], true: [0.0, 0.0]};
                 this.outputBit = 0;
                 this.readPtr = 0;
                 this.oneReadPulse = 0;
@@ -122,6 +126,10 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.paused = false;
   } // continueChannel
 
+  muteChannel(muted) {
+    this.muted = muted;
+  } // muteChannel
+
   playSound(audioData, options) {
     this.fragments = audioData.fragments;
     this.pulses = audioData.pulses;
@@ -129,7 +137,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     if ('events' in audioData) {
       this.events = audioData.events;
     }
-    this.outputVolume = [0.0, audioData.volume];
+    this.outputVolume = {false: [0.0, audioData.volume], true: [0.0, 0.0]};
     this.infinityRndPulses = false;
     this.infinityQuantity = 0;
     this.infinityFragment = 0;

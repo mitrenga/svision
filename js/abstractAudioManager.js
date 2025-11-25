@@ -23,7 +23,7 @@ export class AbstractAudioManager {
     if (!(channel in this.channels)) {
       var audioHandler = this.createAudioHandler(channel, options);
       if (audioHandler != false) {
-        audioHandler.openChannel(channel);
+        audioHandler.openChannel(channel, options);
         this.channels[channel] = audioHandler;
       }
     }
@@ -95,6 +95,12 @@ export class AbstractAudioManager {
       this.continueChannel(channel);
     });
   } // continueAllChannels
+
+  muteChannel(channel, muted) {
+    if (channel in this.channels) {
+      this.channels[channel].muteChannel(muted);
+    }
+  } // continueChannel
 
   playSound(channel, sound, options) {
     if (options === false) {

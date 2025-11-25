@@ -14,8 +14,8 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.oscillator = null;
   } // constructor
 
-  openChannel(channel) {
-    super.openChannel(channel);
+  openChannel(channel, options) {
+    super.openChannel(channel, options);
     this.busy = false;
   } // openChannel
 

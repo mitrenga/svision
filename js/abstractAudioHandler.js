@@ -16,7 +16,7 @@ export class AbstractAudioHandler {
     this.error = false;
   } // constructor
 
-  openChannel(channel) {
+  openChannel(channel, options) {
     if (this.waitForBusy('openAudioChannel')) {
       return;
     }
@@ -61,6 +61,9 @@ export class AbstractAudioHandler {
 
   continueChannel() {
   } // continueChannel
+
+  muteChannel(muted) {
+  } // muteChannel
 
   channelIsReady() {
     return true;

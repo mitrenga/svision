@@ -12,7 +12,7 @@ export class AudioDisableHandler extends AbstractAudioHandler {
     this.id = 'AudioDisableHandler';
   } // constructor
 
-  openChannel(channel) {
+  openChannel(channel, options) {
     this.busy = false;
   } // openChannel
 

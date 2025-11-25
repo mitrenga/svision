@@ -13,12 +13,12 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
     this.node = null;
   } // constructor
 
-  openChannel(channel) {
-    super.openChannel(channel);
-    this.openProcessor();
+  openChannel(channel, options) {
+    super.openChannel(channel, options);
+    this.openProcessor(options);
   } // openChannel
 
-  async openProcessor() {
+  async openProcessor(options) {
     try {
       await this.ctx.audioWorklet.addModule(this.app.importPath+'/svision/js/audioProcessor.js')
         .catch(error => {
@@ -31,6 +31,9 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
       this.busy = false;
     } finally {
       this.busy = false;
+      if ('muted' in options && options.muted) {
+        this.node.port.postMessage({id: 'mute'});
+      }
 
       this.node.port.onmessage = (event) => {
         this.app.model.sendEvent(1, {id: event.data.id, data: event.data});
@@ -65,6 +68,12 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
       this.node.port.postMessage({id: 'continue'});
     }
   } // continueChannel
+
+  muteChannel(muted) {
+    if (this.node != null) {
+      this.node.port.postMessage({id: {false: 'unmute', true: 'mute'}[muted]});
+    }
+  } // muteChannel
 
   channelIsReady() {
     return this.node != null;
