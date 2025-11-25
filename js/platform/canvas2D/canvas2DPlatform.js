@@ -18,6 +18,8 @@ export class Canvas2DPlatform extends AbstractPlatform {
   } // platformName
   
   initCanvasElement(app, parentElementID) {
+    super.initCanvasElement(app, parentElementID);
+    
     app.parentElement = document.getElementById(parentElementID);
     app.parentElement.innerText = '';
     app.element = document.createElement('canvas');

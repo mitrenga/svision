@@ -56,12 +56,12 @@ export class ZXVolumeEntity extends AbstractEntity {
       this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3+x*18, 52, 16, 13, '', 'setVolume'+x, [], false, false, {}));
     }
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 3, 68, 19, 13, '-', 'changeVolumeDown', ['ArrowLeft', '-'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', topMargin: 2}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 178, 68, 21, 13, '+', 'changeVolumeUp', ['ArrowRight', '+'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', topMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 3, 68, 19, 13, '-', 'changeVolumeDown', ['ArrowLeft', '-'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', topMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 178, 68, 21, 13, '+', 'changeVolumeUp', ['ArrowRight', '+'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', topMargin: 2}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 67, 90, 67, 13, 'PLAY SAMPLE', 'playSample', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {margin: 4}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeVolume', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeVolume', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
 
     this.driverEntity = new TextEntity(this, this.app.fonts.fonts5x5, 3, this.height-8, this.width-6, 5, '', this.app.platform.colorByName('brightRed'), false, {});
     this.addEntity(this.driverEntity);

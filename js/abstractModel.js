@@ -46,19 +46,27 @@ export class AbstractModel {
       this.borderEntity.app = this.app;
       this.borderEntity.model = this;
       this.borderEntity.bkColor = this.app.platform.border(this.app).defaultColor;
+      this.borderEntity.stack = this.app.stack;
       var entityObjects = this.app.platform.initEntity(this.borderEntity);
       if (entityObjects !== false) {
-        this.borderEntity.stack = {...this.borderEntity.stack, ...entityObjects};
+        Object.keys(entityObjects).forEach((key) => {
+          this.borderEntity.stack[key] = entityObjects[key];
+        });
       }
+      this.borderEntity.init();
     }
     this.desktopEntity = this.newDesktopEntity();
     this.desktopEntity.app = this.app;
     this.desktopEntity.model = this;
     this.desktopEntity.bkColor = this.app.platform.desktop(this.app).defaultColor;
+    this.desktopEntity.stack = this.app.stack;
     var entityObjects = this.app.platform.initEntity(this.desktopEntity);
     if (entityObjects !== false) {
-      this.desktopEntity.stack = {...this.desktopEntity.stack, ...entityObjects};
+      Object.keys(entityObjects).forEach((key) => {
+        this.desktopEntity.stack[key] = entityObjects[key];
+      });
     }
+    this.desktopEntity.init();
   } // init
 
   shutdown() {

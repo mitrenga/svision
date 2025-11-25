@@ -30,6 +30,7 @@ export class WebGL2Platform extends AbstractPlatform {
   } // initCanvasElement
 
   initEntity(entity) {
+    return false;
   } // initEntity
 
   newLayout(app) {

@@ -61,6 +61,30 @@ export class TextEntity  extends AbstractEntity {
     this.cursorY = 0;
   } // constructor
 
+  init() {
+    super.init();
+
+    if (this.hoverColor === false) {
+      if (this.id in this.stack) {
+        if ('hoverColor' in this.stack[this.id]) {
+          if (this.bkColor in this.stack[this.id].hoverColor) {
+            this.hoverColor = this.stack[this.id].hoverColor[this.bkColor];
+          }
+        }
+      }
+    }
+
+    if (this.clickColor === false) {
+      if (this.id in this.stack) {
+        if ('clickColor' in this.stack[this.id]) {
+          if (this.bkColor in this.stack[this.id].clickColor) {
+            this.clickColor = this.stack[this.id].clickColor[this.bkColor];
+          }
+        }
+      }
+    }
+  } // init
+
   setText(text) {
     if (this.text != text) {
       this.text = text;

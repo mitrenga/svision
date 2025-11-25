@@ -36,9 +36,9 @@ export class ZXRemapKeysEntity extends AbstractEntity {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-83, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.keysMap.keys[k].action}));
     }
     this.sendEvent(1, 0, {id: 'updateEntity', member: this.keysMap.keys[0].action, penColor: this.app.platform.colorByName('brightWhite'), bkColor: this.app.platform.colorByName('brightBlue'), text: this.cursorText(), hide: false});
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-44, 18, 32, 9, 'SKIP', 'skipKey', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightRed'), {align: 'center', margin: 2, member: 'skipKey'}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-44, 18, 32, 9, 'SKIP', 'skipKey', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('red'), {align: 'center', margin: 2, member: 'skipKey'}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('brightBlue'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
   } // init
 
   cursorText() {

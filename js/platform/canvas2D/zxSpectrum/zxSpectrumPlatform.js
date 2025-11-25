@@ -41,6 +41,46 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     return 'ZX Spectrum [HTML canvas 2D]';
   } // platformName
 
+  initCanvasElement(app, parentElementID) {
+    super.initCanvasElement(app, parentElementID);
+    
+    app.stack.flashState = false;
+    var buttonClickColor = '#7a7a7aff';
+    app.stack.ButtonEntity = {clickColor: {}, hoverColor: {}};
+    app.stack.ButtonEntity.clickColor[this.colorByName('black')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('blue')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('red')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('magenta')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('green')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('cyan')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('yellow')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('white')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightBlack')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightBlue')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightRed')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightMagenta')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightGreen')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightCyan')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightYellow')] = buttonClickColor;
+    app.stack.ButtonEntity.clickColor[this.colorByName('brightWhite')] = buttonClickColor;
+    app.stack.ButtonEntity.hoverColor[this.colorByName('black')] = '#3d3d3dff';
+    app.stack.ButtonEntity.hoverColor[this.colorByName('blue')] = this.colorByName('brightBlue');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('red')] = this.colorByName('brightRed');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('magenta')] = this.colorByName('brightMagenta');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('green')] = this.colorByName('brightGreen');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('cyan')] = this.colorByName('brightCyan');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('yellow')] = this.colorByName('brightYellow');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('white')] = this.colorByName('brightWhite');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightBlack')] = '#3d3d3dff';
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightBlue')] = this.colorByName('blue');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightRed')] = this.colorByName('red');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightMagenta')] = this.colorByName('magenta');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightGreen')] = this.colorByName('green');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightCyan')] = this.colorByName('cyan');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightYellow')] = this.colorByName('yellow');
+    app.stack.ButtonEntity.hoverColor[this.colorByName('brightWhite')] = this.colorByName('white');
+  } // initCanvasElement
+
   newLayout(app) {
     return new ZXSpectrumLayout(app);
   } // newLayout

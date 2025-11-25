@@ -41,7 +41,7 @@ export class AbstractEntity {
 
     this.drawingCache = [];
     this.drawingCropCache = null;
-    this.stack = {};
+    this.stack = false;
     this.entities = [];
 
     this.fetchDataId = '';
@@ -51,11 +51,14 @@ export class AbstractEntity {
   } // init
 
   addEntity(entity) {
-    entity.init();
+    entity.stack = this.app.stack;
     var entityObjects = this.app.platform.initEntity(entity);
     if (entityObjects !== false) {
-      entity.stack = {...entity.stack, ...entityObjects};
+      Object.keys(entityObjects).forEach((key) => {
+        entity.stack[key] = entityObjects[key];
+      });
     }
+    entity.init();
     this.entities.push(entity);
   } // addEntity
 
