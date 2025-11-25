@@ -36,7 +36,7 @@ h2 {
 }
 
 .disable {
-  color: rgba(129, 129, 148, 0.8);
+  color: #aaaaaa;
   font-style: italic;
 }
 
@@ -52,7 +52,7 @@ h2 {
 .canvasApp {
   width: 100%;
   height: 100%;
-  background-color: rgb(25, 136, 58);
+  background-color: #19883a;
 }
 
 .labelHello {
@@ -63,7 +63,7 @@ h2 {
   padding-left: 8px;
   padding-right: 8px;
   color: white;
-  background-color: rgb(84, 26, 200);
+  background-color: #541ac8;
   font-family: 'Courier New', Courier, monospace;
 }
 

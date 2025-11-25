@@ -94,7 +94,7 @@ export class ZXControlsEntity extends AbstractEntity {
       if (y == this.selectedDevice) {
         penColor = this.penSelectedDeviceColor;
       }
-      this.devicesEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 8, 16+y*12, 68, 9, this.devices[y].label, penColor, false, {margin: 2});
+      this.devicesEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 8, 16+y*12, 68, 9, this.devices[y].label, penColor, false, {margin: 2, hoverColor: '#a9a9a9ff'});
       this.addEntity(this.devicesEntities[y]);
     }
 

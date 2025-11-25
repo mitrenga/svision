@@ -17,7 +17,7 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
       ['brightBlack', 'brightBlue', 'brightRed', 'brightMagenta', 'brightGreen', 'brightCyan', 'brightYellow', 'brightWhite']
     ]; // zxColorsName
 
-    this.zxColorsRGB = {
+    this.zxColors = {
       black: '#000000',
       blue: '#1435b2',
       red: '#b6391e',
@@ -34,7 +34,7 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
       brightCyan: '#4ddcfc',
       brightYellow: '#ffe15a',
       brightWhite: '#ffffff',
-    }; // zxColorsRGB
+    };
   } // constructor
 
   platformName() {
@@ -94,8 +94,8 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
   } // border
 
   colorByName(colorName) {
-    if (colorName in this.zxColorsRGB) {
-      return this.zxColorsRGB[colorName];
+    if (colorName in this.zxColors) {
+      return this.zxColors[colorName];
     }
     return false;
   } // colorByName
