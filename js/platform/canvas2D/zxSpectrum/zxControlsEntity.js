@@ -410,7 +410,7 @@ export class ZXControlsEntity extends AbstractEntity {
         return true;
 
       case 'selectingGamepad':
-        this.addModalEntity(new ZXSelectingGamepadEntity(this, 7, 18, 187, 67, this.selectionGamepad));
+        this.addModalEntity(new ZXSelectingGamepadEntity(this, 7, 18, 187, 83, this.selectionGamepad));
         return true;
 
       case 'changeSelectionGamepad':

@@ -9,17 +9,21 @@ import TextEntity from '../textEntity.js';
 
 export class ZXSelectingGamepadEntity extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height, selectedGamepad) {
+  constructor(parentEntity, x, y, width, height, selectionGamepad) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXSelectingGamepadEntity';
 
-    this.selectedItem = 0;
-    this.selectedGamepad = selectedGamepad;
-    this.menuSelectedRow = null;
+    this.selectionItem = 0;
+    this.selectionGamepad = selectionGamepad;
+    this.menuSelectionEntity = null;
     this.penMenuItemColor = this.app.platform.colorByName('black');
-    this.penSelectedMenuItemColor = this.app.platform.colorByName('brightWhite');
+    this.penSelectionMenuItemColor = this.app.platform.colorByName('brightWhite');
     this.menuEntities = [];
     this.menuItems = [];
+    this.hoverColor = '#b1ab79ff';
+    this.clickColor = '#939393ff';
+    this.hoverSelectionColor = this.app.platform.colorByName('brightMagenta');
+    this.clickSelectionColor = '#7a7a7aff';
   } // constructor
 
   init() {
@@ -28,11 +32,11 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, this.app.platform.colorByName('black')));
     this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, this.app.platform.colorByName('white')));
 
-    this.menuSelectedRow = new AbstractEntity(this, 2, 2+this.selectedItem*8, this.width-4, 7, false, this.app.platform.colorByName('magenta'));
-    this.addEntity(this.menuSelectedRow);
+    this.menuSelectionEntity = new AbstractEntity(this, 2, 2+this.selectionItem*8, this.width-4, 9, false, this.app.platform.colorByName('magenta'));
+    this.addEntity(this.menuSelectionEntity);
 
     for (var y = 0; y < 8; y++) {
-      this.menuEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 2, 2+y*8, this.width-4, 9, '', false, false, {margin: 1});
+      this.menuEntities[y] = new TextEntity(this, this.app.fonts.fonts5x5, 2, 2+y*10, this.width-4, 9, '', false, false, {margin: 2});
       this.addEntity(this.menuEntities[y]);
     }
     this.setMenuItems();
@@ -44,35 +48,41 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     }
 
     for (var y = 0; y < 8; y++) {
+      this.menuEntities[y].hoverColor = false;
+      this.menuEntities[y].clickColor = false;
       this.menuEntities[y].setPenColor(false);
       this.menuEntities[y].setText('');
     }
     this.menuItems = [];
     for (var y = 0; y < Object.keys(this.app.inputEventsManager.gamepads).length && y < 8; y++) {
       this.menuItems.push(Object.keys(this.app.inputEventsManager.gamepads)[y]);
+      this.menuEntities[y].hoverColor = this.hoverColor;
+      this.menuEntities[y].clickColor = this.clickColor;
       this.menuEntities[y].setPenColor(this.penMenuItemColor);
       this.menuEntities[y].setText(this.menuItems[y].toUpperCase());
     }
-    this.selectedItem = 0;
+    this.selectionItem = 0;
     for (var y = 0; y < this.menuItems.length; y++) {
-      if (this.selectedGamepad == this.menuItems[y]) {
-        this.selectedItem = y;
+      if (this.selectionGamepad == this.menuItems[y]) {
+        this.selectionItem = y;
         break;
       }
     }
-    this.menuEntities[this.selectedItem].setPenColor(this.penSelectedMenuItemColor);
-    this.menuSelectedRow.y = 2+this.selectedItem*8;
+    this.menuEntities[y].hoverColor = this.hoverSelectionColor;
+    this.menuEntities[y].clickColor = this.clickSelectionColor;
+    this.menuEntities[this.selectionItem].setPenColor(this.penSelectionMenuItemColor);
+    this.menuSelectionEntity.y = 2+this.selectionItem*10;
   } // setMenuItems
 
   changeMenuItem(newItem) {
     if (newItem < 0 || newItem >= this.menuItems.length) {
       return;
     }
-    this.menuEntities[this.selectedItem].setPenColor(this.penMenuItemColor);
-    this.selectedItem = newItem;
-    this.selectedGamepad = this.menuItems[this.selectedItem];
-    this.menuEntities[this.selectedItem].setPenColor(this.penSelectedMenuItemColor);
-    this.menuSelectedRow.y = 2+this.selectedItem*8;
+    this.menuEntities[this.selectionItem].setPenColor(this.penMenuItemColor);
+    this.selectionItem = newItem;
+    this.selectionGamepad = this.menuItems[this.selectionItem];
+    this.menuEntities[this.selectionItem].setPenColor(this.penSelectionMenuItemColor);
+    this.menuSelectionEntity.y = 2+this.selectionItem*10;
   } // changeMenuItem
 
   handleEvent(event) {
@@ -85,22 +95,23 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
       case 'keyPress':
         switch (event.key) {
           case 'Enter':
-            this.sendEvent(0, 0, {id: 'changeSelectedGamepad', selectedGamepad: this.selectedGamepad});
+            this.sendEvent(0, 0, {id: 'changeSelectionGamepad', selectionGamepad: this.selectionGamepad});
             this.destroy();
             return true;
           case 'Escape':
             this.destroy();
             return true;
           case 'ArrowDown':
-            this.changeMenuItem(this.selectedItem+1);
+            this.changeMenuItem(this.selectionItem+1);
             return true;
           case 'ArrowUp':
-            this.changeMenuItem(this.selectedItem-1);
+            this.changeMenuItem(this.selectionItem-1);
             return true;
           case 'Mouse1':
             for (var i = 0; i < this.menuItems.length; i++) {
               if (this.menuEntities[i].pointOnEntity(event)) {
                 this.app.inputEventsManager.keysMap.Mouse1 = this.menuEntities[i];
+                this.menuEntities[i].clickState = true;
                 return true;
               }
             }
@@ -119,7 +130,7 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
             for (var i = 0; i < this.menuItems.length; i++) {
               if (this.menuEntities[i].pointOnEntity(event) && this.app.inputEventsManager.keysMap.Mouse1 == this.menuEntities[i]) {
                 this.changeMenuItem(i);
-                this.sendEvent(0, 0, {id: 'changeSelectedGamepad', selectedGamepad: this.selectedGamepad});
+                this.sendEvent(0, 0, {id: 'changeSelectionGamepad', selectionGamepad: this.selectionGamepad});
                 this.destroy();
                 return true;
               }
