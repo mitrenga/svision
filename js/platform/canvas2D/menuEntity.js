@@ -35,7 +35,9 @@ export class MenuEntity  extends AbstractEntity {
       selectionTextColor: false,
       selectionBarColor: false,
       hoverColor: false,
-      selectionHoverColor: false
+      selectionHoverColor: false,
+      clickColor: false,
+      selectionClickColor: false
     };
     Object.keys(options).forEach(key => {
       if (key in this.options) {
@@ -62,8 +64,10 @@ export class MenuEntity  extends AbstractEntity {
       this.menuEntities[y][0] = new TextEntity(this, this.options.fonts, this.options.leftMargin, this.options.topMargin+y*16, this.options.itemWidth, this.options.itemHeight, this.onGetData(this.dataSender, 't1', y), penColor, false, {topMargin: this.options.t1TopMargin, leftMargin: this.options.t1LeftMargin});
       if (y != this.selection) {
         this.menuEntities[y][0].hoverColor = this.options.hoverColor;
+        this.menuEntities[y][0].clickColor = this.options.clickColor;
       } else {
         this.menuEntities[y][0].hoverColor = this.options.selectionHoverColor;
+        this.menuEntities[y][0].clickColor = this.options.selectionClickColor;
       }
       this.addEntity(this.menuEntities[y][0]);
       this.menuEntities[y][1] = new TextEntity(this, this.options.fonts, this.options.leftMargin+this.options.itemWidth-this.options.t2Width, this.options.topMargin+y*16, this.options.t2Width, this.options.itemHeight, this.onGetData(this.dataSender, 't2', y), penColor, false, {topMargin: this.options.t2TopMargin, rightMargin: this.options.t2RightMargin, align: 'right'});
@@ -83,10 +87,12 @@ export class MenuEntity  extends AbstractEntity {
       return;
     }
     this.menuEntities[this.selection][0].hoverColor = this.options.hoverColor;
+    this.menuEntities[this.selection][0].clickColor = this.options.clickColor;
     this.menuEntities[this.selection][0].setPenColor(this.options.textColor);
     this.menuEntities[this.selection][1].setPenColor(this.options.textColor);
     this.selection = newSelection;
     this.menuEntities[this.selection][0].hoverColor = this.options.selectionHoverColor;
+    this.menuEntities[this.selection][0].clickColor = this.options.selectionClickColor;
     this.menuEntities[this.selection][0].setPenColor(this.options.selectionTextColor);
     this.menuEntities[this.selection][1].setPenColor(this.options.selectionTextColor);
     this.selectionEntity.y = this.options.topMargin+this.selection*16;
@@ -118,6 +124,7 @@ export class MenuEntity  extends AbstractEntity {
             for (var i = 0; i < this.menuEntities.length; i++) {
               if (this.menuEntities[i][0].pointOnEntity(event)) {
                 this.app.inputEventsManager.keysMap.Mouse1 = this.menuEntities[i][0];
+                this.menuEntities[i][0].clickState = true;
                 return true;
               }
             }

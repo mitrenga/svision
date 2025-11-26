@@ -36,8 +36,8 @@ export class ZXControlsEntity extends AbstractEntity {
       {label: 'TOUCHSCREEN', type: 'touchscreen'}
     ];
 
-    this.deviceHoverColor = '#e6d644ff';
-    this.deviceClickColor = '#7a7a7aff';
+    this.deviceHoverColor = '#b1ab79ff';
+    this.deviceClickColor = '#939393ff';
 
     this.options = {
       'keyboard': {
@@ -70,8 +70,8 @@ export class ZXControlsEntity extends AbstractEntity {
       }
     }
 
-    this.selectedGamepad = false;
-    this.checkSelectedGamepad();
+    this.selectionGamepad = false;
+    this.checkSelectionGamepad();
 
     this.tsData = {
       'jump-left-right': {left: {x: 137, y: 47, width: 19, height: 22}, right: {x: 158, y: 47, width: 19, height: 22}, jump: {x: 97, y: 47, width: 38, height: 22}, next: 'left-right-jump'},
@@ -145,14 +145,14 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 67, 104, 19, 'PRESS A BUTTON\nON YOUR GAMEPAD\nTO START', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.notFound.supported', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 75, 104, 12, 'DEVICE DOES NOT\nSUPPORT GAMEPAD', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.notFound.unsupported', hide: true}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 90, 16, 104, 9, '', 'selectGamepad', [], false, this.app.platform.colorByName('magenta'), {group: 'gamepad.connected', hoverColor: this.app.platform.colorByName('brightMagenta'), clickColor: '#7a7a7aff', hide: true}));
-    this.addEntity(this.controlsEntites.gpLabel = new SlidingTextEntity(this, this.app.fonts.fonts5x5, 90, 16, 96, 9, this.selectedGamepadName().toUpperCase(), this.app.platform.colorByName('brightWhite'), false, {margin: 2, group: 'gamepad.connected', hide: true}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 90, 16, 104, 9, '', 'selectingGamepad', [], false, this.app.platform.colorByName('magenta'), {group: 'gamepad.connected', hoverColor: this.app.platform.colorByName('brightMagenta'), clickColor: '#7a7a7aff', hide: true}));
+    this.addEntity(this.controlsEntites.gpLabel = new SlidingTextEntity(this, this.app.fonts.fonts5x5, 90, 16, 96, 9, this.selectionGamepadName().toUpperCase(), this.app.platform.colorByName('brightWhite'), false, {margin: 2, group: 'gamepad.connected', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 187, 16, 7, 9, '↓', this.app.platform.colorByName('black'), false, {align: 'center', topMargin: 2, group: 'gamepad.connected', hide: true}));
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 106, 40, 72, 19, 'GAMEPAD IS NOT', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.connected.notConfigured', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 106, 47, 72, 19, 'CONFIGURED', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.connected.notConfigured', hide: true}));
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 115, 68, 54, 13, 'CONFIGURE', 'gamepadRemapKeys', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'gamepad.connected.notConfigured', hide: true}));
-    this.addOptionsEntities(28, 'gamepads', this.selectedGamepad, 'gamepad.connected.configured', true);
+    this.addOptionsEntities(28, 'gamepads', this.selectionGamepad, 'gamepad.connected.configured', true);
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 88, 64, 13, 'REMAP KEYS', 'gamepadRemapKeys', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'gamepad.connected.configured', hide: true}));
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 103, 64, 13, 'IGNORE', 'gamepadIgnore', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('red'), {align: 'center', margin: 4, group: 'gamepad.connected.configured', hide: true}));
 
@@ -213,8 +213,8 @@ export class ZXControlsEntity extends AbstractEntity {
   prettyGamepadKey(action) {
     var result = 'OFF';
     if (action !== false) {
-      if (this.selectedGamepad in this.app.controls.gamepads.devices) {
-        var gamepad = this.app.controls.gamepads.devices[this.selectedGamepad];
+      if (this.selectionGamepad in this.app.controls.gamepads.devices) {
+        var gamepad = this.app.controls.gamepads.devices[this.selectionGamepad];
         if ('buttons' in gamepad) {
           Object.keys(gamepad.buttons).forEach((button) => {
             if (gamepad.buttons[button].action == action) {
@@ -286,7 +286,7 @@ export class ZXControlsEntity extends AbstractEntity {
           if (!Object.keys(this.app.inputEventsManager.gamepads).length) {
             group += '.notFound.supported';
           } else {
-            if (this.selectedGamepad in this.app.controls.gamepads.devices) {
+            if (this.selectionGamepad in this.app.controls.gamepads.devices) {
               group += '.connected.configured';
             } else {
               group += '.connected.notConfigured';
@@ -306,27 +306,27 @@ export class ZXControlsEntity extends AbstractEntity {
     return group;
   } // getGroupPath
 
-  selectedGamepadName() {
-    if (this.selectedGamepad === false) {
+  selectionGamepadName() {
+    if (this.selectionGamepad === false) {
       return '--- select gamepad ---';
     }
-    return this.selectedGamepad;
-  } // selectedGamepadName
+    return this.selectionGamepad;
+  } // selectionGamepadName
 
-  checkSelectedGamepad() {
+  checkSelectionGamepad() {
     var gamepadsKeys = Object.keys(this.app.inputEventsManager.gamepads);
     if (gamepadsKeys.length) {
-      if (this.selectedGamepad === false) {
-        this.selectedGamepad = gamepadsKeys[0];
+      if (this.selectionGamepad === false) {
+        this.selectionGamepad = gamepadsKeys[0];
       }
-      if (!(this.selectedGamepad in this.app.inputEventsManager.gamepads)) {
-        this.selectedGamepad = gamepadsKeys[0];
+      if (!(this.selectionGamepad in this.app.inputEventsManager.gamepads)) {
+        this.selectionGamepad = gamepadsKeys[0];
       }
     } else {
-      this.selectedGamepad = false;
+      this.selectionGamepad = false;
     }
     this.gamepadActionsUpdate();
-  } // checkSelectedGamepad
+  } // checkSelectionGamepad
 
   gamepadActionsUpdate() {
     this.options.gamepads.keys.forEach((key) => {
@@ -404,18 +404,18 @@ export class ZXControlsEntity extends AbstractEntity {
 
       case 'gamepadConnected':
       case 'gamepadDisconnected':
-        this.checkSelectedGamepad();
-        this.controlsEntites.gpLabel.setText(this.selectedGamepadName().toUpperCase());
+        this.checkSelectionGamepad();
+        this.controlsEntites.gpLabel.setText(this.selectionGamepadName().toUpperCase());
         this.changeGroup(this.selectionDevice);
         return true;
 
-      case 'selectGamepad':
-        this.addModalEntity(new ZXSelectingGamepadEntity(this, 7, 18, 187, 67, this.selectedGamepad));
+      case 'selectingGamepad':
+        this.addModalEntity(new ZXSelectingGamepadEntity(this, 7, 18, 187, 67, this.selectionGamepad));
         return true;
 
-      case 'changeSelectedGamepad':
-        this.selectedGamepad = event.selectedGamepad;
-        this.controlsEntites.gpLabel.setText(this.selectedGamepadName().toUpperCase());
+      case 'changeSelectionGamepad':
+        this.selectionGamepad = event.selectionGamepad;
+        this.controlsEntites.gpLabel.setText(this.selectionGamepadName().toUpperCase());
         this.gamepadActionsUpdate();
         this.changeGroup(this.selectionDevice);
         return true;
