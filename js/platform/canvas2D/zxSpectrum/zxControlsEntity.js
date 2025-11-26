@@ -145,9 +145,9 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 67, 104, 19, 'PRESS A BUTTON\nON YOUR GAMEPAD\nTO START', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.notFound.supported', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 75, 104, 12, 'DEVICE DOES NOT\nSUPPORT GAMEPAD', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.notFound.unsupported', hide: true}));
 
-    this.addEntity(this.controlsEntites.gpLabel = new SlidingTextEntity(this, this.app.fonts.fonts5x5, 90, 16, 96, 9, this.selectedGamepadName().toUpperCase(), this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {margin: 2, group: 'gamepad.connected', hide: true}));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 187, 16, 7, 9, '↓', this.app.platform.colorByName('yellow'), this.app.platform.colorByName('magenta'), {align: 'center', topMargin: 2, group: 'gamepad.connected', hide: true}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 90, 16, 104, 9, '', 'selectGamepad', [], false, false, {group: 'gamepad.connected', hide: true}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 90, 16, 104, 9, '', 'selectGamepad', [], false, this.app.platform.colorByName('magenta'), {group: 'gamepad.connected', hoverColor: this.app.platform.colorByName('brightMagenta'), clickColor: '#7a7a7aff', hide: true}));
+    this.addEntity(this.controlsEntites.gpLabel = new SlidingTextEntity(this, this.app.fonts.fonts5x5, 90, 16, 96, 9, this.selectedGamepadName().toUpperCase(), this.app.platform.colorByName('brightWhite'), false, {margin: 2, group: 'gamepad.connected', hide: true}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 187, 16, 7, 9, '↓', this.app.platform.colorByName('black'), false, {align: 'center', topMargin: 2, group: 'gamepad.connected', hide: true}));
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 106, 40, 72, 19, 'GAMEPAD IS NOT', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.connected.notConfigured', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 106, 47, 72, 19, 'CONFIGURED', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.connected.notConfigured', hide: true}));
