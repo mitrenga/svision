@@ -43,6 +43,12 @@ export class SlidingTextEntity extends AbstractEntity {
     if ('hide' in options) {
       this.hide = options.hide;
     }
+    if ('hoverColor' in options) {
+      this.hoverColor = options.hoverColor;
+    }
+    if ('clickColor' in options) {
+      this.clickColor = options.clickColor;
+    }
 
     this.animationWidth = this.textWidth();
     if (this.animationWidth < this.width) {
@@ -57,6 +63,30 @@ export class SlidingTextEntity extends AbstractEntity {
     this.app.layout.newDrawingCache(this, 0);
     this.app.layout.newDrawingCropCache(this);
   } // constructor
+  
+  init() {
+    super.init();
+
+    if (this.hoverColor === false) {
+      if (this.id in this.stack) {
+        if ('hoverColor' in this.stack[this.id]) {
+          if (this.bkColor in this.stack[this.id].hoverColor) {
+            this.hoverColor = this.stack[this.id].hoverColor[this.bkColor];
+          }
+        }
+      }
+    }
+
+    if (this.clickColor === false) {
+      if (this.id in this.stack) {
+        if ('clickColor' in this.stack[this.id]) {
+          if (this.bkColor in this.stack[this.id].clickColor) {
+            this.clickColor = this.stack[this.id].clickColor[this.bkColor];
+          }
+        }
+      }
+    }
+  } // init
 
   textWidth() {
     var w = this.options.leftMargin+this.options.rightMargin;
@@ -88,10 +118,9 @@ export class SlidingTextEntity extends AbstractEntity {
   } // resetAnimation
 
   drawEntity() {
+    super.drawEntity();
+
     if (this.drawingCache[0].needToRefresh(this, this.animationWidth, this.height)) {
-      if (this.bkColor != false) {
-        this.app.layout.paintRect(this.drawingCache[0].ctx, 0, 0, this.animationWidth, this.height, this.bkColor);
-      }
       this.cursorX = this.options.leftMargin;
       for (var ch = 0; ch < this.text.length; ch++) {
         var charData = this.fonts.getCharData(this.text[ch], '1', 1);
@@ -103,6 +132,26 @@ export class SlidingTextEntity extends AbstractEntity {
     }
     this.app.layout.paintCropCache(this, 0, this.animationPosition, 0, 0, 0);
   } // drawEntity
+
+  handleEvent(event) {
+    if (super.handleEvent(event)) {
+      return true;
+    }
+
+    switch (event.id) {
+      case 'mouseHover':
+        if (!this.hide && this.hoverColor !== false) {
+          if (this.pointOnEntity(event)) {
+            console.log(this.hoverColor);
+            this.app.inputEventsManager.mouseHover = this;
+            this.hoverState = true;
+            return true;
+          }
+        }
+        break;
+    }
+    return false;
+  } // handleEvent
 
   cleanCache() {
     this.drawingCache[0].cleanCache();
