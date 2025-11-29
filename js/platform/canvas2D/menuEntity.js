@@ -47,6 +47,9 @@ export class MenuEntity  extends AbstractEntity {
     if (this.options.itemWidth == 0) {
       this.options.itemWidth = this.width-this.options.leftMargin-this.options.rightMargin;
     }
+    if ('selection' in options) {
+      this.selection = options.selection;
+    }
   } // constructor
 
   init() {
