@@ -128,6 +128,14 @@ export class MenuEntity  extends AbstractEntity {
                 return true;
               }
             }
+          case 'Touch':
+            for (var i = 0; i < this.menuEntities.length; i++) {
+              if (this.menuEntities[i][0].pointOnEntity(event)) {
+                this.app.inputEventsManager.touchesMap[event.identifier] = this.menuEntities[i][0];
+                this.menuEntities[i][0].clickState = true;
+                return true;
+              }
+            }
         }
         break;
 
@@ -137,6 +145,16 @@ export class MenuEntity  extends AbstractEntity {
             for (var i = 0; i < this.menuEntities.length; i++) {
               if (this.menuEntities[i][0].pointOnEntity(event)) {
                 if (this.app.inputEventsManager.keysMap.Mouse1 === this.menuEntities[i][0]) {
+                  this.changeMenuItem(i);
+                  this.sendEvent(0, 0, {id: this.onGetData(this.dataSender, 'event', this.selection)});
+                  return true;
+                }
+              }
+            }
+          case 'Touch':
+            for (var i = 0; i < this.menuEntities.length; i++) {
+              if (this.menuEntities[i][0].pointOnEntity(event)) {
+                if (this.app.inputEventsManager.touchesMap[event.identifier] === this.menuEntities[i][0]) {
                   this.changeMenuItem(i);
                   this.sendEvent(0, 0, {id: this.onGetData(this.dataSender, 'event', this.selection)});
                   return true;

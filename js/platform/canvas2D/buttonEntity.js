@@ -32,11 +32,20 @@ export class ButtonEntity extends TextEntity {
             this.clickState = true;
             return true;
           }
+          if ((event.key == 'Touch' && this.pointOnEntity(event))) {
+            this.app.inputEventsManager.touchesMap[event.identifier] = this;
+            this.clickState = true;
+            return true;
+          }
         }
         break;
       case 'keyRelease':
         if (!this.hide) {
           if ((event.key == 'Mouse1' && this.app.inputEventsManager.keysMap.Mouse1 === this && this.pointOnEntity(event))) {
+            this.sendEvent(-1, 0, {id: this.eventID});
+            return true;
+          }
+          if ((event.key == 'Touch' && this.app.inputEventsManager.touchesMap[event.identifier] === this && this.pointOnEntity(event))) {
             this.sendEvent(-1, 0, {id: this.eventID});
             return true;
           }

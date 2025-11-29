@@ -22,9 +22,7 @@ export class InputEventsManager {
     if (this.app.model.autorepeatKeys || !(event.key in this.keysMap)) {
       this.keysMap[event.key] = true;
       if (this.app.model) {
-        if (!this.blurWindow) {
-          this.app.model.sendEvent(0, {id: 'keyPress', key: event.key});
-        }
+        this.app.model.sendEvent(0, {id: 'keyPress', key: event.key});
       }
     }
   } // eventKeyDown
@@ -48,14 +46,18 @@ export class InputEventsManager {
 
   eventMouseDown(event) {
     var buttons = event.buttons;
+    if (buttons == 0) {
+      buttons = 1;
+    }
+    
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 1) {
         if (!('Mouse'+(1<<b) in this.keysMap)) {
           this.keysMap['Mouse'+(1<<b)] = false;
           if (this.app.model) {
-            if (!this.blurWindow) {
-              this.app.model.sendEvent(0, {id: 'keyPress', key: 'Mouse'+(1<<b), x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
-            }
+            var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
+            var clientY = this.app.layout.convertClientCoordinateY(event.clientY);
+            this.app.model.sendEvent(0, {id: 'keyPress', key: 'Mouse'+(1<<b), x: clientX, y: clientY});
           }
         }
       }
@@ -69,7 +71,9 @@ export class InputEventsManager {
       if (buttons%2 == 0) {
         if ('Mouse'+(1<<b) in this.keysMap) {
           if (this.app.model) {
-            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Mouse'+(1<<b), x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
+            var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
+            var clientY = this.app.layout.convertClientCoordinateY(event.clientY);
+            this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Mouse'+(1<<b), x: clientX, y: clientY});
           }
           if (this.keysMap['Mouse'+(1<<b)] !== false && this.keysMap['Mouse'+(1<<b)] !== true) {
             this.keysMap['Mouse'+(1<<b)].clickState = false;
@@ -85,13 +89,15 @@ export class InputEventsManager {
     if (this.mouseHover !== false) {
       this.mouseHover.hoverState = false;
     }
+    var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
+    var clientY = this.app.layout.convertClientCoordinateY(event.clientY);
 
     if (!('Mouse1' in this.keysMap)) {
-      this.app.model.sendEvent(0, {id: 'mouseHover', x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)});
+      this.app.model.sendEvent(0, {id: 'mouseHover', x: clientX, y: clientY});
     }
 
     if ('Mouse1' in this.keysMap && this.keysMap.Mouse1 !== false && this.keysMap.Mouse1 !== true) {
-      if (this.keysMap.Mouse1.pointOnEntity({x: this.app.layout.convertClientCoordinateX(event.clientX), y: this.app.layout.convertClientCoordinateY(event.clientY)})) {
+      if (this.keysMap.Mouse1.pointOnEntity({x: clientX, y: clientY})) {
         this.keysMap.Mouse1.clickState = true;
       } else {
         this.keysMap.Mouse1.clickState = false;
@@ -101,52 +107,57 @@ export class InputEventsManager {
 
   eventTouchStart(event) {
     event.preventDefault();
-    if (this.app.model) {
-      for (var t = 0; t < event.touches.length; t++) {
-        if (!(event.touches[t].identifier in this.touchesMap)) {
-          var touchX = this.app.layout.convertClientCoordinateX(event.touches[t].clientX);          
-          var touchY = this.app.layout.convertClientCoordinateY(event.touches[t].clientY);
-          var key = false;
-          if (touchX < this.app.model.borderEntity.width/2) {
-            key = 'Touch4';
-          }
-          if (touchX > this.app.model.borderEntity.width/2 && touchX < this.app.model.borderEntity.width/4*3) {
-            key = 'Touch1';
-          }
-          if (touchX > this.app.model.borderEntity.width/4*3) {
-            key = 'Touch2';
-          }
-          if (key !== false) {
-            this.app.model.sendEvent(0, {id: 'keyPress', key: key});
-            this.touchesMap[event.touches[t].identifier] = key;
-          }
-          this.app.model.sendEvent(0, {id: 'mouseClick', key: 'left', x: touchX, y: touchY});
+    for (var t = 0; t < event.changedTouches.length; t++) {
+      var changedTouch = event.changedTouches[t];
+      if (!(changedTouch.identifier in this.touchesMap)) {
+        this.touchesMap[changedTouch.identifier] = false;
+        if (this.app.model) {
+          var touchX = this.app.layout.convertClientCoordinateX(changedTouch.clientX);          
+          var touchY = this.app.layout.convertClientCoordinateY(changedTouch.clientY);
+          this.app.model.sendEvent(0, {id: 'keyPress', key: 'Touch', identifier: changedTouch.identifier, x: touchX, y: touchY});
         }
       }
     }
   } // eventTouchStart
 
   eventTouchEnd(event) {
-    if (this.app.model) {
-      Object.keys(this.touchesMap).forEach((identifier) => {
-        var validTouch = false;
-        for (var t = 0; t < event.touches.length; t++) {
-          if (identifier == event.touches[t].identifier) {
-            validTouch = true;
-            break;
-          }
-        }
-        if (!validTouch) {
-          this.app.model.sendEvent(0, {id: 'keyRelease', key: this.touchesMap[identifier]});
-          delete this.touchesMap[identifier];
-        }
-      });
-    }
     event.preventDefault();
+    for (var t = 0; t < event.changedTouches.length; t++) {
+      var changedTouch = event.changedTouches[t];
+      if (changedTouch.identifier in this.touchesMap) {
+        if (this.app.model) {
+          var touchX = this.app.layout.convertClientCoordinateX(changedTouch.clientX);          
+          var touchY = this.app.layout.convertClientCoordinateY(changedTouch.clientY);
+          this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Touch', identifier: changedTouch.identifier, x: touchX, y: touchY});
+        }        
+        Object.keys(this.touchesMap).forEach((t) => {
+          if (this.touchesMap[t] !== false && this.touchesMap[t] !== true) {
+            this.touchesMap[t].clickState = false;
+          }
+          delete this.touchesMap[t];
+        });
+      }
+    }
   } // eventTouchEnd
 
   eventTouchMove(event) {
     event.preventDefault();
+    for (var t = 0; t < event.changedTouches.length; t++) {
+      var changedTouch = event.changedTouches[t];
+      if (changedTouch.identifier in this.touchesMap) {
+        if (this.app.model) {
+          if (this.touchesMap[changedTouch.identifier] !== false && this.touchesMap[changedTouch.identifier] !== true) {
+            var touchX = this.app.layout.convertClientCoordinateX(changedTouch.clientX);          
+            var touchY = this.app.layout.convertClientCoordinateY(changedTouch.clientY);
+            if (this.touchesMap[changedTouch.identifier].pointOnEntity({x: touchX, y: touchY})) {
+              this.touchesMap[changedTouch.identifier].clickState = true;
+            } else {
+              this.touchesMap[changedTouch.identifier].clickState = false;
+            }
+          }        
+        }
+      }
+    }
   } // eventTouchMove
 
   eventGamepadConnected(event) {
