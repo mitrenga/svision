@@ -26,7 +26,7 @@ class AutoConfigPage extends AbstractPage {
       $this->data[] = '        document.cookie="libImportMethod=there-is-no-way;max-age=31536000;path=/";';
       $this->data[] = '        location.reload();';
       $this->data[] = '      }';
-      $this->data[] = '      setTimeout(checkImportFrom, 250);';
+      $this->data[] = '      setTimeout(checkImportFrom, 500);';
       $this->data[] = '    </script>';
     } else {
       $this->data[] = '    <script type="module" src="app/svision/js/config/autoCfgAwaitImport.js?ver='.$srcVersion.'"></script>';
@@ -36,7 +36,7 @@ class AutoConfigPage extends AbstractPage {
       $this->data[] = '        document.cookie="libImportMethod=false-await-import;max-age=31536000;path=/";';
       $this->data[] = '        location.reload();';
       $this->data[] = '      }';
-      $this->data[] = '      setTimeout(checkAwaitImport, 250);';
+      $this->data[] = '      setTimeout(checkAwaitImport, 500);';
       $this->data[] = '    </script>';
     }
     $this->data[] = '  </body>';
