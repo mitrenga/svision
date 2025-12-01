@@ -96,6 +96,11 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
             }
           }
         }
+      } else {
+        for (var idChannel = 0; idChannel < event.outputBuffer.numberOfChannels; idChannel++) {
+          var channel = event.outputBuffer.getChannelData(idChannel);
+          channel.fill(0.0, 0, channel.length);
+        }
       }
     } // onaudioprocess
 
