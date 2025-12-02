@@ -414,10 +414,9 @@ export class ZXControlsEntity extends AbstractEntity {
         this.changeGroup(this.selectionDevice);
         return true;
 
-        case 'mouseRemapKeys':
+      case 'mouseRemapKeys':
         this.addModalEntity(new ZXRemapKeysEntity(this, 7, 16, 187, 115, this.options.mouse));
         return true;
-
 
       case 'gamepadConnected':
       case 'gamepadDisconnected':
@@ -435,6 +434,11 @@ export class ZXControlsEntity extends AbstractEntity {
         this.controlsEntites.gpLabel.setText(this.selectionGamepadName().toUpperCase());
         this.gamepadActionsUpdate();
         this.changeGroup(this.selectionDevice);
+        return true;
+
+      case 'gamepadRemapKeys':
+        this.app.inputEventsManager.gamepadsConfig = this.selectionGamepad;
+        this.addModalEntity(new ZXRemapKeysEntity(this, 7, 16, 187, 115, this.options.gamepads));
         return true;
 
       case 'touchscreenChange':

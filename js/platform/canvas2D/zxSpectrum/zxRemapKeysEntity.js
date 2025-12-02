@@ -58,6 +58,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     switch (event.id) { 
 
       case 'closeZXRemapKeys':
+        this.app.inputEventsManager.gamepadsConfig = false;
         this.destroy();
         return true;
 
@@ -75,7 +76,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           if (this.options.device == 'keyboard' && event.key.toUpperCase() in this.app.fonts.fonts5x5.fontsData) {
             newKey = event.key.toUpperCase();
           }
-        } else if (this.validFnKeys[this.options.device].indexOf(event.key) >= 0) {
+        } else if (this.checkValidFnKeys(this.options.device, event.key)) {
           newKey = event.key;
         }
         if ((newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) || newKey == 'NoKey') {
@@ -88,6 +89,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
               this.app.controls[this.options.device][newKey.action] = newKey.key;
             });
             this.app.setCookie(this.options.device, JSON.stringify(this.app.controls[this.options.device]));
+            this.app.inputEventsManager.gamepadsConfig = false;
             this.destroy();
             return true;
           }
@@ -99,6 +101,25 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
     return false;
   } // handleEvent
+
+  checkValidFnKeys(device, key) {
+    switch (device) {
+      case 'gamepads':
+        if (key.length > 1) {
+          if (key[0] == 'B') {
+            return true;
+          }
+          if (key[0] == 'A') {
+            return true;
+          }
+        }
+        break;
+    }
+    if (this.validFnKeys[device].indexOf(key) >= 0) {
+      return true;
+    }
+    return false;
+  } // checkValidFnKeys
 
 } // ZXRemapKeysEntity
 
