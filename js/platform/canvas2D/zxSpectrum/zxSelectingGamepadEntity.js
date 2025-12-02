@@ -121,6 +121,20 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
             }
             this.app.inputEventsManager.keysMap.Mouse1 = true;
             return true;
+          case 'Touch':
+            for (var i = 0; i < this.menuItems.length; i++) {
+              if (this.menuEntities[i].pointOnEntity(event)) {
+                this.app.inputEventsManager.touchesMap[event.identifier] = this.menuEntities[i];
+                this.menuEntities[i].clickState = true;
+                return true;
+              }
+            }
+            if (this.pointOnEntity(event)) {
+              this.app.inputEventsManager.touchesMap[event.identifier] = this;
+              return true;
+            }
+            this.app.inputEventsManager.touchesMap[event.identifier] = true;
+            return true;
           }
         break;
 
@@ -138,6 +152,23 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
                 return true;
               }
               if (this.app.inputEventsManager.keysMap.Mouse1 === true) {
+                this.destroy();
+                return true;
+              }
+            }
+            break;
+          case 'Touch':
+            for (var i = 0; i < this.menuItems.length; i++) {
+              if (this.menuEntities[i].pointOnEntity(event) && this.app.inputEventsManager.touchesMap[event.identifier] == this.menuEntities[i]) {
+                this.changeMenuItem(i);
+                this.sendEvent(0, 0, {id: 'changeSelectionGamepad', selectionGamepad: this.selectionGamepad});
+                this.destroy();
+                return true;
+              }
+              if (this.pointOnEntity(event) && this.app.inputEventsManager.touchesMap[event.identifier] == this) {
+                return true;
+              }
+              if (this.app.inputEventsManager.touchesMap[event.identifier] === true) {
                 this.destroy();
                 return true;
               }

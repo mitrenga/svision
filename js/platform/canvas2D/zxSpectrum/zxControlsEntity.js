@@ -361,6 +361,15 @@ export class ZXControlsEntity extends AbstractEntity {
               }
             }
             break;
+          case 'Touch':
+            for (var i = 0; i < this.devices.length; i++) {
+              if (this.devicesEntities[i].pointOnEntity(event)) {
+                this.app.inputEventsManager.touchesMap[event.identifier] = this.devicesEntities[i];
+                this.devicesEntities[i].clickState = true;
+                return true;
+              }
+            }
+            break;
           }
         break;
 
@@ -369,6 +378,14 @@ export class ZXControlsEntity extends AbstractEntity {
           case 'Mouse1':
             for (var i = 0; i < this.devices.length; i++) {
               if (this.devicesEntities[i].pointOnEntity(event) && this.app.inputEventsManager.keysMap.Mouse1 == this.devicesEntities[i]) {
+                this.changeGroup(i);
+                return true;
+              }
+            }
+            break;
+          case 'Touch':
+            for (var i = 0; i < this.devices.length; i++) {
+              if (this.devicesEntities[i].pointOnEntity(event) && this.app.inputEventsManager.touchesMap[event.identifier] == this.devicesEntities[i]) {
                 this.changeGroup(i);
                 return true;
               }
