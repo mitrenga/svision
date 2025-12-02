@@ -161,7 +161,7 @@ export class InputEventsManager {
   } // eventTouchMove
 
   eventGamepadConnected(event) {
-    this.gamepads[event.gamepad.id] = event.gamepad;
+    this.gamepads[event.gamepad.id] = event.gamepad.index;
     if (this.app.model) {
       this.app.model.sendEvent(0, {id: 'gamepadConnected'});
     }
@@ -182,7 +182,7 @@ export class InputEventsManager {
     Object.keys(this.app.controls.gamepads.devices).forEach((id) => {
       if (id in this.app.inputEventsManager.gamepads) {
         var controlsDevice = this.app.controls.gamepads.devices[id];
-        var connectedDevice = this.app.inputEventsManager.gamepads[id];
+        var connectedDevice = navigator.getGamepads()[this.app.inputEventsManager.gamepads[id]];
         // buttons
         if ('buttons' in controlsDevice) {
           Object.keys(controlsDevice.buttons).forEach((b) => {
