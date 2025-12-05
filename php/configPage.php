@@ -205,13 +205,12 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '    <span class="cookies">';
     $this->data[] = '    <script>';
     $this->data[] = '      var allCookies = [];';
-    $this->data[] = '      var cookies = document.cookie;';
-    $this->data[] = '      if (cookies.length > 0) {';
-    $this->data[] = '        var arrayCookies = cookies.split(";");';
-    $this->data[] = '        arrayCookies.map(function(originalValue) {';
-    $this->data[] = '          var key = originalValue.split("=")[0];';
+    $this->data[] = '      if (document.cookie.length > 0) {';
+    $this->data[] = '        var arrayCookies = document.cookie.split(";");';
+    $this->data[] = '        arrayCookies.forEach(function(cookieString) {';
+    $this->data[] = '          var key = cookieString.split("=")[0];';
     $this->data[] = '          while (key.length > 0 && key[0] == " ") key = key.substring(1, key.length);';
-    $this->data[] = '          var value = originalValue.split("=")[1];';
+    $this->data[] = '          var value = cookieString.split("=")[1];';
     $this->data[] = '          while (value.length > 0 && value[0] == " ") value = value.substring(1, value.length);';
     $this->data[] = '          allCookies.push({key: key, value: value});';
     $this->data[] = '        });';

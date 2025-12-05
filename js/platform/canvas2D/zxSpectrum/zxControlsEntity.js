@@ -61,11 +61,11 @@ export class ZXControlsEntity extends AbstractEntity {
       'gamepads': {
         device: 'gamepads',
         keys: [
-          {action: 'left', label: 'WALKING LEFT'},
-          {action: 'right', label: 'WALKING RIGHT'},
-          {action: 'jump', label: 'JUMP'},
-          {action: 'play', label: 'PLAY'},
-          {action: 'pause', label: 'PAUSE'}
+          {action: 'left', label: 'WALKING LEFT', event: 'GamepadLeft'},
+          {action: 'right', label: 'WALKING RIGHT', event: 'GamepadRight'},
+          {action: 'jump', label: 'JUMP', event: 'GamepadJump'},
+          {action: 'play', label: 'PLAY', event: 'GamepadPlay'},
+          {action: 'pause', label: 'PAUSE', event: 'GamepadPause'}
         ]
       }
     }
@@ -325,13 +325,13 @@ export class ZXControlsEntity extends AbstractEntity {
     } else {
       this.selectionGamepad = false;
     }
-    this.gamepadActionsUpdate();
   } // checkSelectionGamepad
 
   gamepadActionsUpdate() {
     this.options.gamepads.keys.forEach((key) => {
       this.sendEvent(0, 0, {id: 'updateEntity', member: 'gamepads.'+key.action, text: this.prettyGamepadKey(key.action)});
     });
+    this.changeGroup(this.selectionDevice);
   } // gamepadActionsUpdate
 
   handleEvent(event) {
@@ -401,7 +401,7 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'mouseEnable':
         this.app.controls.mouse = this.app.getControls('mouse', false);
         this.app.controls.mouse.enable = true;
-        this.app.setCookie('mouse', JSON.stringify(this.app.controls.mouse));
+        this.app.writeCookie('mouse', JSON.stringify(this.app.controls.mouse));
         this.options.mouse.keys.forEach((key) => {
           this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: this.app.prettyKey(this.app.controls.mouse[key.action])});
         });
@@ -410,7 +410,7 @@ export class ZXControlsEntity extends AbstractEntity {
 
       case 'mouseDisable':
         this.app.controls.mouse.enable = false;
-        this.app.setCookie('mouse', JSON.stringify({enable: false}));
+        this.app.writeCookie('mouse', JSON.stringify({enable: false}));
         this.changeGroup(this.selectionDevice);
         return true;
 
@@ -421,6 +421,7 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'gamepadConnected':
       case 'gamepadDisconnected':
         this.checkSelectionGamepad();
+        this.gamepadActionsUpdate();
         this.controlsEntites.gpLabel.setText(this.selectionGamepadName().toUpperCase());
         this.changeGroup(this.selectionDevice);
         return true;
@@ -439,6 +440,20 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'gamepadRemapKeys':
         this.app.inputEventsManager.gamepadsConfig = this.selectionGamepad;
         this.addModalEntity(new ZXRemapKeysEntity(this, 7, 16, 187, 115, this.options.gamepads));
+        return true;
+
+      case 'refreshGamepadActions':
+        this.gamepadActionsUpdate();
+        this.changeGroup(this.selectionDevice);
+        return true;
+      
+      case 'gamepadIgnore':
+        delete this.app.controls.gamepads.devices[this.selectionGamepad];
+        this.app.deleteCookie(this.selectionGamepad);
+        var keys = Object.keys(this.app.controls.gamepads.devices);
+        this.app.writeCookie('gamepads', JSON.stringify(keys));
+        this.gamepadActionsUpdate();
+        this.changeGroup(this.selectionDevice);
         return true;
 
       case 'touchscreenChange':

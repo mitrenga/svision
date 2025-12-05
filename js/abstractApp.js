@@ -190,18 +190,36 @@ export class AbstractApp {
     return key.toUpperCase();
   } // prettyKey
 
-  setCookie(name, value) {
+  writeCookie(name, value) {
     document.cookie = name+'='+value+';max-age=31536000;path=/';
-  } // setCookie
+  } // writeCookie
 
-  getCookie(name, defaultValue) {
-    var regex = new RegExp('(^| )'+name+'=([^;]+)');
-    var match = document.cookie.match(regex);
-    if (match) {
-      return match[2];
+  deleteCookie(name) {
+    document.cookie = name+'=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/';
+    document.cookie = name+'=;expires=Thu, 01 Jan 1970 00:00:00 UTC';
+  } // deleteCookie
+
+  readCookie(name, defaultValue) {
+    var allCookies = {};
+    if (document.cookie.length > 0) {
+      var arrayCookies = document.cookie.split(";");
+      arrayCookies.forEach((cookieString) => {
+        var key = cookieString.split("=")[0];
+        while (key.length > 0 && key[0] == " ") {
+          key = key.substring(1, key.length);
+        }
+        var value = cookieString.split("=")[1];
+        while (value.length > 0 && value[0] == " ") {
+          value = value.substring(1, value.length);
+        }
+        allCookies[key] = value;
+      });
+    }
+    if (name in allCookies) {
+      return allCookies[name];
     }
     return defaultValue;
-  } // getCookie
+  } // readCookie
 
 } // AbstractApp
 

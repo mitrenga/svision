@@ -69,7 +69,7 @@ export class ZXVolumeEntity extends AbstractEntity {
 
   changeVolume(volume) {
     this.app.audioManager.volume[this.channel] = Math.min(10, Math.max(0, Math.round(volume)));
-    this.app.setCookie(this.cookie, this.app.audioManager.volume[this.channel]);
+    this.app.writeCookie(this.cookie, this.app.audioManager.volume[this.channel]);
     this.cursorEntity.x = 8+this.app.audioManager.volume[this.channel]*18;
   } // changeVolume
 

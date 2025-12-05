@@ -71,6 +71,10 @@ export class ZXRemapKeysEntity extends AbstractEntity {
       case 'skipKey':
         event.key = 'NoKey';
       case 'keyPress':
+        if (this.position >= this.options.keys.length) {
+          break;
+        }
+        
         var newKey = false;
         if (event.key.length == 1) {
           if (this.options.device == 'keyboard' && event.key.toUpperCase() in this.app.fonts.fonts5x5.fontsData) {
@@ -84,11 +88,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.app.prettyKey(newKey)});
           this.position++;
           if (this.position == this.options.keys.length) {
-            this.newKeys.forEach((newKey) => {
-              this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
-              this.app.controls[this.options.device][newKey.action] = newKey.key;
-            });
-            this.app.setCookie(this.options.device, JSON.stringify(this.app.controls[this.options.device]));
+            this.saveKeys();
             this.app.inputEventsManager.gamepadsConfig = false;
             this.destroy();
             return true;
@@ -101,6 +101,43 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
     return false;
   } // handleEvent
+
+  saveKeys() {
+    switch (this.options.device) {
+
+      case 'keyboard':
+      case 'mouse':
+        this.newKeys.forEach((newKey) => {
+          this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
+          this.app.controls[this.options.device][newKey.action] = newKey.key;
+        });
+        this.app.writeCookie(this.options.device, JSON.stringify(this.app.controls[this.options.device]));
+        break;
+
+      case 'gamepads':
+        this.app.controls.gamepads.devices[this.app.inputEventsManager.gamepadsConfig] = {buttons: {}, axes: {}};
+        var device = this.app.controls.gamepads.devices[this.app.inputEventsManager.gamepadsConfig];
+        this.newKeys.forEach((newKey, k) => {
+          //this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
+          if (newKey.key[0] == 'B') {
+            device.buttons[newKey.key.substring(1)] = {action: newKey.action, event: this.options.keys[k].event};
+          }
+          if (newKey.key[0] == 'A') {
+            if (!(newKey.key.substring(1, newKey.key.length-1) in device.axes)) {
+              device.axes[newKey.key.substring(1, newKey.key.length-1)] = {};
+            }
+            device.axes[newKey.key.substring(1, newKey.key.length-1)][newKey.key.substring(newKey.key.length-1)] = {action: newKey.action, event: this.options.keys[k].event};
+          }
+        });
+        var keys = Object.keys(this.app.controls.gamepads.devices);
+        this.app.writeCookie('gamepads', JSON.stringify(keys));
+        keys.forEach((id) => {
+          this.app.writeCookie(id, JSON.stringify(this.app.controls.gamepads.devices[id]));
+        });
+        this.sendEvent(-1, 0, {id: 'refreshGamepadActions'});
+        break;
+    }
+  } // saveKeys
 
   checkValidFnKeys(device, key) {
     switch (device) {
