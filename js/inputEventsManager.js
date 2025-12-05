@@ -217,12 +217,12 @@ export class InputEventsManager {
               var pressed = false;
               switch (direction) {
                 case '<':
-                  if (axis < -0.2) {
+                  if (axis < -0.9) {
                     pressed = true;
                   }
                   break;
                 case '>':
-                  if (axis > 0.2) {
+                  if (axis > 0.9) {
                     pressed = true;
                   }
                   break;
