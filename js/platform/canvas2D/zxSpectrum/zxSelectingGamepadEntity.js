@@ -43,7 +43,15 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
   } // init
 
   setMenuItems() {
-    if (!Object.keys(this.app.inputEventsManager.gamepads).length) {
+    var connectedDevices = navigator.getGamepads();
+    var isConnectedGamepad = false;
+    for (var d = 0; d < connectedDevices.length && isConnectedGamepad == false; d++) {
+      if (connectedDevices[d] != null) {
+        isConnectedGamepad = true;
+        break;
+      }
+    }
+    if (!isConnectedGamepad) {
       this.destroy();
     }
 
@@ -54,22 +62,24 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
       this.menuEntities[y].setText('');
     }
     this.menuItems = [];
-    for (var y = 0; y < Object.keys(this.app.inputEventsManager.gamepads).length && y < 8; y++) {
-      this.menuItems.push(Object.keys(this.app.inputEventsManager.gamepads)[y]);
-      this.menuEntities[y].hoverColor = this.hoverColor;
-      this.menuEntities[y].clickColor = this.clickColor;
-      this.menuEntities[y].setPenColor(this.penMenuItemColor);
-      this.menuEntities[y].setText(this.menuItems[y].toUpperCase());
-    }
+    var y = 0;
     this.selectionItem = 0;
-    for (var y = 0; y < this.menuItems.length; y++) {
-      if (this.selectionGamepad == this.menuItems[y]) {
-        this.selectionItem = y;
-        break;
+    for (var d = 0; d < connectedDevices.length && this.menuItems.length < 8; d++) {
+      var connectedDevice = connectedDevices[d];
+      if (connectedDevice != null) {
+        this.menuItems.push(connectedDevice.id);
+        this.menuEntities[y].hoverColor = this.hoverColor;
+        this.menuEntities[y].clickColor = this.clickColor;
+        this.menuEntities[y].setPenColor(this.penMenuItemColor);
+        this.menuEntities[y].setText(this.menuItems[y].toUpperCase());
+        if (connectedDevice.id == this.selectionGamepad) {
+          this.selectionItem = y;
+        }
+        y++;
       }
     }
-    this.menuEntities[y].hoverColor = this.hoverSelectionColor;
-    this.menuEntities[y].clickColor = this.clickSelectionColor;
+    this.menuEntities[this.selectionItem].hoverColor = this.hoverSelectionColor;
+    this.menuEntities[this.selectionItem].clickColor = this.clickSelectionColor;
     this.menuEntities[this.selectionItem].setPenColor(this.penSelectionMenuItemColor);
     this.menuSelectionEntity.y = 2+this.selectionItem*10;
   } // setMenuItems
@@ -175,15 +185,32 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
             }
             break;
         }
-
-      case 'gamepadConnected':
-      case 'gamepadDisconnected':
-        this.setMenuItems();
-        break;
     }
 
     return false;
   } // handleEvent
+
+  loopEntity(timestamp) {
+    var connectedDevices = navigator.getGamepads();
+    var y = 0;
+    for (var d = 0; d < connectedDevices.length; d++) {
+      var connectedDevice = connectedDevices[d];
+      if (connectedDevice != null) {
+        if (y == this.menuItems.length) {
+          this.setMenuItems();
+          break;
+        }
+        if (connectedDevice.id != this.menuItems[y]) {
+          this.setMenuItems();
+          break;
+        }
+        y++;
+      }
+    }
+    if (y != this.menuItems.length) {
+      this.setMenuItems();
+    }
+  } // loopEntity
 
 } // ZXSelectingGamepadEntity
 

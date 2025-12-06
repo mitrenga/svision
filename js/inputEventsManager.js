@@ -14,7 +14,6 @@ export class InputEventsManager {
     this.mouseHover = false;
     this.touchesMap = {};
     this.gamepadsMap = {};
-    this.gamepads = {};
     this.gamepadsConfig = false;
     this.blurWindow = false;
   } // constructor
@@ -161,20 +160,6 @@ export class InputEventsManager {
       }
     }
   } // eventTouchMove
-
-  eventGamepadConnected(event) {
-    this.gamepads[event.gamepad.id] = event.gamepad.index;
-    if (this.app.model) {
-      this.app.model.sendEvent(0, {id: 'gamepadConnected'});
-    }
-  } // eventGamepadConnected
-
-  eventGamepadDisconnected(event) {
-    delete this.gamepads[event.gamepad.id];
-    if (this.app.model) {
-      this.app.model.sendEvent(0, {id: 'gamepadDisconnected'});
-    }
-  } // eventGamepadDisconnected
 
   updateGamepadsStates() {
     if (!this.app.controls.gamepads.supported) {
