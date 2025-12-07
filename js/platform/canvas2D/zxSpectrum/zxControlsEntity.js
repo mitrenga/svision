@@ -111,7 +111,7 @@ export class ZXControlsEntity extends AbstractEntity {
 
     // keyboard
     this.addOptionsEntities(16, 'keyboard', false, 'keyboard', false);
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', 'keyboardRemapKeys', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'keyboard'}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', 'keyboardRemapKeys', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'keyboard'}));
 
     // mouse
     var spriteEntity = new SpriteEntity(this, 90, 16, this.app.platform.colorByName('cyan'), false, 0, 0);
@@ -129,7 +129,7 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 139, 76, 54, 13, 'ENABLE', 'mouseEnable', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'mouse.disable', hide: true}));
     this.addOptionsEntities(16, 'mouse', false, 'mouse.enable', true);
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 83, this.height-16, 41, 13, 'DISABLE',  'mouseDisable', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('red'), {align: 'center', margin: 4, group: 'mouse.enable', hide: true}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', 'mouseRemapKeys', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'mouse.enable', hide: true}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', 'mouseRemapKeys', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'mouse.enable', hide: true}));
 
     // gamepad
     var spriteEntity = new SpriteEntity(this, 90, 16, this.app.platform.colorByName('cyan'), false, 0, 0);
@@ -153,11 +153,11 @@ export class ZXControlsEntity extends AbstractEntity {
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 106, 40, 72, 19, 'GAMEPAD IS NOT', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.connected.notConfigured', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 106, 47, 72, 19, 'CONFIGURED', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.connected.notConfigured', hide: true}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 115, 68, 54, 13, 'CONFIGURE', 'gamepadRemapKeys', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'gamepad.connected.notConfigured', hide: true}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 115, 68, 54, 13, 'CONFIGURE', 'gamepadRemapKeys', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'gamepad.connected.notConfigured', hide: true}));
     this.addOptionsEntities(28, 'gamepads', this.selectionGamepad, 'gamepad.connected.configured', true);
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 88, this.height-16, 36, 13, 'IGNORE', 'gamepadIgnore', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('red'), {align: 'center', margin: 4, group: 'gamepad.connected.configured', hide: true}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', 'gamepadRemapKeys', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'gamepad.connected.configured', hide: true}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', 'gamepadRemapKeys', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'gamepad.connected.configured', hide: true}));
 
     // touch screen
     var spriteEntity = new SpriteEntity(this, 90, 16, this.app.platform.colorByName('cyan'), false, 0, 0);
@@ -195,7 +195,7 @@ export class ZXControlsEntity extends AbstractEntity {
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 82, 64, 13, 'CHANGE', 'touchscreenChange', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'touchscreen.supported', hide: true}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', 'closeZXControls', ['Escape'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', 'closeZXControls', ['Escape', 'GamepadExit'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
   } // init
 
   addOptionsEntities(y, device, gamepad, group, hide) {
@@ -372,9 +372,11 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'keyPress':
         switch (event.key) {
           case 'ArrowDown':
+          case 'GamepadDown':
             this.changeGroup(this.selectionDevice+1);
             return true;
           case 'ArrowUp':
+          case 'GamepadUp':
             this.changeGroup(this.selectionDevice-1);
             return true;
           case 'Mouse1':

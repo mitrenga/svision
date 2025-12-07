@@ -115,12 +115,15 @@ export class MenuEntity  extends AbstractEntity {
       case 'keyPress':
         switch (event.key) {
           case 'Enter':
+          case 'GamepadOK':
             this.sendEvent(0, 0, {id: this.onGetData(this.dataSender, 'event', this.selection)});
             return true;
           case 'ArrowDown':
+          case 'GamepadDown':
             this.changeMenuItem(this.selection+1);
             return true;
           case 'ArrowUp':
+          case 'GamepadUp':
             this.changeMenuItem(this.selection-1);
             return true;
           case 'Mouse1':

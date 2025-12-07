@@ -97,8 +97,8 @@ export class ZXPlayerNameEntity extends AbstractEntity {
 
     this.addEntity(new KeyboardEntity(this, 4, 42, 194, 67, this.keyboardLayout, false));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-98, this.height-16, 46, 13, 'CANCEL', 'cancel', ['Escape'], this.app.platform.colorByName('white'), this.app.platform.colorByName('red'), {align: 'center', margin: 4}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-50, this.height-16, 46, 13, 'OK', 'ok', ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-98, this.height-16, 46, 13, 'CANCEL', 'cancel', ['Escape', 'GamepadExit'], this.app.platform.colorByName('white'), this.app.platform.colorByName('red'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-50, this.height-16, 46, 13, 'OK', 'ok', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {align: 'center', margin: 4}));
   } // init
 
   handleEvent(event) {
