@@ -16,12 +16,26 @@ export class InputEventsManager {
     this.gamepadsMap = {};
     this.gamepadsConfig = false;
     this.blurWindow = false;
+    this.lastEventForAudio = false;
   } // constructor
   
+  needEventForAudio() {
+    if (this.lastEventForAudio === false) {
+      return true;
+    }
+    if (this.app.now-this.lastEventForAudio > 5000) {
+      return true;
+    }
+    return false;
+  } // needEventForAudio
+
   eventKeyDown(event) {
     if (this.app.model.autorepeatKeys || !(event.key in this.keysMap)) {
       this.keysMap[event.key] = true;
       if (this.app.model) {
+        if (event.key == 'Enter') {
+          this.lastEventForAudio = this.app.now;
+        }
         this.app.model.sendEvent(0, {id: 'keyPress', key: event.key});
       }
     }
@@ -49,10 +63,12 @@ export class InputEventsManager {
     if (buttons == 0) {
       buttons = 1;
     }
-    
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 1) {
         if (!('Mouse'+(1<<b) in this.keysMap)) {
+          if (b == 0) {
+            this.lastEventForAudio = this.app.now;
+          }
           this.keysMap['Mouse'+(1<<b)] = false;
           if (this.app.model) {
             var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
@@ -107,6 +123,7 @@ export class InputEventsManager {
 
   eventTouchStart(event) {
     event.preventDefault();
+    this.lastEventForAudio = this.app.now;
     this.app.controls.touchscreen.supported = true;
     for (var t = 0; t < event.changedTouches.length; t++) {
       var changedTouch = event.changedTouches[t];
