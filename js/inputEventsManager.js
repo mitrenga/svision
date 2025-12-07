@@ -230,7 +230,8 @@ export class InputEventsManager {
         }
       }
     } else {
-      connectedDevices.forEach((connectedDevice) => {
+      for (var d = 0; d < connectedDevices.length; d++) {
+        var connectedDevice = connectedDevices[d];
         if (connectedDevice != null) {
           var id = connectedDevice.id;
           if (id in this.app.controls.gamepads.devices) {
@@ -289,7 +290,7 @@ export class InputEventsManager {
             }
           }
         }
-      });
+      }
     }
   } // updateGamepadsStates
 
