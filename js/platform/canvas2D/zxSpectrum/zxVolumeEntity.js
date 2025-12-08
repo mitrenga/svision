@@ -3,11 +3,13 @@ const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { SpriteEntity } = await import('../spriteEntity.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
+const { ZXWaitForAudioEventEntity } = await import('./zxWaitForAudioEventEntity.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
 import SpriteEntity from '../spriteEntity.js';
 import ButtonEntity from '../buttonEntity.js';
+import ZXWaitForAudioEventEntity from './zxWaitForAudioEventEntity.js';
 /**/
 // begin code
 
@@ -89,6 +91,11 @@ export class ZXVolumeEntity extends AbstractEntity {
         this.changeVolume(this.app.audioManager.volume[this.channel]-1);
         return true;
       case 'playSample':
+        if (this.app.inputEventsManager.needEventForAudio()) {
+          this.addModalEntity(new ZXWaitForAudioEventEntity(this, 36, 68, 127, 45, this.app.platform.colorByName('blue'), this.app.platform.colorByName('brightCyan'), 'playSample2'));
+          return true;
+        }
+      case 'playSample2':
         this.sendEvent(0, 0, {id: 'openAudioChannel', channel: this.channel, options: {audioDisableHandler: 'disable'}});
         if (this.app.audioManager.volume[this.channel] == 0.0) {
           this.driverEntity.setText('NOTE: AUDIO DRIVER IS OFF');
@@ -99,6 +106,7 @@ export class ZXVolumeEntity extends AbstractEntity {
             this.driverEntity.setText('WARNING: DRIVER IS DEPRECATED!');
           }
         }
+        this.sendEvent(1, 0, {id: 'closePressAnyKey'});
         this.sendEvent(0, 0, {id: 'playSound', sound: this.sampleSound, channel: this.channel, options: false});
         return true;
       case 'errorAudioChannel':

@@ -123,7 +123,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           this.app.playerName = this.inputEntity.value;
           this.app.writeCookie('playerName', this.app.playerName);
           if (this.autoStartGame) {
-            this.app.setModel('MainModel');
+            this.sendEvent(0, 0, {id: 'startGame'});
           } else {
             this.sendEvent(0, 0, {id: 'refreshMenu'});
             this.destroy();
