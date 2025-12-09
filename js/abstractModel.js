@@ -158,6 +158,7 @@ export class AbstractModel {
     this.desktopWidth = this.app.platform.desktop(this.app).width;
     this.desktopHeight = this.app.platform.desktop(this.app).height;
     this.app.layout.resizeModel(this);
+    this.sendEvent(0, {id: 'resizeModel'});
     this.drawModel();
   } // resizeModel
 
