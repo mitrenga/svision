@@ -35,9 +35,9 @@ export class ZXVolumeEntity extends AbstractEntity {
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 22, this.width, 9, 'CHANGE VOLUME FOR GAME '+this.channel.toUpperCase(), this.app.platform.colorByName('black'), false, {align: 'center'}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3, 36, 19, 13, 'OFF', 'setVolume0', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 91, 36, 19, 13, '50%', 'setVolume5', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 178, 36, 21, 13, 'MAX', 'setVolume10', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3, 36, 19, 13, 'OFF', {id: 'setVolume0'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 91, 36, 19, 13, '50%', {id: 'setVolume5'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 178, 36, 21, 13, 'MAX', {id: 'setVolume10'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
 
     var sliderEntity = new SpriteEntity(this, 10, 55, this.app.platform.colorByName('black'), false, 0, 0);
     sliderEntity.setCompressedGraphicsData(
@@ -55,15 +55,15 @@ export class ZXVolumeEntity extends AbstractEntity {
 
 
     for(var x = 0; x <= 10; x++) {
-      this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3+x*18, 52, 16, 13, '', 'setVolume'+x, [], false, false, {}));
+      this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3+x*18, 52, 16, 13, '', {id: 'setVolume'+x}, [], false, false, {}));
     }
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 3, 68, 19, 13, '-', 'changeVolumeDown', ['ArrowLeft', '-', 'GamepadLeft'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', topMargin: 2}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 178, 68, 21, 13, '+', 'changeVolumeUp', ['ArrowRight', '+', 'GamepadRight'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', topMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 3, 68, 19, 13, '-', {id: 'changeVolumeDown'}, ['ArrowLeft', '-', 'GamepadLeft'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', topMargin: 2}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.zxFonts8x8, 178, 68, 21, 13, '+', {id: 'changeVolumeUp'}, ['ArrowRight', '+', 'GamepadRight'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', topMargin: 2}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 67, 90, 67, 13, 'PLAY SAMPLE', 'playSample', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 67, 90, 67, 13, 'PLAY SAMPLE', {id: 'playSample'}, ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {margin: 4}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeVolume', ['Escape', 'GamepadExit'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', {id: 'closeVolume'}, ['Escape', 'GamepadExit'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
 
     this.driverEntity = new TextEntity(this, this.app.fonts.fonts5x5, 3, this.height-8, this.width-6, 5, '', this.app.platform.colorByName('brightRed'), false, {});
     this.addEntity(this.driverEntity);
@@ -92,7 +92,7 @@ export class ZXVolumeEntity extends AbstractEntity {
         return true;
       case 'playSample':
         if (this.app.inputEventsManager.needEventForAudio()) {
-          this.addModalEntity(new ZXWaitForAudioEventEntity(this, 36, 68, 127, 45, this.app.platform.colorByName('blue'), this.app.platform.colorByName('brightCyan'), 'playSample2'));
+          this.addModalEntity(new ZXWaitForAudioEventEntity(this, 36, 68, 127, 45, this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), 'playSample2'));
           return true;
         }
       case 'playSample2':

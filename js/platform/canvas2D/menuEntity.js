@@ -116,7 +116,7 @@ export class MenuEntity  extends AbstractEntity {
         switch (event.key) {
           case 'Enter':
           case 'GamepadOK':
-            this.sendEvent(0, 0, {id: this.onGetData(this.dataSender, 'event', this.selection)});
+            this.sendEvent(0, 0, this.onGetData(this.dataSender, 'event', this.selection));
             return true;
           case 'ArrowDown':
           case 'GamepadDown':
@@ -152,7 +152,7 @@ export class MenuEntity  extends AbstractEntity {
               if (this.menuEntities[i][0].pointOnEntity(event)) {
                 if (this.app.inputEventsManager.keysMap.Mouse1 === this.menuEntities[i][0]) {
                   this.changeMenuItem(i);
-                  this.sendEvent(0, 0, {id: this.onGetData(this.dataSender, 'event', this.selection)});
+                  this.sendEvent(0, 0, this.onGetData(this.dataSender, 'event', this.selection));
                   return true;
                 }
               }
@@ -162,7 +162,7 @@ export class MenuEntity  extends AbstractEntity {
               if (this.menuEntities[i][0].pointOnEntity(event)) {
                 if (this.app.inputEventsManager.touchesMap[event.identifier] === this.menuEntities[i][0]) {
                   this.changeMenuItem(i);
-                  this.sendEvent(0, 0, {id: this.onGetData(this.dataSender, 'event', this.selection)});
+                  this.sendEvent(0, 0, this.onGetData(this.dataSender, 'event', this.selection));
                   return true;
                 }
               }

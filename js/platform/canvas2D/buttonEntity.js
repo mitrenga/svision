@@ -7,11 +7,11 @@ import TextEntity from './textEntity.js';
 
 export class ButtonEntity extends TextEntity {
 
-  constructor(parentEntity, fonts, x, y, width, height, text, eventID, hotKeys, penColor, bkColor, options) {
+  constructor(parentEntity, fonts, x, y, width, height, text, event, hotKeys, penColor, bkColor, options) {
     super(parentEntity, fonts, x, y, width, height, text, penColor, bkColor, options);
     this.id = 'ButtonEntity';
 
-    this.eventID = eventID;
+    this.event = event;
     this.hotKeys = hotKeys;
   } // constructor
 
@@ -24,7 +24,7 @@ export class ButtonEntity extends TextEntity {
       case 'keyPress':
         if (!this.hide) {
           if (this.hotKeys.indexOf(event.key) >= 0) {
-            this.sendEvent(0, 0, {id: this.eventID});
+            this.sendEvent(0, 0, this.event);
             return true;
           }
           if ((event.key == 'Mouse1' && this.pointOnEntity(event))) {
@@ -42,11 +42,11 @@ export class ButtonEntity extends TextEntity {
       case 'keyRelease':
         if (!this.hide) {
           if ((event.key == 'Mouse1' && this.app.inputEventsManager.keysMap.Mouse1 === this && this.pointOnEntity(event))) {
-            this.sendEvent(0, 0, {id: this.eventID});
+            this.sendEvent(0, 0, this.event);
             return true;
           }
           if ((event.key == 'Touch' && this.app.inputEventsManager.touchesMap[event.identifier] === this && this.pointOnEntity(event))) {
-            this.sendEvent(0, 0, {id: this.eventID});
+            this.sendEvent(0, 0, this.event);
             return true;
           }
         }

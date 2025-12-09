@@ -97,8 +97,8 @@ export class ZXPlayerNameEntity extends AbstractEntity {
 
     this.addEntity(new KeyboardEntity(this, 4, 42, 194, 67, this.keyboardLayout, false));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-98, this.height-16, 46, 13, 'CANCEL', 'cancel', ['Escape', 'GamepadExit'], this.app.platform.colorByName('white'), this.app.platform.colorByName('red'), {align: 'center', margin: 4}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-50, this.height-16, 46, 13, 'OK', 'ok', ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-98, this.height-16, 46, 13, 'CANCEL', {id: 'closeZXPlayerName'}, ['Escape', 'GamepadExit'], this.app.platform.colorByName('white'), this.app.platform.colorByName('red'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-50, this.height-16, 46, 13, 'OK', {id: 'saveZXPlayerName'}, ['Enter', 'GamepadOK'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {align: 'center', margin: 4}));
   } // init
 
   handleEvent(event) {
@@ -107,7 +107,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
     }
 
     switch (event.id) { 
-      case 'cancel':
+      case 'closeZXPlayerName':
         this.destroy();
         return true;
 
@@ -118,7 +118,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
         }
         break;
 
-      case 'ok':
+      case 'saveZXPlayerName':
         if (this.inputEntity.value.length > 0) {
           this.app.playerName = this.inputEntity.value;
           this.app.writeCookie('playerName', this.app.playerName);

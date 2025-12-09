@@ -37,9 +37,9 @@ export class ZXRemapKeysEntity extends AbstractEntity {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-83, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.options.keys[k].action}));
     }
     this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[0].action, penColor: this.app.platform.colorByName('brightWhite'), bkColor: this.app.platform.colorByName('brightBlue'), text: this.cursorText(), hide: false});
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-44, 18, 32, 9, 'SKIP', 'skipKey', [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('red'), {align: 'center', margin: 2, member: 'skipKey'}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-44, 18, 32, 9, 'SKIP', {id: 'skipKey'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('red'), {align: 'center', margin: 2, member: 'skipKey'}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', 'closeZXRemapKeys', ['Escape', 'GamepadExit'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', {id: 'closeZXRemapKeys'}, ['Escape', 'GamepadExit'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
   } // init
 
   cursorText() {
@@ -120,13 +120,13 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         this.newKeys.forEach((newKey, k) => {
           //this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
           if (newKey.key[0] == 'B') {
-            device.buttons[newKey.key.substring(1)] = {action: newKey.action, event: this.options.keys[k].event};
+            device.buttons[newKey.key.substring(1)] = {action: newKey.action, event: this.options.keys[k].eventKey};
           }
           if (newKey.key[0] == 'A') {
             if (!(newKey.key.substring(1, newKey.key.length-1) in device.axes)) {
               device.axes[newKey.key.substring(1, newKey.key.length-1)] = {};
             }
-            device.axes[newKey.key.substring(1, newKey.key.length-1)][newKey.key.substring(newKey.key.length-1)] = {action: newKey.action, event: this.options.keys[k].event};
+            device.axes[newKey.key.substring(1, newKey.key.length-1)][newKey.key.substring(newKey.key.length-1)] = {action: newKey.action, event: this.options.keys[k].eventKey};
           }
         });
         var keys = Object.keys(this.app.controls.gamepads.devices);

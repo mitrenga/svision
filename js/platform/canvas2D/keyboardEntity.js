@@ -62,7 +62,7 @@ export class KeyboardEntity extends AbstractEntity {
 
           var keyEntity = new ButtonEntity(
             this, options.fonts, x, y, options.width, options.height, label,
-            eventPrefix+this.layout.keymap[layoutId][row][key], [],
+            {id: eventPrefix+this.layout.keymap[layoutId][row][key]}, [],
             penColor, bkColor, options
           ); 
           keyEntity.group = layoutId;
