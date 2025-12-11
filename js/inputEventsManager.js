@@ -46,6 +46,9 @@ export class InputEventsManager {
       delete this.keysMap[event.key];
     }
     if (this.app.model) {
+      if (event.key == 'Enter') {
+        this.lastEventForAudio = this.app.now;
+      }
       this.app.model.sendEvent(0, {id: 'keyRelease', key: event.key});
     }
   } // eventKeyUp
@@ -86,6 +89,9 @@ export class InputEventsManager {
     for (var b = 0; b < 8; b++) {
       if (buttons%2 == 0) {
         if ('Mouse'+(1<<b) in this.keysMap) {
+          if (b == 0) {
+            this.lastEventForAudio = this.app.now;
+          }
           if (this.app.model) {
             var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
             var clientY = this.app.layout.convertClientCoordinateY(event.clientY);
@@ -140,6 +146,7 @@ export class InputEventsManager {
 
   eventTouchEnd(event) {
     event.preventDefault();
+    this.lastEventForAudio = this.app.now;
     for (var t = 0; t < event.changedTouches.length; t++) {
       var changedTouch = event.changedTouches[t];
       if (changedTouch.identifier in this.touchesMap) {
