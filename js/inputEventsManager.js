@@ -148,12 +148,10 @@ export class InputEventsManager {
           var touchY = this.app.layout.convertClientCoordinateY(changedTouch.clientY);
           this.app.model.sendEvent(0, {id: 'keyRelease', key: 'Touch', identifier: changedTouch.identifier, x: touchX, y: touchY});
         }        
-        Object.keys(this.touchesMap).forEach((t) => {
-          if (this.touchesMap[t] !== false && this.touchesMap[t] !== true) {
-            this.touchesMap[t].clickState = false;
-          }
-          delete this.touchesMap[t];
-        });
+        if (this.touchesMap[changedTouch.identifier] !== undefined && this.touchesMap[changedTouch.identifier] !== false && this.touchesMap[changedTouch.identifier] !== true) {
+          this.touchesMap[changedTouch.identifier].clickState = false;
+        }
+        delete this.touchesMap[changedTouch.identifier];
       }
     }
   } // eventTouchEnd
@@ -326,7 +324,7 @@ export class InputEventsManager {
       this.app.model.sendEvent(0, {id: 'key'+type, key: key});
     });
     Object.keys(this.touchesMap).forEach((identification) => {
-      this.app.model.sendEvent(0, {id: 'key'+type, key: this.touchesMap[identification]});
+     //this.app.model.sendEvent(0, {id: 'key'+type, key: this.touchesMap[identification]});
     });
     Object.keys(this.gamepadsMap).forEach((buttonId) => {
       this.app.model.sendEvent(0, {id: 'key'+type, key: this.gamepadsMap[buttonId]});
