@@ -71,7 +71,7 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
         this.menuEntities[y].hoverColor = this.hoverColor;
         this.menuEntities[y].clickColor = this.clickColor;
         this.menuEntities[y].setPenColor(this.penMenuItemColor);
-        this.menuEntities[y].setText(this.menuItems[y].toUpperCase());
+        this.menuEntities[y].setText(this.menuItems[y]);
         if (connectedDevice.id == this.selectionGamepad) {
           this.selectionItem = y;
         }

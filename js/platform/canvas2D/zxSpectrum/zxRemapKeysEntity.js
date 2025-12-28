@@ -30,7 +30,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, this.app.platform.colorByName('black')));
     this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, this.app.platform.colorByName('white')));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'REMAP '+this.options.device.toUpperCase()+' KEYS', this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center', margin: 2}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'REMAP '+this.options.device+' KEYS', this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('black'), {align: 'center', margin: 2}));
 
     for (var k = 0; k < this.options.keys.length; k++) {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 11, 18+12*k, 74, 9, this.options.keys[k].label, this.app.platform.colorByName('black'), false, {margin: 2}));

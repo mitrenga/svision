@@ -30,10 +30,10 @@ export class ZXVolumeEntity extends AbstractEntity {
     super.init();
     
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, this.app.platform.colorByName('black')));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, this.channel.toUpperCase(), this.app.platform.colorByName('brightWhite'), false, {align: 'center', topMargin: 2}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, this.channel, this.app.platform.colorByName('brightWhite'), false, {align: 'center', topMargin: 2}));
     this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, this.app.platform.colorByName('yellow')));
 
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 22, this.width, 9, 'CHANGE VOLUME FOR GAME '+this.channel.toUpperCase(), this.app.platform.colorByName('black'), false, {align: 'center'}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 22, this.width, 9, 'CHANGE VOLUME FOR GAME '+this.channel, this.app.platform.colorByName('black'), false, {align: 'center'}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3, 36, 19, 13, 'OFF', {id: 'setVolume0'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 91, 36, 19, 13, '50%', {id: 'setVolume5'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
@@ -110,7 +110,7 @@ export class ZXVolumeEntity extends AbstractEntity {
         this.sendEvent(0, 0, {id: 'playSound', sound: this.sampleSound, channel: this.channel, options: false});
         return true;
       case 'errorAudioChannel':
-        this.driverEntity.setText(event.error.toUpperCase());
+        this.driverEntity.setText(event.error);
         this.app.showErrorMessage(event.error, 'reopen');
         return true;
       case 'closeVolume':
