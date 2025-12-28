@@ -98,8 +98,8 @@ export class Fonts5x5 extends AbstractFonts {
   } // constructor
 
   getCharData(char, bitMask, scale) {
-    var validChar = char;
-    if (!(char in this.fontsData)) {
+    var validChar = char.toUpperCase();
+    if (!(validChar in this.fontsData)) {
       validChar = '?';
     }
     var charObject = {};

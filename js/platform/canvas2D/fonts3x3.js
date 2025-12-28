@@ -18,7 +18,7 @@ export class Fonts3x3 extends AbstractFonts {
 
     this.fontsData = {
       ' ': {width: 1, data: []},
-      '\'': {width: 1, data: [0,0,1,2]},
+      '\'': {width: 1, data: [[0,0,1,2]]},
       '+': {width: 3, data: [[1,0,1,1], [0,1,3,1], [1,2,1,1]]},
       ',': {width: 1, data: [[1,1,1,2]]},
       '-': {width: 2, data: [[0,1,2,1]]},
@@ -81,8 +81,8 @@ export class Fonts3x3 extends AbstractFonts {
   } // constructor
 
   getCharData(char, bitMask, scale) {
-    var validChar = char;
-    if (!(char in this.fontsData)) {
+    var validChar = char.toUpperCase();
+    if (!(validChar in this.fontsData)) {
       validChar = '?';
     }
     var charObject = {};
