@@ -25,6 +25,8 @@ class AppPage extends AbstractPage {
     $this->data[] = '  </head>';
     $this->data[] = '  <body id="bodyApp">';
     $this->data[] = '    <script>var appName = "'.$GLOBALS['appName'].'";</script>';
+    $this->data[] = '    <script>var serverIP = "'.$GLOBALS['serverIP'].'";</script>';
+    $this->data[] = '    <script>var clientIP = "'.$GLOBALS['clientIP'].'";</script>';
     $this->data[] = '    <script>var appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
     $this->data[] = '    <script>var wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
     $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
