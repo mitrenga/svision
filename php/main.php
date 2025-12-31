@@ -9,11 +9,13 @@
     $webProtocol = 'https';
     $wsProtocol = 'wss';
   }
-  $serverIP = $_SERVER['SERVER_ADDR'];
   $clientIP = $_SERVER['REMOTE_ADDR'];
+  if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+    $clientIP = $_SERVER['HTTP_X_FORWARDED_FOR'];
+  }
   $srvName = $_SERVER['SERVER_NAME'];
   if (strlen($srvName) == 0) {
-    $srvName = $serverIP;
+    $srvName = $_SERVER['SERVER_ADDR'];
   }
   $tmpURL = $webProtocol.'://'.$srvName.$_SERVER['PHP_SELF'];
   if ($tmpURL[strlen ($tmpURL)-1] == '/')
