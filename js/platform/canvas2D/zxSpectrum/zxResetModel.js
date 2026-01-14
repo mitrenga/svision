@@ -11,9 +11,11 @@ import TextEntity from '../textEntity.js';
 
 export class ZXResetModel extends AbstractModel {
   
-  constructor(app) {
+  constructor(app, copyright) {
     super(app);   
-    this.id = 'ZXResetModel';
+    this.id = 'ZXResetModel'
+    
+    this.copyright = copyright;
     this.resetEntity = null;
     this.inputLineEntity = null;
   } // constructor
@@ -24,7 +26,7 @@ export class ZXResetModel extends AbstractModel {
     this.resetEntity = new ZXResetEntity(this.desktopEntity, 0, 0, 32*8, 24*8);
     this.resetEntity.hide = true;
     this.desktopEntity.addEntity(this.resetEntity);
-    this.inputLineEntity = new TextEntity(this.desktopEntity, this.app.fonts.zxFonts8x8, 0, 23*8, 32*8, 8, '© 2025 GNU General Public Licence', this.app.platform.colorByName('black'), false, {align: 'center'});
+    this.inputLineEntity = new TextEntity(this.desktopEntity, this.app.fonts.zxFonts8x8, 0, 23*8, 32*8, 8, this.copyright, this.app.platform.colorByName('black'), false, {align: 'center'});
     this.inputLineEntity.hide = true;
     this.desktopEntity.addEntity(this.inputLineEntity);
     this.sendEvent(500, {id: 'showReset'});
