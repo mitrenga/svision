@@ -180,7 +180,27 @@ export class AbstractEntity {
       }
     }
     if (color != false) {
-      this.app.layout.paint(this, 0, 0, this.width, this.height, color);
+      var cropX = 0;
+      var cropY = 0;
+      var cropWidth = this.width;
+      var cropHeight = this.height;
+      if (this.x-this.parentCoverX < 0) {
+        cropX = this.parentCoverX-this.x;
+        cropWidth -= cropX;
+      }
+      if (this.y-this.parentCoverY < 0) {
+        cropY = this.parentCoverY-this.y;
+        cropHeight -= cropY;
+      }
+      if (this.x+this.width > this.parentWidth) {
+        cropWidth += this.parentWidth-this.x-this.width;
+      }
+      if (this.y+this.height > this.parentHeight) {
+        cropHeight += this.parentHeight-this.y-this.height;
+      }
+      if (cropWidth > 0 && cropHeight > 0) {
+        this.app.layout.paint(this, cropX, cropY, cropWidth, cropHeight, color);
+      }
     }
     this.drawSubEntities();
   } // drawEntity
