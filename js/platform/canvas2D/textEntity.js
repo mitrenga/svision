@@ -85,6 +85,14 @@ export class TextEntity  extends AbstractEntity {
     }
   } // init
 
+  enablePaintWithVisibility() {
+    this.app.layout.newDrawingCropCache(this);
+  } // enablePaintWithVisibility
+
+  disablePaintWithVisibility() {
+    this.drawingCropCache = null;
+  } // disablePaintWithVisibility
+
   setText(text) {
     if (this.text != text) {
       this.text = text;
@@ -312,8 +320,34 @@ export class TextEntity  extends AbstractEntity {
       }
     }
 
-    this.app.layout.paintCache(this, 0);
+    if (this.drawingCropCache == null) {
+      this.app.layout.paintCache(this, 0);
+    } else {
+      if ((this.x-this.parentCoverX >= 0) && (this.y-this.parentCoverY >= 0) && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight)) {
+        this.app.layout.paintCache(this, 0);
+      } else {
+        var cropX = 0;
+        if (this.x-this.parentCoverX < 0) {
+          cropX = this.x-this.parentCoverX;
+        }
+        if (this.x+this.width-1 > this.parentWidth) {
+          cropX = this.x+this.width-this.parentWidth;
+        }
+        var cropY = 0;
+        if (this.y-this.parentCoverY < 0) {
+          cropY = this.y-this.parentCoverY;
+        }
+        if (this.y+this.height-1 > this.parentHeight) {
+          cropY = this.y+this.height-this.parentHeight;
+        }
+        this.app.layout.paintCropCache(this, 0, -cropX, -cropY, -cropX, -cropY);
+      }
+    }
   } // drawEntity
+
+  cleanCache() {
+    this.drawingCache[0].cleanCache();
+  } // cleanCache
 
   handleEvent(event) {
     if (super.handleEvent(event)) {
