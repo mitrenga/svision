@@ -500,7 +500,7 @@ export class SpriteEntity  extends AbstractEntity {
           if (this.y+this.height-1 > this.parentHeight) {
             cropY = this.y+this.height-this.parentHeight;
           }
-          this.app.layout.paintCropCache(this, 0, -cropX, -cropY, -cropX, -cropY);
+          this.app.layout.paintCropCache(this, index, -cropX, -cropY, -cropX, -cropY);
         }
       }
     }
