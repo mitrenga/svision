@@ -483,24 +483,24 @@ export class SpriteEntity  extends AbstractEntity {
       if (this.drawingCropCache == null) {
         this.app.layout.paintCache(this, index);
       } else {
-        if ((this.x >= 0) && (this.y >= 0) && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight)) {
+        if ((this.x-this.parentCoverX >= 0) && (this.y-this.parentCoverY >= 0) && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight)) {
           this.app.layout.paintCache(this, index);
         } else {
-          var posX = 0;
-          if (this.x < 0) {
-            posX = this.x;
+          var cropX = 0;
+          if (this.x-this.parentCoverX < 0) {
+            cropX = this.x-this.parentCoverX;
           }
           if (this.x+this.width-1 > this.parentWidth) {
-            posX = this.x+this.width-this.parentWidth;
+            cropX = this.x+this.width-this.parentWidth;
           }
-          var posY = 0;
-          if (this.y < 0) {
-            posY = this.y;
+          var cropY = 0;
+          if (this.y-this.parentCoverY < 0) {
+            cropY = this.y-this.parentCoverY;
           }
           if (this.y+this.height-1 > this.parentHeight) {
-            posY = this.y+this.height-this.parentHeight;
+            cropY = this.y+this.height-this.parentHeight;
           }
-          this.app.layout.paintCropCache(this, 0, -posX, -posY, -posX, -posY);
+          this.app.layout.paintCropCache(this, 0, -cropX, -cropY, -cropX, -cropY);
         }
       }
     }

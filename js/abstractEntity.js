@@ -36,6 +36,8 @@ export class AbstractEntity {
 
     this.parentX = 0;
     this.parentY = 0;
+    this.parentCoverX = 0;
+    this.parentCoverY = 0;
     this.parentWidth = width;
     this.parentHeight = height;
 
@@ -200,6 +202,14 @@ export class AbstractEntity {
       if (h < 0) {
         h = 0;
       }
+    }
+    entity.parentCoverX = this.parentCoverX-this.x;
+    if (entity.parentCoverX < 0) {
+      entity.parentCoverX = 0;
+    }
+    entity.parentCoverY = this.parentCoverY-this.y;
+    if (entity.parentCoverY < 0) {
+      entity.parentCoverY = 0;
     }
     entity.parentWidth = w;
     entity.parentHeight = h;
