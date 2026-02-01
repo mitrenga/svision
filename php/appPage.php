@@ -7,6 +7,7 @@ class AppPage extends AbstractPage {
   public function createPage() {
     $srcVersion = md5(time());
 
+    $this->data[] = '<!-- free source code on https://github.com/mitrenga -->';
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
