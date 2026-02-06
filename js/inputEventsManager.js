@@ -128,6 +128,16 @@ export class InputEventsManager {
     }
   } // eventMouseMove
 
+  eventWheel(event) {
+    var deltaX = event.deltaX;
+    var deltaY = event.deltaY;
+    if (this.app.model) {
+      var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
+      var clientY = this.app.layout.convertClientCoordinateY(event.clientY);
+      this.app.model.sendEvent(0, {id: 'mouseWheel', deltaX: deltaX, deltaY: deltaY, x: clientX, y: clientY});
+    }
+  } // eventWheel
+
   eventTouchStart(event) {
     event.preventDefault();
     this.lastEventForAudio = this.app.now;
