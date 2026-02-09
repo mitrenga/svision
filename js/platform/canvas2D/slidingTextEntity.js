@@ -142,7 +142,6 @@ export class SlidingTextEntity extends AbstractEntity {
       case 'mouseHover':
         if (!this.hide && this.hoverColor !== false) {
           if (this.pointOnEntity(event)) {
-            console.log(this.hoverColor);
             this.app.inputEventsManager.mouseHover = this;
             this.hoverState = true;
             return true;
