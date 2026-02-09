@@ -36,6 +36,7 @@ export class ZXErrorEntity extends AbstractEntity {
         break;
     }
     this.addEntity(new TextEntity(this, this.fonts, 16, 52, 28*8, 4*8, 'ERROR: '+this.message, this.penColor, false, {align: 'center', textWrap: true}));
+    console.error(this.message);
   } // init
 
   handleEvent(event) {
