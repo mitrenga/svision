@@ -195,6 +195,18 @@ export class SlidingTextEntity extends AbstractEntity {
           }
         break;
 
+      case 'loopLeft':
+          if (timestamp-this.animationTimestamp > this.options.speed) {
+            this.animationPosition += Math.round((timestamp-this.animationTimestamp)/this.options.speed);
+            if (this.animationPosition > this.animationWidth-this.width) {
+              this.animationPosition = 0;
+              this.animationProgress = 0;
+            }
+            this.animationProgress = this.animationPosition/(this.animationWidth-this.width);
+            this.animationTimestamp = timestamp;
+          }
+        break;
+
       case 'custom':
         break;
     }
