@@ -10,6 +10,7 @@ export class AbstractApp {
   constructor(platform, parentElement, importPath, wsURL) {
     this.parentElement = false;
     this.element = false;
+    this.prevSize = {width: 0, height: 0};
     this.importPath = importPath;
     this.now = 0;
     this.inputEventsManager = new InputEventsManager(this);
@@ -39,6 +40,9 @@ export class AbstractApp {
   } // constructor
 
   loopApp(timestamp) {
+    if (this.prevSize.width != this.element.clientWidth || this.prevSize.height != this.element.clientHeight) {
+      this.resizeApp();
+    }
     this.now = timestamp;
     if (this.model) {
       this.model.loopModel(timestamp);
@@ -52,6 +56,7 @@ export class AbstractApp {
     if (this.model) {
       this.model.resizeModel();
     }
+    this.prevSize = {width: this.element.clientWidth, height: this.element.clientHeight};
   } // resizeApp
   
   eventResizeWindow(event) {

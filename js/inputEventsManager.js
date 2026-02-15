@@ -336,6 +336,9 @@ export class InputEventsManager {
     this.blurWindow = true;
     this.sendEventsActiveKeys('Release');
     this.app.model.sendEvent(0, {id: 'blurWindow'});
+    if (this.mouseHover !== false) {
+      this.mouseHover.hoverState = false;
+    }
   } // eventOnBlurWindow
 
   eventFocusWindow(event) {
