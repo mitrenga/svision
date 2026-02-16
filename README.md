@@ -1,2 +1,2 @@
 # svision
-'svision' is a library and tools for easy creation of online web applications
+'svision' is a library and tools for easily creating web-based graphics applications
