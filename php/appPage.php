@@ -9,7 +9,7 @@ class AppPage extends AbstractPage {
 
     $this->data[] = '<!-- free source code on https://github.com/mitrenga -->';
     $this->data[] = '<!DOCTYPE html>';
-    $this->data[] = '<html lang="cs">';
+    $this->data[] = '<html lang="en">';
     $this->data[] = '  <head>';
     $this->data[] = '    <title>'.$GLOBALS['appName'].'</title>';
     $this->data[] = '    <meta name="description" lang="cs" content="'.$GLOBALS['appName'].'">';
