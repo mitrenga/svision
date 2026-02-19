@@ -20,6 +20,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.readPtr = 0;
     this.oneReadPulse = 0;
     this.repeat = false;
+    this.nextSound = false;
     this.paused = false;
     this.muted = false;
 
@@ -43,9 +44,13 @@ class AudioProcessor extends AudioWorkletProcessor {
           this.readPtr = 0;
           this.oneReadPulse = 0;
           this.repeat = false;
+          this.nextSound = false;
           if (event.data.options !== false) {
             if ('repeat' in event.data.options) {
               this.repeat = event.data.options.repeat;
+            }
+            if ('nextSound' in event.data.options) {
+              this.nextSound = event.data.options.nextSound;
             }
           }
           break;
@@ -109,6 +114,15 @@ class AudioProcessor extends AudioWorkletProcessor {
                 }
               }
               if (this.repeat) {
+                if (this.nextSound !== false) {
+                  this.fragments = this.nextSound.fragments;
+                  this.pulses = this.nextSound.pulses;
+                  this.events = false;
+                  if ('events' in this.nextSound) {
+                    this.events = this.nextSound.events;
+                  }
+                  this.nextSound = false;
+                }
                 this.readPtr = 0;
               } else if (this.infinityRndPulses === false) {
                 channel.fill(0, writePtr);

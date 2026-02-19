@@ -111,6 +111,11 @@ export class AbstractModel {
         this.sendEvent(100, {id: 'openAudioChannel', channel: event.channel, options: {}});
         return true;
       case 'playSound':
+        if (event.options !== false) {
+          if ('next' in event.options) {
+            event.options.nextSound = this.app.audioManager.audioData(event.channel, event.options.next, event.options);
+          }
+        }
         this.app.audioManager.playSound(event.channel, event.sound, event.options);
         return true;
     }

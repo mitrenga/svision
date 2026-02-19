@@ -24,6 +24,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.readPtr = 0;
     this.oneReadPulse = 0;
     this.repeat = false;
+    this.nextSound = false;
     this.paused = false;
     this.muted = false;
   } // constructor
@@ -82,6 +83,15 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
                 }
               }
               if (this.repeat) {
+                if (this.nextSound !== false) {
+                  this.fragments = this.nextSound.fragments;
+                  this.pulses = this.nextSound.pulses;
+                  this.events = false;
+                  if ('events' in this.nextSound) {
+                    this.events = this.nextSound.events;
+                  }
+                  this.nextSound = false;
+                }
                 this.readPtr = 0;
               } else if (this.infinityRndPulses === false) {
                 channel.fill(0, writePtr);
@@ -153,9 +163,13 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.readPtr = 0;
     this.oneReadPulse = 0;
     this.repeat = false;
+    this.nextSound = false;
     if (options !== false) {
       if ('repeat' in options) {
         this.repeat = options.repeat;
+      }
+      if ('nextSound' in options) {
+        this.nextSound = options.nextSound;
       }
     }
   } // playSound
