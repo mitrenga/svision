@@ -80,7 +80,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           if (this.options.device == 'keyboard' && event.key.toUpperCase() in this.app.fonts.fonts5x5.fontsData) {
             newKey = event.key.toUpperCase();
           }
-        } else if (this.checkValidFnKeys(this.options.device, event.key)) {
+        } else if (this.isValidFnKeys(this.options.device, event.key)) {
           newKey = event.key;
         }
         if ((newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) || newKey == 'NoKey') {
@@ -139,7 +139,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     }
   } // saveKeys
 
-  checkValidFnKeys(device, key) {
+  isValidFnKeys(device, key) {
     switch (device) {
       case 'gamepads':
         if (key.length > 1) {
@@ -156,7 +156,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
       return true;
     }
     return false;
-  } // checkValidFnKeys
+  } // isValidFnKeys
 
 } // ZXRemapKeysEntity
 
