@@ -13,6 +13,7 @@ export class AbstractAudioManager {
     this.channels = {};
     this.unsupportedAudioChannel = false;
     this.audioDataCache = {};
+    this.restartSounds = {};
   } // constructor
 
   createAudioHandler(channel, options) {
@@ -111,6 +112,7 @@ export class AbstractAudioManager {
     }
 
     if (channel in this.channels) {
+      this.restartSounds[channel] = {sound: sound, options: options};
       if (this.channels[channel].getState() != 'running' && options.attempts < 64) {
         if (this.channels[channel].error === false) {
           this.channels[channel].ctx.resume()
@@ -128,6 +130,7 @@ export class AbstractAudioManager {
         }
       } else {
         if (this.channels[channel].channelIsReady()) {
+          delete this.restartSounds[channel];
           this.channels[channel].playSound(this.audioData(channel, sound, options), options);
         } else if (options.attempts < 64) {
           options.attempts += 1;
