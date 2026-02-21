@@ -17,13 +17,19 @@ export class AbstractAudioHandler {
   } // constructor
 
   openChannel(channel, options) {
+    var classAudioCtx = (window.AudioContext || window.webkitAudioContext);
+    if (classAudioCtx == null) {
+      this.error = 'AudioContext not started';
+      this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: channel});
+      return;
+    }
     if (this.waitForBusy('openAudioChannel')) {
       return;
     }
     this.busy = true;
     this.error = false;
     this.channel = channel;
-    this.ctx = new (window.AudioContext || window.webkitAudioContext)({sampleRate:44100, latencyHint: 'interactive'});
+    this.ctx = new (classAudioCtx)({sampleRate:44100, latencyHint: 'interactive'});
   } // openChannel
 
   closeChannel() {
@@ -31,7 +37,9 @@ export class AbstractAudioHandler {
       return false;
     }
     this.busy = true;
-    this.ctx.close();
+    if (this.ctx != null) {
+      this.ctx.close();
+    }
     this.ctx = null;
     this.busy = false;
     return true;
@@ -50,6 +58,9 @@ export class AbstractAudioHandler {
   } // getSampleRate
 
   getState() {
+    if (this.ctx == null) {
+      return 'closed';
+    }
     return this.ctx.state;
   } // getState
 

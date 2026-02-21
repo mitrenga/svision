@@ -50,13 +50,15 @@ export class AbstractAudioManager {
   refreshAllChannels() {
     Object.keys(this.channels).forEach(channel => {
       if (this.channels[channel].getState() != 'running') {
-        this.channels[channel].ctx.resume()
-          .then(() => {
-          })
-          .catch(error => {
-            console.error('AudioContext error: '+error.message);
-            this.channels[channel].error = error.message;
-          });
+        if (this.channels[channel].ctx) {
+          this.channels[channel].ctx.resume()
+            .then(() => {
+            })
+            .catch(error => {
+              console.error('AudioContext error: '+error.message);
+              this.channels[channel].error = error.message;
+            });
+        }
       }
     });
   } // refreshAllChannels

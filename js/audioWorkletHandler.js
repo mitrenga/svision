@@ -15,7 +15,9 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
 
   openChannel(channel, options) {
     super.openChannel(channel, options);
-    this.openProcessor(options);
+    if (this.error === false && this.ctx != null) {
+      this.openProcessor(options);
+    }
   } // openChannel
 
   async openProcessor(options) {
@@ -45,7 +47,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
     if (this.waitForBusy('closeAudioChannel')) {
       return false;
     }
-    if (this.node != null) {
+    if (this.node) {
       this.node.disconnect();
     }
     return super.closeChannel();

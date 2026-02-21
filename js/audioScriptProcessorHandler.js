@@ -34,7 +34,9 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     if ('muted' in options) {
       this.muted = options.muted;
     }
-    this.openProcessor();
+    if (this.error === false && this.ctx != null) {
+      this.openProcessor();
+    }
   } // openChannel
 
   openProcessor() {
@@ -122,7 +124,9 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     if (this.waitForBusy('closeAudioChannel')) {
       return false;
     }
-    this.node.disconnect();
+    if (this.node) {
+      this.node.disconnect();
+    }    
     return super.closeChannel();
   } // closeChannel
 
