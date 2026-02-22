@@ -1,2 +1,2 @@
 # svision
-'svision' is a library and tools for easily creating web-based graphics applications
+'svision' is a library and toolkit for building web-based graphics applications, especially retro games
