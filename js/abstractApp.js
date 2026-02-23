@@ -76,7 +76,7 @@ export class AbstractApp {
             if (localStorage.key(window.appPrefix+'.'+storage.key)) {
               try {
                 var dataJSON = localStorage.getItem(window.appPrefix+'.'+storage.key);
-                var data = {source: 'storage', data: JSON.parse(dataJSON)};
+                var data = {url: url, source: 'storage', data: JSON.parse(dataJSON)};
                 receiver.setData(data);
                 return;
               } catch (error) {
@@ -116,7 +116,7 @@ export class AbstractApp {
           receiver.errorData(data.error);
         } else {
           if (receiver.fetchDataId == data.fetchDataId) {
-            receiver.setData(data);
+            receiver.setData({...{url: url}, ...data});
           }
         }
       })
