@@ -19,11 +19,12 @@ import ZXSelectingGamepadEntity from './zxSelectingGamepadEntity.js';
 
 export class ZXControlsEntity extends AbstractEntity {
 
-  constructor(parentEntity, x, y, width, height) {
+  constructor(parentEntity, x, y, width, height, options) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXControlsEntity';
+
+    this.options = options;
     this.selectionDevice = 0;
-    
     this.devicesSelectionEntity = null;
     this.penDeviceColor = this.app.platform.colorByName('black');
     this.penSelectionDeviceColor = this.app.platform.colorByName('brightWhite');
@@ -39,47 +40,8 @@ export class ZXControlsEntity extends AbstractEntity {
     this.deviceHoverColor = '#b1ab79ff';
     this.deviceClickColor = '#939393ff';
 
-    this.options = {
-      'keyboard': {
-        device: 'keyboard',
-        keys: [
-          {action: 'left', label: 'WALKING LEFT'},
-          {action: 'right', label: 'WALKING RIGHT'},
-          {action: 'jump', label: 'JUMP'},
-          {action: 'music', label: 'MUTE MUSIC'},
-          {action: 'sounds', label: 'MUTE SOUNDS'}
-        ]
-      },
-      'mouse': {
-        device: 'mouse',
-        keys: [
-          {action: 'left', label: 'WALKING LEFT'},
-          {action: 'right', label: 'WALKING RIGHT'},
-          {action: 'jump', label: 'JUMP'}
-        ]
-      },
-      'gamepads': {
-        device: 'gamepads',
-        keys: [
-          {action: 'left', label: 'WALKING LEFT', eventKey: 'GamepadLeft'},
-          {action: 'right', label: 'WALKING RIGHT', eventKey: 'GamepadRight'},
-          {action: 'jump', label: 'JUMP', eventKey: 'GamepadJump'},
-          {action: 'up', label: 'MENU UP', eventKey: 'GamepadUp'},
-          {action: 'down', label: 'MENU DOWN', eventKey: 'GamepadDown'},
-          {action: 'ok', label: 'OK', eventKey: 'GamepadOK'},
-          {action: 'exit', label: 'EXIT', eventKey: 'GamepadExit'}
-        ]
-      }
-    }
-
     this.selectionGamepad = false;
     this.checkSelectionGamepad();
-
-    this.tsData = {
-      'jump-left-right': {left: {x: 137, y: 47, width: 19, height: 22}, right: {x: 158, y: 47, width: 19, height: 22}, jump: {x: 97, y: 47, width: 38, height: 22}, next: 'left-right-jump'},
-      'left-right-jump': {left: {x: 97, y: 47, width: 19, height: 22}, right: {x: 118, y: 47, width: 19, height: 22}, jump: {x: 139, y: 47, width: 38, height: 22}, next: 'left-jump-right'},
-      'left-jump-right': {left: {x: 97, y: 47, width: 25, height: 22}, right: {x: 152, y: 47, width: 25, height: 22}, jump: {x: 124, y: 47, width: 26, height: 22}, next: 'jump-left-right'}
-    };
 
     this.controlsEntites = {};
   } // constructor
@@ -173,26 +135,22 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 107, 80, 70, 7, 'DEVICE', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'touchscreen.notFound', hide: true}));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 107, 87, 70, 12, 'DOES NOT HAVE\nA TOUCHSCREEN', this.app.platform.colorByName('brightBlue'), false, {align: 'justify', group: 'touchscreen.notFound', hide: true}));
 
-    var tsType = this.tsData[this.app.controls.touchscreen.type];
-    this.addEntity(this.controlsEntites.tsLeft = new TextEntity(
-      this, this.app.fonts.fonts5x5,
-      tsType.left.x, tsType.left.y, tsType.left.width, tsType.left.height,
-      '←', this.app.platform.colorByName('brightBlue'), this.app.platform.colorByName('brightYellow'),
-      {align: 'center', topMargin: 9, group: 'touchscreen.supported', hide: true}
-    ));
-    this.addEntity(this.controlsEntites.tsRight = new TextEntity(
-      this, this.app.fonts.fonts5x5,
-      tsType.right.x, tsType.right.y, tsType.right.width, tsType.right.height,
-      '➔', this.app.platform.colorByName('brightBlue'), this.app.platform.colorByName('brightYellow'),
-      {align: 'center', topMargin: 9, group: 'touchscreen.supported', hide: true}
-    ));
-    this.addEntity(this.controlsEntites.tsJump = new TextEntity(
-      this, this.app.fonts.fonts5x5,
-      tsType.jump.x, tsType.jump.y, tsType.jump.width, tsType.jump.height,
-      '↑', this.app.platform.colorByName('brightBlue'), this.app.platform.colorByName('brightYellow'),
-      {align: 'center', topMargin: 9, group: 'touchscreen.supported', hide: true}
-    ));
-
+    var ts = this.options.touchscreen;
+    ts.types.keys.forEach((key) => {
+      ['left', 'right'].forEach((side) => {
+        var x = {left: 97, right: 138};
+        var spriteEntity = new SpriteEntity(this, x[side], 46, this.app.platform.colorByName('brightBlue'), this.app.platform.colorByName('brightYellow'), 0, 0);
+        spriteEntity.group = 'touchscreen.supported.'+key;
+        spriteEntity.hide = true;
+        if ('compressedSpriteData' in ts.icons[ts.types[key][side].sprite]) {
+          spriteEntity.setCompressedGraphicsData(ts.icons[ts.types[key][side].sprite].compressedSpriteData);
+        } else {
+          spriteEntity.setGraphicsData(ts.icons[ts.types[key][side].sprite]);
+        }
+        this.addEntity(spriteEntity);
+      });
+    });
+    
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 82, 64, 13, 'CHANGE', {id: 'touchscreenChange'}, ['Enter'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('magenta'), {align: 'center', margin: 4, group: 'touchscreen.supported', hide: true}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', {id: 'closeZXControls'}, ['Escape', 'GamepadExit'], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('blue'), {align: 'center', margin: 4}));
@@ -308,7 +266,7 @@ export class ZXControlsEntity extends AbstractEntity {
 
       case 'touchscreen':
         if (this.app.controls.touchscreen.supported) {
-          group += '.supported';
+          group += '.supported.'+this.app.controls.touchscreen.type;
         } else {
           group += '.notFound';
         }
@@ -476,23 +434,14 @@ export class ZXControlsEntity extends AbstractEntity {
         return true;
 
       case 'touchscreenChange':
-        this.app.controls.touchscreen.type = this.tsData[this.app.controls.touchscreen.type].next;
-        var tsType = this.tsData[this.app.controls.touchscreen.type];
-        this.controlsEntites.tsLeft.x = tsType.left.x;
-        this.controlsEntites.tsLeft.y = tsType.left.y;
-        this.controlsEntites.tsLeft.width = tsType.left.width;
-        this.controlsEntites.tsLeft.height = tsType.left.height;
-        this.controlsEntites.tsLeft.cleanCache();
-        this.controlsEntites.tsRight.x = tsType.right.x;
-        this.controlsEntites.tsRight.y = tsType.right.y;
-        this.controlsEntites.tsRight.width = tsType.right.width;
-        this.controlsEntites.tsRight.height = tsType.right.height;
-        this.controlsEntites.tsRight.cleanCache();
-        this.controlsEntites.tsJump.x = tsType.jump.x;
-        this.controlsEntites.tsJump.y = tsType.jump.y;
-        this.controlsEntites.tsJump.width = tsType.jump.width;
-        this.controlsEntites.tsJump.height = tsType.jump.height;
-        this.controlsEntites.tsJump.cleanCache();
+        var keys = this.options.touchscreen.types.keys;
+        var ndx = keys.findIndex((key) => key == this.app.controls.touchscreen.type)+1;
+        if (ndx >= keys.length) {
+          ndx = 0;
+        }
+        this.app.controls.touchscreen.type = keys[ndx];
+        this.app.writeCookie('touchscreen', JSON.stringify({type: keys[ndx]}));
+        this.changeGroup(this.selectionDevice);
         return true;
     }
 
