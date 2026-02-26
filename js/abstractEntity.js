@@ -244,8 +244,8 @@ export class AbstractEntity {
     });
   } // drawSubEntities
   
-  pointOnEntity(data) {
-    if ((this.parentX+this.x <= data.x) && (this.parentY+this.y <= data.y) && (this.parentX+this.x+this.width >= data.x) && (this.parentY+this.y+this.height >= data.y)) {
+  pointOnEntity(event) {
+    if ((this.parentX+this.x <= event.x) && (this.parentY+this.y <= event.y) && (this.parentX+this.x+this.width >= event.x) && (this.parentY+this.y+this.height >= event.y)) {
       return true;
     }
     return false;
