@@ -188,6 +188,7 @@ export class InputEventsManager {
           if (this.touchesMap[changedTouch.identifier] !== false && this.touchesMap[changedTouch.identifier] !== true) {
             var touchX = this.app.layout.convertClientCoordinateX(changedTouch.clientX);          
             var touchY = this.app.layout.convertClientCoordinateY(changedTouch.clientY);
+            this.app.model.sendEvent(0, {id: 'keyMove', key: 'Touch', identifier: changedTouch.identifier, x: touchX, y: touchY});
             if (this.touchesMap[changedTouch.identifier].pointOnEntity({x: touchX, y: touchY})) {
               this.touchesMap[changedTouch.identifier].clickState = true;
             } else {
