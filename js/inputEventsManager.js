@@ -14,6 +14,7 @@ export class InputEventsManager {
     this.mouseHover = false;
     this.touchesMap = {};
     this.touchesControls = {};
+    this.touchesJoysticks = {};
     this.gamepadsMap = {};
     this.gamepadsConfig = false;
     this.blurWindow = false;
