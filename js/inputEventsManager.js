@@ -13,8 +13,7 @@ export class InputEventsManager {
     this.keysMap = {};
     this.mouseHover = false;
     this.touchesMap = {};
-    this.touchesControls = {};
-    this.touchesJoysticks = {};
+    this.touchesGameControls = {};
     this.gamepadsMap = {};
     this.gamepadsConfig = false;
     this.blurWindow = false;
@@ -171,11 +170,6 @@ export class InputEventsManager {
           this.touchesMap[changedTouch.identifier].clickState = false;
         }
         delete this.touchesMap[changedTouch.identifier];
-        Object.keys(this.touchesControls).forEach((control) => {
-          if (changedTouch.identifier in this.touchesControls[control]) {
-            delete this.touchesControls[control][changedTouch.identifier];
-          }
-        });
       }
     }
   } // eventTouchEnd
@@ -351,10 +345,9 @@ export class InputEventsManager {
     Object.keys(this.keysMap).forEach((key) => {
       this.app.model.sendEvent(0, {id: 'key'+type, key: key});
     });
-    Object.keys(this.touchesControls).forEach((control) => {
-      Object.keys(this.touchesControls[control]).forEach((identifier) => {
-        this.app.model.sendEvent(0, {id: 'key'+type, key: 'Touch.'+control, identifier: identifier});
-      });
+    Object.keys(this.touchesGameControls).forEach((identifier) => {
+      var touch = this.touchesGameControls[identifier];
+      this.app.model.sendEvent(0, {id: 'key'+type, key: 'RetryTouch', action: touch.action});
     });
     Object.keys(this.gamepadsMap).forEach((buttonId) => {
       this.app.model.sendEvent(0, {id: 'key'+type, key: this.gamepadsMap[buttonId]});
@@ -362,9 +355,7 @@ export class InputEventsManager {
     if (type == 'Release') {
       this.keysMap = {};
       this.touchesMap = {};
-      Object.keys(this.touchesControls).forEach((control) => {
-        this.touchesControls[control] = {};
-      });
+      this.touchesGameControls = {};
       this.gamepadsMap = {};
     }
   } // sendEventsActiveKeys
