@@ -115,8 +115,12 @@ export class InputEventsManager {
     var clientX = this.app.layout.convertClientCoordinateX(event.clientX);          
     var clientY = this.app.layout.convertClientCoordinateY(event.clientY);
 
-    if (!('Mouse1' in this.keysMap)) {
-      this.app.model.sendEvent(0, {id: 'mouseHover', x: clientX, y: clientY});
+    if (this.app.model) {
+      if (!('Mouse1' in this.keysMap)) {
+        this.app.model.sendEvent(0, {id: 'mouseHover', x: clientX, y: clientY});
+      } else {
+        this.app.model.sendEvent(0, {id: 'keyMove', key: 'Mouse1', x: clientX, y: clientY});
+      }
     }
 
     if ('Mouse1' in this.keysMap && this.keysMap.Mouse1 !== false && this.keysMap.Mouse1 !== true) {
@@ -180,7 +184,7 @@ export class InputEventsManager {
       var changedTouch = event.changedTouches[t];
       if (changedTouch.identifier in this.touchesMap) {
         if (this.app.model) {
-          if (this.touchesMap[changedTouch.identifier] !== false && this.touchesMap[changedTouch.identifier] !== true) {
+          if (typeof (this.touchesMap[changedTouch.identifier]) != "boolean") {
             var touchX = this.app.layout.convertClientCoordinateX(changedTouch.clientX);          
             var touchY = this.app.layout.convertClientCoordinateY(changedTouch.clientY);
             this.app.model.sendEvent(0, {id: 'keyMove', key: 'Touch', identifier: changedTouch.identifier, x: touchX, y: touchY});
