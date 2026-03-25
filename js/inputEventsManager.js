@@ -200,6 +200,9 @@ export class InputEventsManager {
   } // eventTouchMove
 
   updateGamepadsStates() {
+    if (!('gamepads' in this.app.controls)) {
+      return;
+    }
     if (!this.app.controls.gamepads.supported) {
       return;
     }
