@@ -73,71 +73,80 @@ class AudioProcessor extends AudioWorkletProcessor {
 
   process (inputs, outputs, options) {
     if ((!this.paused) && (this.pulses !== false)) {
-      outputs.forEach((output) => {
-        output.forEach((channel) => {
-          var writePtr = 0;
-          while (writePtr < channel.length) {
-            if (this.oneReadPulse == 0) {
-              if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
-                if (this.infinityQuantity > 0) {
-                  this.infinityQuantity--;
-                  this.oneReadPulse = this.fragments[this.infinityFragment];
-                } else {
-                  this.infinityQuantity = this.infinityRndPulses.quantity-1;
-                  this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
-                  this.oneReadPulse = this.fragments[this.infinityFragment];
-                }
-              } else {
-                this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
-                if (this.events != false) {
-                  if (this.readPtr in this.events) {
-                    this.port.postMessage(this.events[this.readPtr]);
-                  }
-                }
-              }
-            }
-            if (writePtr+this.oneReadPulse <= channel.length) {
-              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr, writePtr+this.oneReadPulse);
-              writePtr += this.oneReadPulse;
-              this.oneReadPulse = 0;
-              this.readPtr++;
-              this.outputBit = 1-this.outputBit;
+      var writePtr = 0;
+      var channelLength = outputs[0][0].length;
+      while (writePtr < channelLength) {
+        if (this.oneReadPulse == 0) {
+          if (this.readPtr >= this.pulses.length && this.infinityRndPulses !== false) {
+            if (this.infinityQuantity > 0) {
+              this.infinityQuantity--;
+              this.oneReadPulse = this.fragments[this.infinityFragment];
             } else {
-              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr);
-              this.oneReadPulse = this.oneReadPulse-(channel.length-writePtr);
-              writePtr = channel.length;
+              this.infinityQuantity = this.infinityRndPulses.quantity-1;
+              this.infinityFragment = this.infinityRndPulses.fragments[Math.round(Math.random()*(this.infinityRndPulses.fragments.length-1))];
+              this.oneReadPulse = this.fragments[this.infinityFragment];
             }
-            if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
-              if (this.events != false) {
-                if (this.readPtr in this.events) {
-                  this.port.postMessage(this.events[this.readPtr]);
-                }
-              }
-              if (this.repeat) {
-                if (this.nextSound !== false) {
-                  this.fragments = this.nextSound.fragments;
-                  this.pulses = this.nextSound.pulses;
-                  this.events = false;
-                  if ('events' in this.nextSound) {
-                    this.events = this.nextSound.events;
-                  }
-                  this.nextSound = false;
-                }
-                this.readPtr = 0;
-              } else if (this.infinityRndPulses === false) {
-                channel.fill(0, writePtr);
-                this.fragments = false;
-                this.pulses = false;
-                this.events = false;
-                this.outputVolume = {false: [0.0, 0.0], true: [0.0, 0.0]};
-                this.outputBit = 0;
-                this.readPtr = 0;
-                this.oneReadPulse = 0;
+          } else {
+            this.oneReadPulse = this.fragments[this.pulses[this.readPtr]];
+            if (this.events != false) {
+              if (this.readPtr in this.events) {
+                this.port.postMessage(this.events[this.readPtr]);
               }
             }
           }
-        });
-      });
+        }
+        if (writePtr+this.oneReadPulse <= channelLength) {
+          outputs.forEach((output) => {
+            output.forEach((channel) => {
+              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr, writePtr+this.oneReadPulse);
+            });
+          });
+          writePtr += this.oneReadPulse;
+          this.oneReadPulse = 0;
+          this.readPtr++;
+          this.outputBit = 1-this.outputBit;
+        } else {
+          outputs.forEach((output) => {
+            output.forEach((channel) => {
+              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr);
+            });
+          });
+          this.oneReadPulse = this.oneReadPulse-(channelLength-writePtr);
+          writePtr = channelLength;
+        }
+        if (this.readPtr >= this.pulses.length && this.oneReadPulse == 0) {
+          if (this.events != false) {
+            if (this.readPtr in this.events) {
+              this.port.postMessage(this.events[this.readPtr]);
+            }
+          }
+          if (this.repeat) {
+            if (this.nextSound !== false) {
+              this.fragments = this.nextSound.fragments;
+              this.pulses = this.nextSound.pulses;
+              this.events = false;
+              if ('events' in this.nextSound) {
+                this.events = this.nextSound.events;
+              }
+              this.nextSound = false;
+            }
+            this.readPtr = 0;
+          } else if (this.infinityRndPulses === false) {
+            outputs.forEach((output) => {
+              output.forEach((channel) => {
+                channel.fill(0, writePtr);
+              });
+            });
+            this.fragments = false;
+            this.pulses = false;
+            this.events = false;
+            this.outputVolume = {false: [0.0, 0.0], true: [0.0, 0.0]};
+            this.outputBit = 0;
+            this.readPtr = 0;
+            this.oneReadPulse = 0;
+          }
+        }
+      }
     }
     return true;
   } // process

@@ -27,6 +27,8 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
           this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: this.channel});
         });
       this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor');
+      // stereo
+      //this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor', {numberOfOutputs: 1, outputChannelCount: [Math.min(2, this.ctx.destination.channelCount)]});
       this.node.connect(this.ctx.destination);
     } catch(error) {
       this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: this.channel});
