@@ -15,14 +15,14 @@ class ManifestPage extends AbstractPage {
     $this->data['icons'] = [];
     foreach (['192', '512', '1024', '1980'] as $dimension) {
       $icon = [];
-      $icon['src'] = $this->webURL.'images/app-icon-'.$dimension.'x'.$dimension.'.png';
+      $icon['src'] = $GLOBALS['webURL'].'images/app-icon-'.$dimension.'x'.$dimension.'.png';
       $icon['sizes'] = $dimension.'x'.$dimension;
       $icon['type'] = 'image/png';
       $icon['purpose'] = 'any maskable';
       $this->data['icons'][] = $icon;
     }
     $icon = [];
-    $icon['src'] = $this->webURL.'images/app-icon.svg';
+    $icon['src'] = $GLOBALS['webURL'].'images/app-icon.svg';
     $icon['type'] = 'image/svg+xml';
     $icon['purpose'] = 'any maskable';
     $this->data['icons'][] = $icon;
