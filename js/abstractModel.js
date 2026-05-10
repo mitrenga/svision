@@ -130,6 +130,12 @@ export class AbstractModel {
     return result;
   } // handleEvent
 
+  sendWorkerMessage(event) {
+  } // sendWorkerMessage
+
+  handleWorkerMessage(event) {
+  } // handleWorkerMessage
+
   fetchData(url, storage, data) {
     this.fetchDataId = this.app.fetchData(url, storage, data, this);
   } // fetchData
