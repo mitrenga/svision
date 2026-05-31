@@ -54,7 +54,7 @@ export class ZXFonts8x8 extends AbstractFonts {
         }
         if (doIt == true) {
           for (var y = 0; y < 8; y++) {
-            binData[y] = binData[y].substring(1, width);
+            binData[y] = binData[y].substring(1);
           }
           width--;
         }
