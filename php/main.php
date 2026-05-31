@@ -22,26 +22,33 @@
     $tmpURL = substr($tmpURL, 0, -1);
   $webURL = substr($tmpURL, 0, -strlen('index.php'));
   $wsURL = $wsProtocol.'://'.$srvName.':'.$wsPort.'/'.$wsPage;
+  $query = $_SERVER['QUERY_STRING'];
 
-  if (substr($_SERVER['QUERY_STRING'], -5) === '.data' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+  if (substr($query, -5) === '.data' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     require_once 'dataPage.php';
     $page = new DataPage();
   }
-  elseif (substr($_SERVER['QUERY_STRING'], -3) === '.db' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+  elseif (substr($query, -3) === '.db' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     require_once 'dbPage.php';
     $page = new DbPage();
   }
-  elseif (substr($_SERVER['QUERY_STRING'], -5) === '.post' && $_SERVER['REQUEST_METHOD'] == 'POST') {
+  elseif (substr($query, -5) === '.post' && $_SERVER['REQUEST_METHOD'] == 'POST') {
     require_once 'postPage.php';
     $page = new PostPage();
   }
-  elseif ($_SERVER['QUERY_STRING'] === 'config') {
-    require_once 'configPage.php';
-    $page = new ConfigPage();
-  }
-  elseif ($_SERVER['QUERY_STRING'] === 'manifest.webmanifest') {
+  elseif ($query === 'manifest.webmanifest') {
     require_once 'manifestPage.php';
     $page = new ManifestPage();
+  }
+  elseif (file_exists('./app/svision/php/'.$query.'Page.php')) {
+    require_once $query.'Page.php';
+    $className = ucfirst($query).'Page';
+    $page = new $className();
+  }
+  elseif (file_exists('./'.$query.'Page.php')) {
+    require_once './'.$query.'Page.php';
+    $className = ucfirst($query).'Page';
+    $page = new $className();
   }
   elseif (!isset ($_COOKIE['libImportMethod']) || substr($_COOKIE['libImportMethod'], 0, 5) === 'false') {
     require_once 'autoConfigPage.php';
