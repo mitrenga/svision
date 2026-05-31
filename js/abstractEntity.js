@@ -20,6 +20,7 @@ export class AbstractEntity {
 
     this.x = x;
     this.y = y;
+    this.text = '';
     this.width = width;
     this.height = height;
     this.bkColor = bkColor;
@@ -113,6 +114,27 @@ export class AbstractEntity {
     }
   } // sendEvent
 
+  setText(text) {
+    if (this.text != text) {
+      this.text = text;
+      this.cleanCache();
+    }
+  } // setText
+
+  setPenColor(color) {
+    if (color != this.penColor) {
+      this.penColor = color;
+      this.cleanCache();
+    }
+  } // setPenColor
+
+  setBkColor(color) {
+    if (color != this.bkColor) {
+      this.bkColor = color;
+      this.cleanCache();
+    }
+  } // setBkColor
+
   cancelEvent(id) {
     this.model.cancelEvent(id);
   } // cancelEvent
@@ -122,19 +144,55 @@ export class AbstractEntity {
       this.modalEntity.handleEvent(event);
       return true;
     }
-    
-    if (event.id == 'destroy') {
-      if (this.modalEntity == event.entity) {
-        this.modalEntity = null;
-      }
-      for (var v = 0; v < this.entities.length; v++) {
-        if (this.entities[v] == event.entity) {
-          this.entities[v].shutdown();
-          this.entities[v] = null;
-          this.entities.splice(v, 1);
-          return true;
+
+    switch (event.id) {
+      case 'updateEntity':
+        if ('member' in event && event.member == this.member.substring(0, event.member.length)) {
+          if ('x' in event) {
+            this.x = event.x;
+          }
+          if ('y' in event) {
+            this.y = event.y;
+          }
+          if ('width' in event) {
+            this.width = event.width;
+          }
+          if ('height' in event) {
+            this.height = event.height;
+          }
+          if ('text' in event) {
+            this.setText(event.text);
+          }
+          if ('penColor' in event) {
+            this.setPenColor(event.penColor);
+          }
+          if ('bkColor' in event) {
+            this.setBkColor(event.bkColor);
+          }
+          if ('hide' in event) {
+            this.hide = event.hide;
+          }
+          if ('multiple' in event && event.multiple) {
+            return false;
+          } else {
+            return true;
+          }
         }
-      }
+        break;
+    
+      case 'destroy':
+        if (this.modalEntity == event.entity) {
+          this.modalEntity = null;
+        }
+        for (var v = 0; v < this.entities.length; v++) {
+          if (this.entities[v] == event.entity) {
+            this.entities[v].shutdown();
+            this.entities[v] = null;
+            this.entities.splice(v, 1);
+            return true;
+          }
+        }
+        break;
     }
 
     for (var v = 0; v < this.entities.length; v++) {

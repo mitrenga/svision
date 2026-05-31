@@ -93,27 +93,6 @@ export class TextEntity  extends AbstractEntity {
     this.drawingCropCache = null;
   } // disablePaintWithVisibility
 
-  setText(text) {
-    if (this.text != text) {
-      this.text = text;
-      this.cleanCache();
-    }
-  } // setText
-
-  setPenColor(color) {
-    if (color != this.penColor) {
-      this.penColor = color;
-      this.cleanCache();
-    }
-  } // setPenColor
-
-  setBkColor(color) {
-    if (color != this.bkColor) {
-      this.bkColor = color;
-      this.cleanCache();
-    }
-  } // setBkColor
-
   cleanCache() {
     this.drawingCache[0].cleanCache();
   } // cleanCache
@@ -365,39 +344,6 @@ export class TextEntity  extends AbstractEntity {
           if (this.pointOnEntity(event)) {
             this.app.inputEventsManager.mouseHover = this;
             this.hoverState = true;
-            return true;
-          }
-        }
-        break;
-      case 'updateEntity':
-        if ('member' in event && event.member == this.member.substr(0, event.member.length)) {
-          if ('x' in event) {
-            this.x = event.x;
-          }
-          if ('y' in event) {
-            this.y = event.y;
-          }
-          if ('width' in event) {
-            this.width = event.width;
-          }
-          if ('height' in event) {
-            this.height = event.height;
-          }
-          if ('text' in event) {
-            this.setText(event.text);
-          }
-          if ('penColor' in event) {
-            this.setPenColor(event.penColor);
-          }
-          if ('bkColor' in event) {
-            this.setBkColor(event.bkColor);
-          }
-          if ('hide' in event) {
-            this.hide = event.hide;
-          }
-          if ('multiple' in event && event.multiple) {
-            return false;
-          } else {
             return true;
           }
         }
