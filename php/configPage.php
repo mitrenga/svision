@@ -40,7 +40,7 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '            var version = {id: 0, text: "unknown", class: "error"};';
     $this->data[] = '            if (String.prototype.trim) {';
     $this->data[] = '              version = {id: 5, text: "ECMAScript 2009", class: "error"};';
-    $this->data[] = '            if (Array.prototype.map) {';
+    $this->data[] = '            if (Array.from) {';
     $this->data[] = '              version = {id: 6, text: "ECMAScript 2015", class: "error"};';
     $this->data[] = '            if (Array.prototype.includes) {';
     $this->data[] = '              version = {id: 7, text: "ECMAScript 2016", class: "error"};';
@@ -62,7 +62,9 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '              version = {id: 15, text: "ECMAScript 2024", class: "ok"};';
     $this->data[] = '            if (RegExp.escape) {';
     $this->data[] = '              version = {id: 16, text: "ECMAScript 2025", class: "ok"};';
-    $this->data[] = '            }}}}}}}}}}}}';
+    $this->data[] = '            if (Error.isError) {';
+    $this->data[] = '              version = {id: 17, text: "ECMAScript 2026", class: "ok"};';
+    $this->data[] = '            }}}}}}}}}}}}}';
     $this->data[] = '            return version;';
     $this->data[] = '          } // getJSVersion';
     $this->data[] = '';
