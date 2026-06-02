@@ -120,7 +120,7 @@ export class Canvas2DLayout extends AbstractLayout {
 
   paintRect(ctx, x, y, width, height, color) {
     ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, height);
+    ctx.fillRect(x*this.ratio, y*this.ratio, width*this.ratio, height*this.ratio);
   } // paintRect
 
   newDrawingCache(entity, index) {
