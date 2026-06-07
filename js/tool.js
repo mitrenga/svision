@@ -130,6 +130,10 @@ export class Tool {
     }
     return key.toUpperCase();
   } // prettyKey
+  
+  static script(obj, script, data) {
+    new Function('arg1', script).call(obj, data);
+  } // script
 
   static writeCookie(name, value) {
     document.cookie = name+'='+value+';max-age=31536000;path=/';
