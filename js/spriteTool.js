@@ -336,6 +336,13 @@ export class SpriteTool {
     return result;
   } // decode_lT2
 
+  static scriptedSprite(obj, data) {
+    if (data !== false) {
+      var sprite = this.decode(data);
+      Tool.script(obj, sprite.sprite[0].grid.join(''), sprite);
+    }
+  } // scriptedSprite
+
   static encodeBraillePalette(palette) {
     var result = '';
     for (var ch in palette) {
