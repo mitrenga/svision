@@ -5,7 +5,7 @@ require_once 'abstractPage.php';
 class AppPage extends AbstractPage {
   
   public function createPage() {
-    $srcVersion = md5(time());
+    $srcVersion = $this->srcVersion();
 
     $this->data[] = '<!-- free source code on https://github.com/mitrenga -->';
     $this->data[] = '<!DOCTYPE html>';
@@ -25,14 +25,17 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
     $this->data[] = '  <body id="bodyApp">';
-    $this->data[] = '    <script>var appName = "'.$GLOBALS['appName'].'";</script>';
-    $this->data[] = '    <script>var clientIP = "'.$GLOBALS['clientIP'].'";</script>';
-    $this->data[] = '    <script>var appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
-    $this->data[] = '    <script>var wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
-    $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
+    $this->data[] = '    <script>window.appName = "'.$GLOBALS['appName'].'";</script>';
+    $this->data[] = '    <script>window.clientIP = "'.$GLOBALS['clientIP'].'";</script>';
+    $this->data[] = '    <script>window.appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
+    $this->data[] = '    <script>window.wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
+    $this->data[] = '    <script>window.srcVersion = "'.$srcVersion.'";</script>';
+    $this->data[] = '    <script>window.devMode = '.(empty($GLOBALS['devMode']) ? 'false' : 'true').';</script>';
+    $this->data[] = '    <script>window.devModeName = '.((empty($GLOBALS['devModeName'])) ? 'false' : '"'.$GLOBALS['devModeName'].'"').';</script>';
+    $this->data[] = '    <script>window.appIconSprite = false;</script>';
     
     if ($_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '    <script>var importPath = "app";</script>';
+      $this->data[] = '    <script>window.importPath = "app";</script>';
       $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
     }
 
@@ -41,10 +44,12 @@ class AppPage extends AbstractPage {
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/html/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/adaptive/');
+      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/ibm/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/zxSpectrum/');
       $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/webGL2/');
 
-      $this->data[] = '    <script>var importPath = "js";</script>';
+      $this->data[] = '    <script>window.importPath = "js";</script>';
       $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
     }
     
