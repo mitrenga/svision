@@ -366,12 +366,13 @@ export class SpriteTool {
     return null;
   } // findBrailleTransparent
 
-  static encodeBrailleGridBlock(grid, palette, width, height, posLen) {
+  static encodeBrailleGridBlock(grid, palette, width, height, posLen, cellBytes) {
     var codeChars = Object.keys(palette);
     var codeIndex = {};
     for (var i = 0; i < codeChars.length; i++) codeIndex[codeChars[i]] = i;
     var numCodes = codeChars.length;
-    var maxReps = Math.floor(255 / numCodes);
+    // 1-byte cell: floor(255/numCodes), 2-byte cell: floor(65025/numCodes)
+    var maxReps = Math.floor(Math.pow(255, cellBytes) / numCodes);
     var transparent = this.findBrailleTransparent(palette);
 
     var startY = -1, endY = -1;
@@ -417,7 +418,7 @@ export class SpriteTool {
         var colorIdx = codeIndex[ch] !== undefined ? codeIndex[ch] : 0;
         while (runLen > 0) {
           var part = Math.min(runLen, maxReps);
-          result += Tool.intToBraille((part-1)*numCodes+colorIdx, 1);
+          result += Tool.intToBraille((part-1)*numCodes+colorIdx, cellBytes);
           runLen -= part;
         }
         x = runEnd;
@@ -432,38 +433,48 @@ export class SpriteTool {
     var frames = spriteData.frames;
     var directions = spriteData.directions;
     var sharedPalette = spriteData.colors;
-    var isDoubleByte = (width > 255 || height > 255);
-    var posLen = isDoubleByte ? 2 : 1;
+    // Position byte width is derived from the dimensions (positions store a
+    // sentinel equal to width/height, and one braille char holds 0..254).
+    var posLen = (width > 254 || height > 254) ? 2 : 1;
+
+    // Build the body (palette section + grid blocks) for a given grid-cell
+    // byte width. Only the run cells depend on cellBytes; positions use posLen.
+    var buildBody = (cellBytes) => {
+      var body = Tool.intToBraille(sharedPalette === false ? 254 : Object.keys(sharedPalette).length, 1);
+      if (sharedPalette !== false) {
+        body += this.encodeBraillePalette(sharedPalette);
+      }
+      for (var d = 0; d < directions; d++) {
+        for (var f = 0; f < frames; f++) {
+          var entry = spriteData.sprite[f+d*frames];
+          var palette = sharedPalette !== false ? sharedPalette : entry.colors;
+          if (sharedPalette === false) {
+            body += Tool.intToBraille(Object.keys(palette).length, 1);
+            body += this.encodeBraillePalette(palette);
+          }
+          body += this.encodeBrailleGridBlock(entry.grid, palette, width, height, posLen, cellBytes);
+        }
+      }
+      return body;
+    };
+
+    // Variant A: encode the grid both ways, keep the shorter. Tie -> 1-byte.
+    var body1 = buildBody(1);
+    var body2 = buildBody(2);
+    var useDouble = body2.length < body1.length;
+    var body = useDouble ? body2 : body1;
 
     var result = '';
     result += Tool.intToBraille(0xFE, 1);
     result += Tool.intToBraille(0xFE, 1);
     result += Tool.intToBraille(0xFE, 1);
     result += Tool.intToBraille(1, 1);
-    result += Tool.intToBraille(isDoubleByte ? 2 : 0, 1);
+    result += Tool.intToBraille(useDouble ? 2 : 0, 1);
     result += Tool.intToBraille(width, 2);
     result += Tool.intToBraille(height, 2);
     result += Tool.intToBraille(frames, 1);
     result += Tool.intToBraille(directions, 1);
-    result += Tool.intToBraille(sharedPalette === false ? 254 : Object.keys(sharedPalette).length, 1);
-
-    if (sharedPalette !== false) {
-      result += this.encodeBraillePalette(sharedPalette);
-    }
-
-    for (var d = 0; d < directions; d++) {
-      for (var f = 0; f < frames; f++) {
-        var entry = spriteData.sprite[f+d*frames];
-        var palette = sharedPalette !== false ? sharedPalette : entry.colors;
-
-        if (sharedPalette === false) {
-          result += Tool.intToBraille(Object.keys(palette).length, 1);
-          result += this.encodeBraillePalette(palette);
-        }
-
-        result += this.encodeBrailleGridBlock(entry.grid, palette, width, height, posLen);
-      }
-    }
+    result += body;
 
     return new RichString(result);
   } // encode_Braille
@@ -496,12 +507,14 @@ export class SpriteTool {
     }
 
     var version = Tool.brailleToInt(read(1));
-    var isDoubleByte = Tool.brailleToBool(read(1));
+    var gridDoubleByte = Tool.brailleToBool(read(1));
     var width = Tool.brailleToInt(read(2));
     var height = Tool.brailleToInt(read(2));
     var frames = Tool.brailleToInt(read(1));
     var directions = Tool.brailleToInt(read(1));
-    var posLen = isDoubleByte ? 2 : 1;
+    // Position byte width derived from dimensions; the flag controls grid cells.
+    var posLen = (width > 254 || height > 254) ? 2 : 1;
+    var cellBytes = gridDoubleByte ? 2 : 1;
     var topNumCodes = Tool.brailleToObjLen(read(1), 1);
 
     var sharedPalette = false;
@@ -553,7 +566,7 @@ export class SpriteTool {
             for (var j = 0; j < width; j++) rowChars[j] = fillChar;
             var x = startX;
             while (x <= endX) {
-              var v = Tool.brailleToInt(read(1));
+              var v = Tool.brailleToInt(read(cellBytes));
               var color = v % numCodes;
               var length = Math.floor(v/numCodes)+1;
               var ch = codeChars[color];
