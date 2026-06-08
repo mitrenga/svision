@@ -589,6 +589,14 @@ export class SpriteTool {
     return result;
   } // decode_Braille
 
+  static decodeHexStr(str) {
+    var sprite = [];
+    for (var x = 0; x < 8; x++) {
+      sprite.push(Tool.hexToBin(str.substring(x*2, x*2+2)));
+    }
+    return {penChar: '1', sprite: sprite};
+  } // decodeHexStr
+
 } // SpriteTool
 
 export default SpriteTool;
