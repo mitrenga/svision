@@ -2,12 +2,14 @@
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { SpriteEntity } = await import('../spriteEntity.js?ver='+window.srcVersion);
+const { SpriteTool } = await import('../../../spriteTool.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { ZXWaitForAudioEventEntity } = await import('./zxWaitForAudioEventEntity.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
 import SpriteEntity from '../spriteEntity.js';
+import SpriteTool from '../../../spriteTool.js';
 import ButtonEntity from '../buttonEntity.js';
 import ZXWaitForAudioEventEntity from './zxWaitForAudioEventEntity.js';
 /**/
@@ -40,17 +42,11 @@ export class ZXVolumeEntity extends AbstractEntity {
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 178, 36, 21, 13, 'MAX', {id: 'setVolume10'}, [], this.app.platform.colorByName('brightWhite'), this.app.platform.colorByName('green'), {topMargin: 4, leftMargin: 2}));
 
     var sliderEntity = new SpriteEntity(this, 10, 55, this.app.platform.colorByName('black'), false, 0, 0);
-    sliderEntity.setCompressedGraphicsData(
-      'lP10510070600012H020H530121232123414141414141414141454141414141414141414321232121',
-      false,
-    );
+    sliderEntity.setGraphicsData(SpriteTool.decode('lP10510070600012H020H530121232123414141414141414141454141414141414141414321232121'));
     this.addEntity(sliderEntity);
 
     this.cursorEntity = new SpriteEntity(this, 8+this.app.audioManager.volume[this.channel]*18, 51, this.app.platform.colorByName('brightRed'), false, 0, 0);
-    this.cursorEntity.setCompressedGraphicsData(
-      'lP100500F05000501031D012332423321',
-      false
-    );
+    this.cursorEntity.setGraphicsData(SpriteTool.decode('lP100500F05000501031D012332423321'));
     this.addEntity(this.cursorEntity);
 
 

@@ -3,6 +3,7 @@ const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { SlidingTextEntity } = await import('../slidingTextEntity.js?ver='+window.srcVersion);
 const { SpriteEntity } = await import('../spriteEntity.js?ver='+window.srcVersion);
+const { SpriteTool } = await import('../../../spriteTool.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { ZXRemapKeysEntity } = await import('./zxRemapKeysEntity.js?ver='+window.srcVersion);
 const { ZXSelectingGamepadEntity } = await import('./zxSelectingGamepadEntity.js?ver='+window.srcVersion);
@@ -11,6 +12,7 @@ import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
 import SlidingTextEntity from '../slidingTextEntity.js';
 import SpriteEntity from '../spriteEntity.js';
+import SpriteTool from '../../../spriteTool.js';
 import ButtonEntity from '../buttonEntity.js';
 import ZXRemapKeysEntity from './zxRemapKeysEntity.js';
 import ZXSelectingGamepadEntity from './zxSelectingGamepadEntity.js';
@@ -79,12 +81,11 @@ export class ZXControlsEntity extends AbstractEntity {
     var spriteEntity = new SpriteEntity(this, 90, 16, this.app.platform.colorByName('cyan'), false, 0, 0);
     spriteEntity.group = 'mouse.disable';
     spriteEntity.hide = true;
-    spriteEntity.setCompressedGraphicsData(
+    spriteEntity.setGraphicsData(SpriteTool.decode(
       'hR200290049050F010F081101110512011203130113021301130114012801260523072' +
       '2072207220722072207220722072207220722072207220722072207230526012801280' +
-      '1280128012801280128011429FF00FF00FF00FF00FF00A00127022703250523081F05',
-      false
-    );
+      '1280128012801280128011429FF00FF00FF00FF00FF00A00127022703250523081F05'
+    ));
     this.addEntity(spriteEntity);
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 93, 105, 19, 'MOUSE BUTTONS\nCONTROL IS DISABLED', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'mouse.disable', hide: true}));
@@ -97,13 +98,12 @@ export class ZXControlsEntity extends AbstractEntity {
     var spriteEntity = new SpriteEntity(this, 90, 16, this.app.platform.colorByName('cyan'), false, 0, 0);
     spriteEntity.group = 'gamepad.notFound';
     spriteEntity.hide = true;
-    spriteEntity.setCompressedGraphicsData(
+    spriteEntity.setGraphicsData(SpriteTool.decode(
       'hR200690030163D2845214B1C4F1853145711590F5B0D5D0B5F0A5F0913063002160713082E04160613082D06150514082C08150414' +
       '082C08160215082D06170215082E04180116082F02300859181E0210021E1A1C040E041D1A1B060C061C1A1A080A081B1A1A080A081' +
       'B1A1B060C061C1A1C040E041E181E021002270861082F021A0115082E04180215082D06170314082C08160314082C08150513082D06' +
-      '150613082E0416071306300216095F0A5F0B5D0D270D270F231323111F191F141B1D1B181721171C132513210E290E2806310616',
-      false
-    );
+      '150613082E0416071306300216095F0A5F0B5D0D270D270F231323111F191F141B1D1B181721171C132513210E290E2806310616'
+    ));
     this.addEntity(spriteEntity);
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 67, 104, 19, 'PRESS A BUTTON\nON YOUR GAMEPAD\nTO START', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'gamepad.notFound.supported', hide: true}));
@@ -125,11 +125,10 @@ export class ZXControlsEntity extends AbstractEntity {
     var spriteEntity = new SpriteEntity(this, 90, 16, this.app.platform.colorByName('cyan'), false, 0, 0);
     spriteEntity.group = 'touchscreen';
     spriteEntity.hide = true;
-    spriteEntity.setCompressedGraphicsData(
+    spriteEntity.setGraphicsData(SpriteTool.decode(
       'lP102X01O0I052N082R2T032V02012C0L070C060A04090G0123045676809A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A' +
-      '9B7C90DE9F2G95E295E297CB97CB95E295E29F2G90DE9B7C9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9H86765403210',
-      false
-    );
+      '9B7C90DE9F2G95E295E297CB97CB95E295E29F2G90DE9B7C9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9A9H86765403210'
+    ));
     this.addEntity(spriteEntity);
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 107, 80, 70, 7, 'DEVICE', this.app.platform.colorByName('brightBlue'), false, {align: 'center', group: 'touchscreen.notFound', hide: true}));
@@ -143,7 +142,7 @@ export class ZXControlsEntity extends AbstractEntity {
         spriteEntity.group = 'touchscreen.supported.'+key;
         spriteEntity.hide = true;
         if ('compressedSpriteData' in ts.icons[ts.types[key][side].sprite]) {
-          spriteEntity.setCompressedGraphicsData(ts.icons[ts.types[key][side].sprite].compressedSpriteData);
+          spriteEntity.setGraphicsData(SpriteTool.decode(ts.icons[ts.types[key][side].sprite].compressedSpriteData));
         } else {
           spriteEntity.setGraphicsData(ts.icons[ts.types[key][side].sprite]);
         }
