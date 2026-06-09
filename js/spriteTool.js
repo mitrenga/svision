@@ -14,6 +14,7 @@ export class SpriteTool {
   // lT2 - latin trim 00..99AA..ZZ
 
   // for colored sprites
+  // b90 - repeated characters expressed as base90 characters (printable ASCII, no escaping needed) — max repetitions calculated dynamically based on the number of colors
   // braille - repeated characters expressed as Braille characters — max repetitions calculated dynamically based on the number of colors
 
   static encode(spriteData, method) {
@@ -24,6 +25,8 @@ export class SpriteTool {
         return this.encode_lP1(spriteData);
       case 'lT2':
         return this.encode_lT2(spriteData);
+      case 'b90':
+        return this.encode_b90(spriteData);
       case 'braille':
         return this.encode_Braille(spriteData);
       default:
@@ -40,6 +43,8 @@ export class SpriteTool {
         return this.decode_lP1(data);
       case 'lT2':
         return this.decode_lT2(data);
+      case 'b90':
+        return this.decode_b90(data);
       case '⣿⣿⣿':
         return this.decode_Braille(data);
       default:
@@ -336,12 +341,228 @@ export class SpriteTool {
     return result;
   } // decode_lT2
 
-  static scriptedSprite(obj, data) {
-    if (data !== false) {
-      var sprite = this.decode(data);
-      Tool.script(obj, sprite.sprite[0].grid.join(''), sprite);
+  static encodeB90Palette(palette) {
+    var result = '';
+    for (var ch in palette) {
+      result += Tool.intToBase90(ch.codePointAt(0), 2);
+      result += Tool.intToBase90(palette[ch] === false ? 89 : Array.from(palette[ch]).length, 1);
+      if (palette[ch] !== false) {
+        var chars = Array.from(palette[ch]);
+        for (var j = 0; j < chars.length; j++) {
+          result += Tool.intToBase90(chars[j].codePointAt(0), 2);
+        }
+      }
     }
-  } // scriptedSprite
+    return result;
+  } // encodeB90Palette
+
+  static encodeB90GridBlock(grid, palette, width, height, posLen, cellBytes) {
+    var codeChars = Object.keys(palette);
+    var codeIndex = {};
+    for (var i = 0; i < codeChars.length; i++) codeIndex[codeChars[i]] = i;
+    var numCodes = codeChars.length;
+    // 2-char cell: floor(8100/numCodes)
+    var maxReps = Math.floor(Math.pow(90, cellBytes) / numCodes);
+    var transparent = this.findBrailleTransparent(palette);
+    var startY = -1, endY = -1;
+    for (var y = 0; y < height; y++) {
+      var row = grid[y] || '';
+      for (var x = 0; x < row.length; x++) {
+        if (row[x] !== transparent) {
+          if (startY === -1) startY = y;
+          endY = y;
+          break;
+        }
+      }
+    }
+    if (startY === -1) {
+      return Tool.intToBase90(height, posLen)+Tool.intToBase90(height, posLen);
+    }
+    var result = Tool.intToBase90(startY, posLen)+Tool.intToBase90(endY, posLen);
+    for (var y = startY; y <= endY; y++) {
+      var row = grid[y] || '';
+      var firstX = -1, lastX = -1;
+      for (var x = 0; x < row.length; x++) {
+        if (row[x] !== transparent) {
+          if (firstX === -1) firstX = x;
+          lastX = x;
+        }
+      }
+      if (firstX === -1) {
+        result += Tool.intToBase90(width, posLen);
+        continue;
+      }
+      result += Tool.intToBase90(firstX, posLen);
+      result += Tool.intToBase90(lastX, posLen);
+      var x = firstX;
+      while (x <= lastX) {
+        var ch = row[x];
+        var runEnd = x+1;
+        while (runEnd <= lastX && row[runEnd] === ch) runEnd++;
+        var runLen = runEnd-x;
+        var colorIdx = codeIndex[ch] !== undefined ? codeIndex[ch] : 0;
+        while (runLen > 0) {
+          var part = Math.min(runLen, maxReps);
+          result += Tool.intToBase90((part-1)*numCodes+colorIdx, cellBytes);
+          runLen -= part;
+        }
+        x = runEnd;
+      }
+    }
+    return result;
+  } // encodeB90GridBlock
+
+  static encode_b90(spriteData) {
+    var width = spriteData.width;
+    var height = spriteData.height;
+    var frames = spriteData.frames;
+    var directions = spriteData.directions;
+    var sharedPalette = spriteData.colors;
+    // Position byte width is derived from the dimensions (positions store a sentinel
+    // equal to width/height, and one base90 char holds 0..89).
+    var posLen = (width > 89 || height > 89) ? 2 : 1;
+
+    // Build the body (palette section + grid blocks) for a given grid-cell
+    // byte width. Only the run cells depend on cellBytes; positions use posLen.
+    var buildBody = (cellBytes) => {
+      var body = Tool.intToBase90(sharedPalette === false ? 89 : Object.keys(sharedPalette).length, 1);
+      if (sharedPalette !== false) {
+        body += this.encodeB90Palette(sharedPalette);
+      }
+      for (var d = 0; d < directions; d++) {
+        for (var f = 0; f < frames; f++) {
+          var entry = spriteData.sprite[f+d*frames];
+          var palette = sharedPalette !== false ? sharedPalette : entry.colors;
+          if (sharedPalette === false) {
+            body += Tool.intToBase90(Object.keys(palette).length, 1);
+            body += this.encodeB90Palette(palette);
+          }
+          body += this.encodeB90GridBlock(entry.grid, palette, width, height, posLen, cellBytes);
+        }
+      }
+      return body;
+    };
+
+    // Variant A: encode the grid both ways, keep the shorter. Tie -> 1-byte.
+    var body1 = buildBody(1);
+    var body2 = buildBody(2);
+    var useDouble = body2.length < body1.length;
+    var body = useDouble ? body2 : body1;
+
+    var result = 'b90';
+    result += Tool.intToBase90(1, 1);
+    result += Tool.intToBase90(useDouble ? 2 : 0, 1);
+    result += Tool.intToBase90(width, 2);
+    result += Tool.intToBase90(height, 2);
+    result += Tool.intToBase90(frames, 1);
+    result += Tool.intToBase90(directions, 1);
+    result += body;
+
+    return new RichString(result);
+  } // encode_b90
+
+  static decode_b90(data) {
+    var pos = 3;
+    function read(len) {
+      var s = data.substring(pos, pos+len);
+      pos += len;
+      return s;
+    }
+    function readPalette(numCodes) {
+      var palette = {};
+      var codeChars = [];
+      for (var i = 0; i < numCodes; i++) {
+        var ch = String.fromCodePoint(Tool.base90ToInt(read(2)));
+        var strLen = Tool.base90ToInt(read(1));
+        if (strLen === 89) {
+          palette[ch] = false;
+        } else {
+          var color = '';
+          for (var k = 0; k < strLen; k++) {
+            color += String.fromCodePoint(Tool.base90ToInt(read(2)));
+          }
+          palette[ch] = color;
+        }
+        codeChars.push(ch);
+      }
+      return {palette: palette, codeChars: codeChars};
+    }
+    var version = Tool.base90ToInt(read(1));
+    var gridDoubleByte = Tool.base90ToInt(read(1)) === 2;
+    var width = Tool.base90ToInt(read(2));
+    var height = Tool.base90ToInt(read(2));
+    var frames = Tool.base90ToInt(read(1));
+    var directions = Tool.base90ToInt(read(1));
+    // Position byte width derived from dimensions; the flag controls grid cells.
+    var posLen = (width > 89 || height > 89) ? 2 : 1;
+    var cellBytes = gridDoubleByte ? 2 : 1;
+    var topRaw = Tool.base90ToInt(read(1));
+    var topNumCodes = (topRaw === 89) ? false : topRaw;
+    var sharedPalette = false;
+    var sharedCodeChars = null;
+    if (topNumCodes !== false) {
+      var pal = readPalette(topNumCodes);
+      sharedPalette = pal.palette;
+      sharedCodeChars = pal.codeChars;
+    }
+    var result = {
+      width: width,
+      height: height,
+      frames: frames,
+      directions: directions,
+      colors: sharedPalette,
+      sprite: []
+    };
+    for (var d = 0; d < directions; d++) {
+      for (var f = 0; f < frames; f++) {
+        var palette, codeChars;
+        if (sharedPalette !== false) {
+          palette = sharedPalette;
+          codeChars = sharedCodeChars;
+        } else {
+          var frameNumCodes = Tool.base90ToInt(read(1));
+          var pal2 = readPalette(frameNumCodes);
+          palette = pal2.palette;
+          codeChars = pal2.codeChars;
+        }
+        var numCodes = codeChars.length;
+        var transparent = SpriteTool.findBrailleTransparent(palette);
+        var fillChar = transparent !== null ? transparent : codeChars[0];
+        var emptyRow = fillChar.repeat(width);
+        var grid = new Array(height);
+        for (var y = 0; y < height; y++) grid[y] = emptyRow;
+        var startY = Tool.base90ToInt(read(posLen));
+        var endY = Tool.base90ToInt(read(posLen));
+        if (startY < height) {
+          for (var y = startY; y <= endY; y++) {
+            var startX = Tool.base90ToInt(read(posLen));
+            if (startX === width) continue;
+            var endX = Tool.base90ToInt(read(posLen));
+            var rowChars = new Array(width);
+            for (var j = 0; j < width; j++) rowChars[j] = fillChar;
+            var x = startX;
+            while (x <= endX) {
+              var v = Tool.base90ToInt(read(cellBytes));
+              var color = v % numCodes;
+              var length = Math.floor(v/numCodes)+1;
+              var ch = codeChars[color];
+              for (var j = 0; j < length; j++) {
+                rowChars[x+j] = ch;
+              }
+              x += length;
+            }
+            grid[y] = rowChars.join('');
+          }
+        }
+        var entry = {grid: grid};
+        if (sharedPalette === false) {
+          entry.colors = palette;
+        }
+        result.sprite.push(entry);
+      }
+    }
+    return result;
+  } // decode_b90
 
   static encodeBraillePalette(palette) {
     var result = '';
@@ -374,7 +595,6 @@ export class SpriteTool {
     // 1-byte cell: floor(255/numCodes), 2-byte cell: floor(65025/numCodes)
     var maxReps = Math.floor(Math.pow(255, cellBytes) / numCodes);
     var transparent = this.findBrailleTransparent(palette);
-
     var startY = -1, endY = -1;
     for (var y = 0; y < height; y++) {
       var row = grid[y] || '';
@@ -386,13 +606,10 @@ export class SpriteTool {
         }
       }
     }
-
     if (startY === -1) {
       return Tool.intToBraille(height, posLen)+Tool.intToBraille(height, posLen);
     }
-
     var result = Tool.intToBraille(startY, posLen)+Tool.intToBraille(endY, posLen);
-
     for (var y = startY; y <= endY; y++) {
       var row = grid[y] || '';
       var firstX = -1, lastX = -1;
@@ -408,7 +625,6 @@ export class SpriteTool {
       }
       result += Tool.intToBraille(firstX, posLen);
       result += Tool.intToBraille(lastX, posLen);
-
       var x = firstX;
       while (x <= lastX) {
         var ch = row[x];
@@ -436,7 +652,6 @@ export class SpriteTool {
     // Position byte width is derived from the dimensions (positions store a
     // sentinel equal to width/height, and one braille char holds 0..254).
     var posLen = (width > 254 || height > 254) ? 2 : 1;
-
     // Build the body (palette section + grid blocks) for a given grid-cell
     // byte width. Only the run cells depend on cellBytes; positions use posLen.
     var buildBody = (cellBytes) => {
@@ -457,13 +672,11 @@ export class SpriteTool {
       }
       return body;
     };
-
     // Variant A: encode the grid both ways, keep the shorter. Tie -> 1-byte.
     var body1 = buildBody(1);
     var body2 = buildBody(2);
     var useDouble = body2.length < body1.length;
     var body = useDouble ? body2 : body1;
-
     var result = '';
     result += Tool.intToBraille(0xFE, 1);
     result += Tool.intToBraille(0xFE, 1);
@@ -475,7 +688,6 @@ export class SpriteTool {
     result += Tool.intToBraille(frames, 1);
     result += Tool.intToBraille(directions, 1);
     result += body;
-
     return new RichString(result);
   } // encode_Braille
 
@@ -505,7 +717,6 @@ export class SpriteTool {
       }
       return {palette: palette, codeChars: codeChars};
     }
-
     var version = Tool.brailleToInt(read(1));
     var gridDoubleByte = Tool.brailleToBool(read(1));
     var width = Tool.brailleToInt(read(2));
@@ -516,7 +727,6 @@ export class SpriteTool {
     var posLen = (width > 254 || height > 254) ? 2 : 1;
     var cellBytes = gridDoubleByte ? 2 : 1;
     var topNumCodes = Tool.brailleToObjLen(read(1), 1);
-
     var sharedPalette = false;
     var sharedCodeChars = null;
     if (topNumCodes !== false) {
@@ -524,7 +734,6 @@ export class SpriteTool {
       sharedPalette = pal.palette;
       sharedCodeChars = pal.codeChars;
     }
-
     var result = {
       width: width,
       height: height,
@@ -533,7 +742,6 @@ export class SpriteTool {
       colors: sharedPalette,
       sprite: []
     };
-
     for (var d = 0; d < directions; d++) {
       for (var f = 0; f < frames; f++) {
         var palette, codeChars;
@@ -550,13 +758,10 @@ export class SpriteTool {
         var transparent = SpriteTool.findBrailleTransparent(palette);
         var fillChar = transparent !== null ? transparent : codeChars[0];
         var emptyRow = fillChar.repeat(width);
-
         var grid = new Array(height);
         for (var y = 0; y < height; y++) grid[y] = emptyRow;
-
         var startY = Tool.brailleToInt(read(posLen));
         var endY = Tool.brailleToInt(read(posLen));
-
         if (startY < height) {
           for (var y = startY; y <= endY; y++) {
             var startX = Tool.brailleToInt(read(posLen));
@@ -578,7 +783,6 @@ export class SpriteTool {
             grid[y] = rowChars.join('');
           }
         }
-
         var entry = {grid: grid};
         if (sharedPalette === false) {
           entry.colors = palette;
@@ -588,6 +792,13 @@ export class SpriteTool {
     }
     return result;
   } // decode_Braille
+
+  static scriptedSprite(obj, data) {
+    if (data !== false) {
+      var sprite = this.decode(data);
+      Tool.script(obj, sprite.sprite[0].grid.join(''), sprite);
+    }
+  } // scriptedSprite
 
   static decodeHexStr(str) {
     var sprite = [];
