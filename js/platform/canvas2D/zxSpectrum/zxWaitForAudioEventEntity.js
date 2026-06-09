@@ -20,7 +20,7 @@ export class ZXWaitForAudioEventEntity extends AbstractEntity {
     super.init();
     this.addEntity(new AbstractEntity(this, 2, 2, this.width-4, this.height-4, false, this.penColor));
     this.addEntity(new AbstractEntity(this, 3, 3, this.width-6, this.height-6, false, this.bkColor));
-    var message = 'WE APOLOGIZE, BUT TO START THE AUDIO, YOU MUST PRESS THE ENTER KEY, CLICK THE MOUSE OR TOUCH THE TOUCHSCREEN.  ';
+    var message = 'WE APOLOGIZE, BUT TO START THE AUDIO, YOU MUST PRESS THE ENTER KEY, CLICK THE MOUSE OR TOUCH THE TOUCHSCREEN. \u00A0';
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 1, 1, this.width-2, this.height-2, message, this.penColor, false, {align: 'justify', textWrap: true, margin: 5}));
     this.sendEvent(0, 5000, {id: 'closePressAnyKey'});
   } // init

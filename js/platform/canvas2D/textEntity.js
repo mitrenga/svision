@@ -97,22 +97,37 @@ export class TextEntity  extends AbstractEntity {
     this.drawingCache[0].cleanCache();
   } // cleanCache
   
+  charWidth(char) {
+    return this.fonts.getCharData(char, '1', this.options.scale).width;
+  } // charWidth
+
+  lineWidth(text) {
+    var width = 0;
+    for (var i = 0; i < text.length; i++) {
+      if (i > 0) {
+        width += this.fonts.charsSpacing;
+      }
+      width += this.charWidth(text[i]);
+    }
+    return width;
+  } // lineWidth
+
   wrapLine(text) {
     var wrappedText = '';
     var pos = 0;
     while (pos < text.length) {
-      var lineWidth = 0;
+      var lineW = 0;
       var lastSpacePos = -1;
       var lastPos = pos;
       while (pos < text.length) {
         if (text[pos] == ' ') {
           lastSpacePos = pos;
         }
-        var charData = this.fonts.getCharData(text[pos], '1', this.options.scale);
-        if (lineWidth+charData.width > this.width-this.options.leftMargin-this.options.rightMargin) {
+        var w = this.charWidth(text[pos]);
+        if (lineW+w > this.width-this.options.leftMargin-this.options.rightMargin) {
           break;
         }
-        lineWidth += charData.width+this.fonts.charsSpacing;
+        lineW += w+this.fonts.charsSpacing;
         pos++;
       }
       if (pos < text.length && lastSpacePos >= 0) {
@@ -126,6 +141,52 @@ export class TextEntity  extends AbstractEntity {
     return wrappedText;
   } // wrapLine
   
+  glyphColor(i) {
+    var penColor = this.penColor;
+    if (this.options.animationMode == 'flashPenColor' && this.app.stack.flashState) {
+      penColor = this.options.flashColor;
+    }
+    if (this.options.penColorsMap !== false && (i in this.options.penColorsMap)) {
+      penColor = this.options.penColorsMap[i];
+    }
+    return penColor;
+  } // glyphColor
+
+  glyphMask(i) {
+    if (this.options.animationMode == 'flashReverseColors' && this.app.stack.flashState == true
+        && (this.options.flashMask === false || this.options.flashMask[i] == '#')) {
+      return '0';
+    }
+    return '1';
+  } // glyphMask
+
+  paintGlyph(charData, baseX, penColor) {
+    for (var x = 0; x < charData.data.length; x++) {
+      this.app.layout.paintRect(this.drawingCache[0].ctx, baseX+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+    }
+  } // paintGlyph
+
+  nextLine(formattedText, textPos, partText) {
+    var moveY = (this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale;
+    if (this.options.textWrap && partText == ' ') {
+      moveY = (this.fonts.paragraphSpacing-this.fonts.lineSpacing)*this.options.scale;
+    }
+    var text = '';
+    if (textPos < formattedText.length) {
+      this.cursorY += moveY;
+      text = formattedText.substr(textPos);
+      var nlPos = text.indexOf('\n');
+      if (nlPos >= 0) {
+        text = formattedText.substr(textPos, nlPos);
+        if (text == '') {
+          text = ' ';
+        }
+      }
+      textPos += text.length+1;
+    }
+    return {text: text, pos: textPos};
+  } // nextLine
+
   drawEntity() {
     super.drawEntity();
 
@@ -153,6 +214,7 @@ export class TextEntity  extends AbstractEntity {
         partText = formattedText.substr(0, nlPos); 
       }
       var textPos = partText.length+1;
+      var lineOffset = 0;   // absolute char index of the current line's start within formattedText
 
       switch (this.options.align) {
         case 'left': 
@@ -163,12 +225,7 @@ export class TextEntity  extends AbstractEntity {
 
             var textWidth = 0;
             if (this.options.align == 'center' || this.options.align == 'justify') {
-              for (var ch = 0; ch < partText.length; ch++) {
-                if (ch > 0) {
-                  textWidth += this.fonts.charsSpacing;
-                }
-                textWidth += this.fonts.getCharData(partText[ch], '1', this.options.scale).width;
-              }
+              textWidth = this.lineWidth(partText);
               if (this.options.align == 'center' && textWidth < this.width) {
                 this.cursorX = Math.floor(this.width/2)-Math.floor(textWidth/2)-this.options.leftMargin;
               }
@@ -179,39 +236,16 @@ export class TextEntity  extends AbstractEntity {
             if (this.options.align == 'justify') {
               if (formattedText.length > textPos && formattedText[textPos] != '\n') {
                 filling = this.width-this.options.leftMargin-this.options.rightMargin-textWidth;
-                spaces = partText.split(' ').length+partText.split(' ').length-2;
+                spaces = partText.split(' ').length+partText.split('\u00A0').length-2;
               }
             }
 
             for (var ch = 0; ch < partText.length; ch++) {
-              var penColor = this.penColor;
-
-              switch (this.options.animationMode) {
-                case 'flashPenColor':
-                  if (this.app.stack.flashState) {
-                    penColor = this.options.flashColor;
-                  }
-                  break;
-              }
-
-              if ((this.options.penColorsMap !== false) && (ch in this.options.penColorsMap)) {
-                penColor = this.options.penColorsMap[ch];
-              }
-
-              var bitMask = '1';
-              if (this.options.animationMode == 'flashReverseColors') {
-                if ((this.options.flashMask === false || this.options.flashMask[ch] == '#') && this.app.stack.flashState == true) {
-                  bitMask = '0';
-                }
-              }
-
-              var charData = this.fonts.getCharData(partText[ch], bitMask, this.options.scale);
-              for (var x = 0; x < charData.data.length; x++) {
-                this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+this.options.leftMargin+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
-              }
+              var charData = this.fonts.getCharData(partText[ch], this.glyphMask(lineOffset+ch), this.options.scale);
+              this.paintGlyph(charData, this.cursorX+this.options.leftMargin, this.glyphColor(lineOffset+ch));
               this.cursorX += charData.width+this.fonts.charsSpacing;
 
-              if (filling > 0 && (partText[ch] == ' ' || partText[ch] == ' ')) {
+              if (filling > 0 && (partText[ch] == ' ' || partText[ch] == '\u00A0')) {
                 var useFilling = Math.round(filling/spaces);
                 this.cursorX += useFilling;
                 filling -= useFilling;
@@ -219,81 +253,29 @@ export class TextEntity  extends AbstractEntity {
               }
             }
 
-            var moveY = (this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale;
-            if (this.options.textWrap && partText == ' ') {
-              moveY = (this.fonts.paragraphSpacing-this.fonts.lineSpacing)*this.options.scale;
-            }
-
-            partText = '';
-            if (textPos <  formattedText.length) {
-              this.cursorY += moveY;
-              partText = formattedText.substr(textPos);
-              nlPos = partText.indexOf('\n');
-              if (nlPos >= 0) {
-                partText = formattedText.substr(textPos, nlPos);
-                if (partText == '') {
-                  partText = ' ';
-                }
-              }
-              textPos += partText.length+1;
-            }
+            lineOffset += partText.length+1;
+            var ln = this.nextLine(formattedText, textPos, partText);
+            partText = ln.text;
+            textPos = ln.pos;
           }
           break;
 
         case 'right': 
           while (partText.length > 0) {
             this.cursorX = this.width;
-            for (var ch = partText.length; ch > 0 ; ch--) {
-              var penColor = this.penColor;
-
-              switch (this.options.animationMode) {
-                case 'flashPenColor':
-                  if (this.app.stack.flashState) {
-                    penColor = this.options.flashColor;
-                  }
-                  break;
-              }
-
-              if ((this.options.penColorsMap !== false) && ((ch-1) in this.options.penColorsMap)) {
-                penColor = this.options.penColorsMap[ch-1];
-              }
-              
-              var bitMask = '1';
-              if (this.options.animationMode == 'flashReverseColors') {
-                if ((this.options.flashMask === false || this.options.flashMask[ch] == '#') && this.app.stack.flashState == true) {
-                  bitMask = '0';
-                }
-              }
-
-              var charData = this.fonts.getCharData(partText[ch-1], bitMask, this.options.scale);
+            for (var ch = partText.length-1; ch >= 0; ch--) {
+              var charData = this.fonts.getCharData(partText[ch], this.glyphMask(lineOffset+ch), this.options.scale);
               this.cursorX -= charData.width;
-              if (ch < partText.length) {
+              if (ch < partText.length-1) {
                 this.cursorX -= this.fonts.charsSpacing;
               }
-
-              for (var x = 0; x < charData.data.length; x++) {
-                this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX-this.options.rightMargin+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
-              }
+              this.paintGlyph(charData, this.cursorX-this.options.rightMargin, this.glyphColor(lineOffset+ch));
             }
 
-            var moveY = (this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale;
-            if (this.options.textWrap && partText == ' ') {
-              moveY = (this.fonts.paragraphSpacing-this.fonts.lineSpacing)*this.options.scale;
-            }
-
-            partText = '';
-            if (textPos <  formattedText.length) {
-              this.cursorY += moveY;
-              partText = formattedText.substr(textPos);
-              nlPos = partText.indexOf('\n');
-              if (nlPos >= 0) {
-                partText = formattedText.substr(textPos, nlPos);
-                if (partText == '') {
-                  partText = ' ';
-                }
-              }
-              textPos += partText.length+1;
-            }
+            lineOffset += partText.length+1;
+            var ln = this.nextLine(formattedText, textPos, partText);
+            partText = ln.text;
+            textPos = ln.pos;
           }
           break;
       }

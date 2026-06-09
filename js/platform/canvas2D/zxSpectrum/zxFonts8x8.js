@@ -18,7 +18,7 @@ export class ZXFonts8x8 extends AbstractFonts {
     }
     this.paragraphSpacing = 8;
 
-    this.extraFonts = ' ‗←↓↑➔█▲▼◀▶◢◣◥◤';
+    this.extraFonts = '\u00A0‗←↓↑➔█▲▼◀▶◢◣◥◤';
     this.extraFontsData = '0000000000000000000000000000F8F80010307E7E301000001818187E3C180000183C7E1818180000080C7E7E0C0800FFFFFFFFFFFFFFFF18183C3C7E7EFFFFFFFF7E7E3C3C1818030F3FFFFF3F0F03C0F0FCFFFFFCF0C00103070F1F3F7FFF80C0E0F0F8FCFEFFFF7F3F1F0F070301FFFEFCF8F0E0C080';
 
     this.fontsChars = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_£abcdefghijklmnopqrstuvwxyz{|}~©'+this.extraFonts;
@@ -58,7 +58,7 @@ export class ZXFonts8x8 extends AbstractFonts {
           }
           width--;
         }
-        if (char == ' ' || char == ' ') {
+        if (char == ' ' || char == '\u00A0') {
           doIt = false;
         }
       }
@@ -78,7 +78,7 @@ export class ZXFonts8x8 extends AbstractFonts {
           }
           width--;
         }
-        if ((char == ' ' || char == ' ') && width < 6) {
+        if ((char == ' ' || char == '\u00A0') && width < 6) {
           doIt = false;
         }
       }
