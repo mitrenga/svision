@@ -68,9 +68,9 @@ export class SpriteEntity  extends AbstractEntity {
 
   // a decoded frame is either an array of rows (mono hR2/lP1/lT2),
   // or {grid:[...], colors?:{...}} (colored braille)
-  frameRows(frame) {
+  frameGrid(frame) {
     return (frame && frame.grid) ? frame.grid : frame;
-  } // frameRows
+  } // frameGrid
 
   // palette priority: per-frame colors > this.sharedPalette > false (mono)
   resolvePalette(frame) {
@@ -102,7 +102,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.drawCacheCtx = [];
 
     if (this.frames == 0) {
-      this.spriteData[0] = this.buildFrameData(this.frameRows(data.sprite), this.resolvePalette(data.sprite));
+      this.spriteData[0] = this.buildFrameData(this.frameGrid(data.sprite), this.resolvePalette(data.sprite));
       this.frames = 1;
       this.directions = 1;
       this.app.layout.newDrawingCache(this, 0);
@@ -116,18 +116,18 @@ export class SpriteEntity  extends AbstractEntity {
         if (frame && frame.colors) {
           this.framePalettes[s] = frame.colors;
         }
-        this.spriteData[s] = this.buildFrameData(this.frameRows(frame), this.resolvePalette(frame));
+        this.spriteData[s] = this.buildFrameData(this.frameGrid(frame), this.resolvePalette(frame));
         this.app.layout.newDrawingCache(this, s);
       }
     }
     this.setDimensions();
   } // setGraphicsData
 
-  buildFrameData(frameData, palette) {
+  buildFrameData(grid, palette) {
     var spriteFrame = [];
     var spriteFrameWidth = 0;
     var spriteFrameHeight = 0;
-    frameData.forEach((row, r) => {
+    grid.forEach((row, r) => {
       for (var col = 0; col < row.length; col++) {
         var isPixel = false;
         if (palette == false && row[col] == this.penChar) {
@@ -164,7 +164,7 @@ export class SpriteEntity  extends AbstractEntity {
   } // buildFrameData
 
   // palette: per-frame palette, or false/undefined for mono (penChar) / sharedPalette
-  addFrameData(frameData, palette) {
+  addFrameData(grid, palette) {
     if (this.directions == 0) {
       this.directions = 1;
     }
@@ -172,7 +172,7 @@ export class SpriteEntity  extends AbstractEntity {
     if (palette) {
       this.framePalettes[index] = palette;
     }
-    this.spriteData[index] = this.buildFrameData(frameData, palette || this.sharedPalette);
+    this.spriteData[index] = this.buildFrameData(grid, palette || this.sharedPalette);
     this.app.layout.newDrawingCache(this, index);
     this.frames++;
     this.setDimensions();
@@ -193,42 +193,6 @@ export class SpriteEntity  extends AbstractEntity {
       this.height = this.spriteHeight*this.repeatY;
     }
   } // setDimensions
-
-  cloneSprite(sprite) {
-    this.spriteData[this.frames] = Array(this.spriteData[sprite].length);
-    for (var s = 0; s < this.spriteData[sprite].length; s++) {
-      this.spriteData[this.frames][s] = {...this.spriteData[sprite][s]};
-    }
-    this.app.layout.newDrawingCache(this, this.frames);
-    this.frames++;
-  } // cloneSprite
-
-  rotateSpriteRow(index, row, shift) {
-    this.spriteData[index].forEach((pixel, p) => {
-      if (pixel.y == row) {
-       this.spriteData[index][p].x += shift;
-       if (this.spriteData[index][p].x < 0) {
-        this.spriteData[index][p].x += this.spriteWidth;
-       }
-       if (this.spriteData[index][p].x >= this.spriteWidth) {
-        this.spriteData[index][p].x -= this.spriteWidth;
-       }
-      }
-    });
-  } // rotateSpriteRow
-
-  moveSpriteWithCrop(index, shiftX, shiftY, cropX, cropY) {
-    for (var p = 0; p < this.spriteData[index].length; ) {
-      var pixel = this.spriteData[index][p];
-      pixel.x += shiftX;
-      pixel.y += shiftY;
-      if (pixel.x < 0 || pixel.y < 0 || pixel.x >= cropX || pixel.y >= cropY) {        
-        this.spriteData[index].splice(p, 1);
-      } else {
-        p++;
-      }
-    }
-  } // moveSpriteWithCrop
 
   drawEntity() {
     if (this.spriteData !== null) {

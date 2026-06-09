@@ -597,6 +597,37 @@ export class SpriteTool {
     return {penChar: '1', sprite: sprite};
   } // decodeHexStr
 
+  // returns a copy of the grid with one row circularly shifted by `shift` (positive = content moves right, wraps around the row width)
+  static rotateRow(grid, rowIndex, shift) {
+    var result = grid.slice();
+    var row = result[rowIndex];
+    var w = row.length;
+    if (w > 0) {
+      var s = ((shift % w) + w) % w;
+      result[rowIndex] = row.slice(w - s) + row.slice(0, w - s);
+    }
+    return result;
+  } // rotateRow
+
+  // returns a new w×h grid with the source shifted by (dx, dy); cells outside the source become ' ' (off)
+  static shiftCrop(grid, dx, dy, w, h) {
+    var result = [];
+    for (var y = 0; y < h; y++) {
+      var srcY = y - dy;
+      var line = '';
+      for (var x = 0; x < w; x++) {
+        var srcX = x - dx;
+        var ch = ' ';
+        if (srcY >= 0 && srcY < grid.length && srcX >= 0 && srcX < grid[srcY].length) {
+          ch = grid[srcY][srcX];
+        }
+        line += ch;
+      }
+      result.push(line);
+    }
+    return result;
+  } // shiftCrop
+
 } // SpriteTool
 
 export default SpriteTool;
