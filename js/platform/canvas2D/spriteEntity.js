@@ -112,8 +112,7 @@ export class SpriteEntity  extends AbstractEntity {
       }
       for (var s = 0; s < data.sprite.length; s++) {
         var frame = data.sprite[s];
-        // sdílená paleta se čte živě z this.colorsMap (kvůli setColorsMap/cloneSprite);
-        // framePalettes drží jen per-frame paletu (braille s vlastní paletou pro každý frame)
+        // shared palette is read live from this.colorsMap; framePalettes only holds the per-frame palette
         if (frame && frame.colors) {
           this.framePalettes[s] = frame.colors;
         }
