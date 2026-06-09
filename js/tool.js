@@ -31,6 +31,26 @@ export class Tool {
     return intNum.toString(36).padStart(len, '0').toUpperCase();
   } // intToLatin
 
+  static base90Alphabet = '!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~';
+
+  static base90ToInt(base90Num) {
+    var res = 0;
+    for (var i = 0; i < base90Num.length; i++) {
+      res = res*90+this.base90Alphabet.indexOf(base90Num[i]);
+    }
+    return res;
+  } // base90ToInt
+
+  static intToBase90(intNum, len) {
+    var res = '';
+    while (len > 0) {
+      res = this.base90Alphabet[intNum%90]+res;
+      intNum = Math.floor(intNum/90);
+      len--;
+    }
+    return res;
+  } // intToBase90
+
   static brailleToInt(brailleNum) {
     var res = 0;
     for (var i = 0; i < brailleNum.length; i++) {
