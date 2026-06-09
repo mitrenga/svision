@@ -66,13 +66,13 @@ export class SpriteEntity  extends AbstractEntity {
     this.cleanCache();
   } // setColorsMap
 
-  // frame z dekodéru je buď pole řádků (mono hR2/lP1/lT2),
-  // nebo {grid:[...], colors?:{...}} (barevný braille)
+  // a decoded frame is either an array of rows (mono hR2/lP1/lT2),
+  // or {grid:[...], colors?:{...}} (colored braille)
   frameRows(frame) {
     return (frame && frame.grid) ? frame.grid : frame;
   } // frameRows
 
-  // priorita palety: per-frame colors > sdílená this.colorsMap > false (mono)
+  // palette priority: per-frame colors > shared this.colorsMap > false (mono)
   resolvePalette(frame) {
     return (frame && frame.colors) ? frame.colors : this.colorsMap;
   } // resolvePalette
@@ -102,7 +102,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.drawCacheCtx = [];
 
     if (this.frames == 0) {
-      this.spriteData[0] = this.setFrameData(this.frameRows(data.sprite), this.resolvePalette(data.sprite));
+      this.spriteData[0] = this.buildFrameData(this.frameRows(data.sprite), this.resolvePalette(data.sprite));
       this.frames = 1;
       this.directions = 1;
       this.app.layout.newDrawingCache(this, 0);
@@ -116,14 +116,14 @@ export class SpriteEntity  extends AbstractEntity {
         if (frame && frame.colors) {
           this.framePalettes[s] = frame.colors;
         }
-        this.spriteData[s] = this.setFrameData(this.frameRows(frame), this.resolvePalette(frame));
+        this.spriteData[s] = this.buildFrameData(this.frameRows(frame), this.resolvePalette(frame));
         this.app.layout.newDrawingCache(this, s);
       }
     }
     this.setDimensions();
   } // setGraphicsData
 
-  setFrameData(frameData, palette) {
+  buildFrameData(frameData, palette) {
     var spriteFrame = [];
     var spriteFrameWidth = 0;
     var spriteFrameHeight = 0;
@@ -161,22 +161,23 @@ export class SpriteEntity  extends AbstractEntity {
       this.spriteHeight = spriteFrameHeight;
     }
     return spriteFrame;
-  } // setFrameData
+  } // buildFrameData
 
-  addGraphicsDataFromHexStr(str) {
-    var sprite = [];
-    for (var x = 0; x < 8; x++) {
-      sprite.push(this.app.hexToBin(str.substring(x*2, x*2+2)));
-    }
+  // palette: per-frame palette, or false/undefined for mono (penChar) / shared colorsMap
+  addFrameData(frameData, palette) {
     if (this.directions == 0) {
       this.directions = 1;
     }
-    this.penChar = '1';
-    this.spriteData[this.frames] = this.setFrameData(sprite, false);
-    this.app.layout.newDrawingCache(this, this.frames);
+    var index = this.frames;
+    if (palette) {
+      this.framePalettes[index] = palette;
+    }
+    this.spriteData[index] = this.buildFrameData(frameData, palette || this.colorsMap);
+    this.app.layout.newDrawingCache(this, index);
     this.frames++;
     this.setDimensions();
-  } // addGraphicsDataFromHexStr
+    return this.spriteData[index];
+  } // addFrameData
 
   setDimensions() {
     if (this.fixWidth > 0) {
@@ -244,11 +245,11 @@ export class SpriteEntity  extends AbstractEntity {
           var color = this.penColor;
           if ('c' in pixel) {
             if (color == false) {
-              // per-frame paleta (braille) má přednost, jinak živě sdílená this.colorsMap
+              // per-frame palette (braille) takes precedence, otherwise the live shared this.colorsMap
               var palette = this.framePalettes[index] || this.colorsMap;
               if (palette) {
                 color = palette[pixel.c];
-                if (color && typeof color === 'object') {   // barva po framech: {0:'#aaa', 1:'#bbb', ...}
+                if (color && typeof color === 'object') {   // per-frame color: {0:'#aaa', 1:'#bbb', ...}
                   color = color[index];
                 }
               }
