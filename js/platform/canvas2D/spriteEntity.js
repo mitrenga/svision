@@ -230,12 +230,6 @@ export class SpriteEntity  extends AbstractEntity {
     }
   } // moveSpriteWithCrop
 
-  switchDirection() {
-    if (this.directions == 2) {
-      this.direction = 1-this.direction;
-    }
-  } // switchDirection
-
   drawEntity() {
     if (this.spriteData !== null) {
       var d = this.direction;
