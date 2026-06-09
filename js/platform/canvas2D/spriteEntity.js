@@ -230,14 +230,6 @@ export class SpriteEntity  extends AbstractEntity {
     }
   } // moveSpriteWithCrop
 
-  incFrame() {
-    this.frame = this.app.rotateInc(this.frame, 0, this.frames-1);
-  } // incFrame
-
-  decFrame() {
-    this.frame = this.app.rotateDec(this.frame, 0, this.frames-1);
-  } // decFrame
-
   switchDirection() {
     if (this.directions == 2) {
       this.direction = 1-this.direction;
