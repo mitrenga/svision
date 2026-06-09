@@ -23,7 +23,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.repeatY = 1;
     this.fixWidth = 0;
     this.fixHeight = 0;
-    this.colorsMap = false;
+    this.sharedPalette = false;
     this.framePalettes = [];
   } // constructor
 
@@ -56,15 +56,15 @@ export class SpriteEntity  extends AbstractEntity {
 
   setPenColor(color) {
     this.penColor = color;
-    this.colorsMap = false;
+    this.sharedPalette = false;
     this.cleanCache();
   }
 
-  setColorsMap(colorsMap) {
-    this.colorsMap = colorsMap;
+  setSharedPalette(palette) {
+    this.sharedPalette = palette;
     this.penColor = false;
     this.cleanCache();
-  } // setColorsMap
+  } // setSharedPalette
 
   // a decoded frame is either an array of rows (mono hR2/lP1/lT2),
   // or {grid:[...], colors?:{...}} (colored braille)
@@ -72,9 +72,9 @@ export class SpriteEntity  extends AbstractEntity {
     return (frame && frame.grid) ? frame.grid : frame;
   } // frameRows
 
-  // palette priority: per-frame colors > shared this.colorsMap > false (mono)
+  // palette priority: per-frame colors > this.sharedPalette > false (mono)
   resolvePalette(frame) {
-    return (frame && frame.colors) ? frame.colors : this.colorsMap;
+    return (frame && frame.colors) ? frame.colors : this.sharedPalette;
   } // resolvePalette
 
   setGraphicsData(data) {
@@ -88,8 +88,8 @@ export class SpriteEntity  extends AbstractEntity {
       this.directions = data.directions;
     }
     if ('colors' in data) {
-      this.colorsMap = data.colors;
-      if (this.colorsMap !== false) {
+      this.sharedPalette = data.colors;
+      if (this.sharedPalette !== false) {
         this.penColor = false;
       }
     }
@@ -112,7 +112,7 @@ export class SpriteEntity  extends AbstractEntity {
       }
       for (var s = 0; s < data.sprite.length; s++) {
         var frame = data.sprite[s];
-        // shared palette is read live from this.colorsMap; framePalettes only holds the per-frame palette
+        // the sprite-wide palette is read live from this.sharedPalette; framePalettes only holds the per-frame palette
         if (frame && frame.colors) {
           this.framePalettes[s] = frame.colors;
         }
@@ -163,7 +163,7 @@ export class SpriteEntity  extends AbstractEntity {
     return spriteFrame;
   } // buildFrameData
 
-  // palette: per-frame palette, or false/undefined for mono (penChar) / shared colorsMap
+  // palette: per-frame palette, or false/undefined for mono (penChar) / sharedPalette
   addFrameData(frameData, palette) {
     if (this.directions == 0) {
       this.directions = 1;
@@ -172,7 +172,7 @@ export class SpriteEntity  extends AbstractEntity {
     if (palette) {
       this.framePalettes[index] = palette;
     }
-    this.spriteData[index] = this.buildFrameData(frameData, palette || this.colorsMap);
+    this.spriteData[index] = this.buildFrameData(frameData, palette || this.sharedPalette);
     this.app.layout.newDrawingCache(this, index);
     this.frames++;
     this.setDimensions();
@@ -245,8 +245,8 @@ export class SpriteEntity  extends AbstractEntity {
           var color = this.penColor;
           if ('c' in pixel) {
             if (color == false) {
-              // per-frame palette (braille) takes precedence, otherwise the live shared this.colorsMap
-              var palette = this.framePalettes[index] || this.colorsMap;
+              // per-frame palette (braille) takes precedence, otherwise the live this.sharedPalette
+              var palette = this.framePalettes[index] || this.sharedPalette;
               if (palette) {
                 color = palette[pixel.c];
                 if (color && typeof color === 'object') {   // per-frame color: {0:'#aaa', 1:'#bbb', ...}

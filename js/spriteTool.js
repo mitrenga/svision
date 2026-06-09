@@ -2,7 +2,7 @@
 const { Tool } = await import('./tool.js?ver='+window.srcVersion);
 const { RichString } = await import('./richString.js?ver='+window.srcVersion);
 /*/
-import Tool from './Tool.js';
+import Tool from './tool.js';
 import RichString from './richString.js';
 /**/
 // begin code

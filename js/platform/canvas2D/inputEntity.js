@@ -25,15 +25,15 @@ export class InputEntity extends TextEntity {
   } // init
 
   setInputLineColors() {
-    var colorsMap = {};
+    var penColorsMap = {};
     for (var ch = 0; ch < this.text.length; ch++) {
       if (this.app.stack.flashState && ch == this.cursor) {
-        colorsMap[ch] = this.bkColor;
+        penColorsMap[ch] = this.bkColor;
       } else {
-        colorsMap[ch] = this.penColor;
+        penColorsMap[ch] = this.penColor;
       }
     }
-    this.options.penColorsMap = colorsMap;
+    this.options.penColorsMap = penColorsMap;
     this.drawingCache[0].cleanCache();
   } // setInputLineColors
 

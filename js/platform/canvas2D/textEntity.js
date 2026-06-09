@@ -324,10 +324,6 @@ export class TextEntity  extends AbstractEntity {
     }
   } // drawEntity
 
-  cleanCache() {
-    this.drawingCache[0].cleanCache();
-  } // cleanCache
-
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
