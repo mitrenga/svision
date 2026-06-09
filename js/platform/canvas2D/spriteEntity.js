@@ -102,7 +102,7 @@ export class SpriteEntity  extends AbstractEntity {
     this.drawCacheCtx = [];
 
     if (this.frames == 0) {
-      this.spriteData[0] = this.setOneFrameData(this.frameRows(data.sprite), this.resolvePalette(data.sprite));
+      this.spriteData[0] = this.setFrameData(this.frameRows(data.sprite), this.resolvePalette(data.sprite));
       this.frames = 1;
       this.directions = 1;
       this.app.layout.newDrawingCache(this, 0);
@@ -116,14 +116,14 @@ export class SpriteEntity  extends AbstractEntity {
         if (frame && frame.colors) {
           this.framePalettes[s] = frame.colors;
         }
-        this.spriteData[s] = this.setOneFrameData(this.frameRows(frame), this.resolvePalette(frame));
+        this.spriteData[s] = this.setFrameData(this.frameRows(frame), this.resolvePalette(frame));
         this.app.layout.newDrawingCache(this, s);
       }
     }
     this.setDimensions();
   } // setGraphicsData
 
-  setOneFrameData(frameData, palette) {
+  setFrameData(frameData, palette) {
     var spriteFrame = [];
     var spriteFrameWidth = 0;
     var spriteFrameHeight = 0;
@@ -161,7 +161,7 @@ export class SpriteEntity  extends AbstractEntity {
       this.spriteHeight = spriteFrameHeight;
     }
     return spriteFrame;
-  } // setOneFrameData
+  } // setFrameData
 
   addGraphicsDataFromHexStr(str) {
     var sprite = [];
@@ -172,7 +172,7 @@ export class SpriteEntity  extends AbstractEntity {
       this.directions = 1;
     }
     this.penChar = '1';
-    this.spriteData[this.frames] = this.setOneFrameData(sprite, false);
+    this.spriteData[this.frames] = this.setFrameData(sprite, false);
     this.app.layout.newDrawingCache(this, this.frames);
     this.frames++;
     this.setDimensions();
