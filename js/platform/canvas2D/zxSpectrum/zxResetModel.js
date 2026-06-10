@@ -2,10 +2,12 @@
 const { AbstractModel } = await import('../../../abstractModel.js?ver='+window.srcVersion);
 const { ZXResetEntity } = await import('./zxResetEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
+const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 /*/
 import AbstractModel from '../../../abstractModel.js';
 import ZXResetEntity from './zxResetEntity.js';
 import TextEntity from '../textEntity.js';
+import ZXColor from './zxColor.js';
 /**/
 // begin code
 
@@ -26,7 +28,7 @@ export class ZXResetModel extends AbstractModel {
     this.resetEntity = new ZXResetEntity(this.desktopEntity, 0, 0, 32*8, 24*8);
     this.resetEntity.hide = true;
     this.desktopEntity.addEntity(this.resetEntity);
-    this.inputLineEntity = new TextEntity(this.desktopEntity, this.app.fonts.zxFonts8x8, 0, 23*8, 32*8, 8, this.copyright, this.app.platform.colorByName('black'), false, {align: 'center'});
+    this.inputLineEntity = new TextEntity(this.desktopEntity, this.app.fonts.zxFonts8x8, 0, 23*8, 32*8, 8, this.copyright, ZXColor.black, false, {align: 'center'});
     this.inputLineEntity.hide = true;
     this.desktopEntity.addEntity(this.inputLineEntity);
     this.sendEvent(500, {id: 'showReset'});

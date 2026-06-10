@@ -12,14 +12,6 @@ export class AbstractLayout {
     this.id = 'AbstractLayout';
   } // constructor
   
-  colorByName(colorName) {
-    return false;
-  } // colorByName
-
-  color(color) {
-    return false;
-  } // color
-
   resizeModel(model) {
   } // resizeModel
 

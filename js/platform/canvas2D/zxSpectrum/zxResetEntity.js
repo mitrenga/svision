@@ -1,7 +1,9 @@
 /**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
+const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
+import ZXColor from './zxColor.js';
 /**/
 // begin code
 
@@ -18,8 +20,8 @@ export class ZXResetEntity extends AbstractEntity {
   } // constructor
 
   drawEntity() {
-    this.app.layout.paint(this, 0, 0, this.width, this.height, this.app.platform.colorByName('black'));
-    var penColor = this.app.platform.colorByName('red');
+    this.app.layout.paint(this, 0, 0, this.width, this.height, ZXColor.black);
+    var penColor = ZXColor.red;
     if (this.timeTrace < this.resetTime) {
       var phase = Math.floor(this.timeTrace/this.resetTime*6);
       var redLine = [];

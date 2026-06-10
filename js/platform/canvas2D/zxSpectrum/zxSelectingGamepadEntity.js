@@ -1,9 +1,11 @@
 /**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
+const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
+import ZXColor from './zxColor.js';
 /**/
 // begin code
 
@@ -16,23 +18,23 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     this.selectionItem = 0;
     this.selectionGamepad = selectionGamepad;
     this.menuSelectionEntity = null;
-    this.penMenuItemColor = this.app.platform.colorByName('black');
-    this.penSelectionMenuItemColor = this.app.platform.colorByName('brightWhite');
+    this.penMenuItemColor = ZXColor.black;
+    this.penSelectionMenuItemColor = ZXColor.brightWhite;
     this.menuEntities = [];
     this.menuItems = [];
     this.hoverColor = '#b1ab79ff';
     this.clickColor = '#939393ff';
-    this.hoverSelectionColor = this.app.platform.colorByName('brightMagenta');
+    this.hoverSelectionColor = ZXColor.brightMagenta;
     this.clickSelectionColor = '#7a7a7aff';
   } // constructor
 
   init() {
     super.init();
 
-    this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, this.app.platform.colorByName('black')));
-    this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, this.app.platform.colorByName('white')));
+    this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
+    this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, ZXColor.white));
 
-    this.menuSelectionEntity = new AbstractEntity(this, 2, 2+this.selectionItem*8, this.width-4, 9, false, this.app.platform.colorByName('magenta'));
+    this.menuSelectionEntity = new AbstractEntity(this, 2, 2+this.selectionItem*8, this.width-4, 9, false, ZXColor.magenta);
     this.addEntity(this.menuSelectionEntity);
 
     for (var y = 0; y < 8; y++) {
