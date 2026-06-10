@@ -7,6 +7,7 @@ const { SpriteTool } = await import('../../../spriteTool.js?ver='+window.srcVers
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { ZXRemapKeysEntity } = await import('./zxRemapKeysEntity.js?ver='+window.srcVersion);
 const { ZXSelectingGamepadEntity } = await import('./zxSelectingGamepadEntity.js?ver='+window.srcVersion);
+const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
@@ -16,6 +17,7 @@ import SpriteTool from '../../../spriteTool.js';
 import ButtonEntity from '../buttonEntity.js';
 import ZXRemapKeysEntity from './zxRemapKeysEntity.js';
 import ZXSelectingGamepadEntity from './zxSelectingGamepadEntity.js';
+import Tool from '../../../tool.js';
 /**/
 // begin code
 
@@ -166,7 +168,7 @@ export class ZXControlsEntity extends AbstractEntity {
       } else {
         key = this.prettyGamepadKey(this.options[device].keys[k].action);
       }
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, y+12*k, 32, 9, this.app.prettyKey(key), this.app.platform.colorByName('brightBlue'), false, {margin: 2, align: 'center', group: group, member: device+'.'+this.options[device].keys[k].action, hide: hide}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, y+12*k, 32, 9, Tool.prettyKey(key), this.app.platform.colorByName('brightBlue'), false, {margin: 2, align: 'center', group: group, member: device+'.'+this.options[device].keys[k].action, hide: hide}));
     }
   } // addOptionsEntities
 
@@ -385,16 +387,16 @@ export class ZXControlsEntity extends AbstractEntity {
       case 'mouseEnable':
         this.app.controls.mouse = this.app.getControls('mouse', false);
         this.app.controls.mouse.enable = true;
-        this.app.writeCookie('mouse', JSON.stringify(this.app.controls.mouse));
+        Tool.writeCookie('mouse', JSON.stringify(this.app.controls.mouse));
         this.options.mouse.keys.forEach((key) => {
-          this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: this.app.prettyKey(this.app.controls.mouse[key.action])});
+          this.sendEvent(0, 0, {id: 'updateEntity', member: 'mouse.'+key.action, text: Tool.prettyKey(this.app.controls.mouse[key.action])});
         });
         this.changeGroup(this.selectionDevice);
         return true;
 
       case 'mouseDisable':
         this.app.controls.mouse.enable = false;
-        this.app.writeCookie('mouse', JSON.stringify({enable: false}));
+        Tool.writeCookie('mouse', JSON.stringify({enable: false}));
         this.changeGroup(this.selectionDevice);
         return true;
 
@@ -425,9 +427,9 @@ export class ZXControlsEntity extends AbstractEntity {
       
       case 'gamepadIgnore':
         delete this.app.controls.gamepads.devices[this.selectionGamepad];
-        this.app.deleteCookie(this.selectionGamepad);
+        Tool.deleteCookie(this.selectionGamepad);
         var keys = Object.keys(this.app.controls.gamepads.devices);
-        this.app.writeCookie('gamepads', JSON.stringify(keys));
+        Tool.writeCookie('gamepads', JSON.stringify(keys));
         this.gamepadActionsUpdate();
         this.changeGroup(this.selectionDevice);
         return true;
@@ -439,7 +441,7 @@ export class ZXControlsEntity extends AbstractEntity {
           ndx = 0;
         }
         this.app.controls.touchscreen.type = keys[ndx];
-        this.app.writeCookie('touchscreen', JSON.stringify({type: keys[ndx]}));
+        Tool.writeCookie('touchscreen', JSON.stringify({type: keys[ndx]}));
         this.changeGroup(this.selectionDevice);
         return true;
     }

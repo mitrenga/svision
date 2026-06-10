@@ -2,10 +2,12 @@
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
+const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import ButtonEntity from '../buttonEntity.js';
 import TextEntity from '../textEntity.js';
+import Tool from '../../../tool.js';
 /**/
 // begin code
 
@@ -85,7 +87,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         }
         if ((newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) || newKey == 'NoKey') {
           this.newKeys.push({action: this.options.keys[this.position].action, key: newKey});
-          this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: this.app.prettyKey(newKey)});
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: this.app.platform.colorByName('brightBlue'), bkColor: false, text: Tool.prettyKey(newKey)});
           this.position++;
           if (this.position == this.options.keys.length) {
             this.saveKeys();
@@ -108,17 +110,17 @@ export class ZXRemapKeysEntity extends AbstractEntity {
       case 'keyboard':
       case 'mouse':
         this.newKeys.forEach((newKey) => {
-          this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
+          this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: Tool.prettyKey(newKey.key)});
           this.app.controls[this.options.device][newKey.action] = newKey.key;
         });
-        this.app.writeCookie(this.options.device, JSON.stringify(this.app.controls[this.options.device]));
+        Tool.writeCookie(this.options.device, JSON.stringify(this.app.controls[this.options.device]));
         break;
 
       case 'gamepads':
         this.app.controls.gamepads.devices[this.app.inputEventsManager.gamepadsConfig] = {buttons: {}, axes: {}};
         var device = this.app.controls.gamepads.devices[this.app.inputEventsManager.gamepadsConfig];
         this.newKeys.forEach((newKey, k) => {
-          //this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: this.app.prettyKey(newKey.key)});
+          //this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: Tool.prettyKey(newKey.key)});
           if (newKey.key[0] == 'B') {
             device.buttons[newKey.key.substring(1)] = {action: newKey.action, event: this.options.keys[k].eventKey};
           }
@@ -130,9 +132,9 @@ export class ZXRemapKeysEntity extends AbstractEntity {
           }
         });
         var keys = Object.keys(this.app.controls.gamepads.devices);
-        this.app.writeCookie('gamepads', JSON.stringify(keys));
+        Tool.writeCookie('gamepads', JSON.stringify(keys));
         keys.forEach((id) => {
-          this.app.writeCookie(id, JSON.stringify(this.app.controls.gamepads.devices[id]));
+          Tool.writeCookie(id, JSON.stringify(this.app.controls.gamepads.devices[id]));
         });
         this.sendEvent(-1, 0, {id: 'refreshGamepadActions'});
         break;

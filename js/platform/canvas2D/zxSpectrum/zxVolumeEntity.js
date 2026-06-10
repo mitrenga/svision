@@ -5,6 +5,7 @@ const { SpriteEntity } = await import('../spriteEntity.js?ver='+window.srcVersio
 const { SpriteTool } = await import('../../../spriteTool.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { ZXWaitForAudioEventEntity } = await import('./zxWaitForAudioEventEntity.js?ver='+window.srcVersion);
+const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 /*/
 import AbstractEntity from '../../../abstractEntity.js';
 import TextEntity from '../textEntity.js';
@@ -12,6 +13,7 @@ import SpriteEntity from '../spriteEntity.js';
 import SpriteTool from '../../../spriteTool.js';
 import ButtonEntity from '../buttonEntity.js';
 import ZXWaitForAudioEventEntity from './zxWaitForAudioEventEntity.js';
+import Tool from '../../../tool.js';
 /**/
 // begin code
 
@@ -67,7 +69,7 @@ export class ZXVolumeEntity extends AbstractEntity {
 
   changeVolume(volume) {
     this.app.audioManager.volume[this.channel] = Math.min(10, Math.max(0, Math.round(volume)));
-    this.app.writeCookie(this.cookie, this.app.audioManager.volume[this.channel]);
+    Tool.writeCookie(this.cookie, this.app.audioManager.volume[this.channel]);
     this.cursorEntity.x = 8+this.app.audioManager.volume[this.channel]*18;
   } // changeVolume
 

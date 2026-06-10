@@ -1,7 +1,9 @@
 /**/
 const { AbstractFonts } = await import('../../../abstractFonts.js?ver='+window.srcVersion);
+const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 /*/
 import AbstractFonts from '../../../abstractFonts.js';
+import Tool from '../../../tool.js';
 /**/
 // begin code
 
@@ -37,7 +39,7 @@ export class ZXFonts8x8 extends AbstractFonts {
       letter = this.fontsChars.indexOf('?');
     }
     for (var y = 0; y < 8; y++) {
-      binData.push(this.app.hexToBin(this.fontsData.substring(letter*16+y*2, letter*16+y*2+2)));
+      binData.push(Tool.hexToBin(this.fontsData.substring(letter*16+y*2, letter*16+y*2+2)));
     }
 
     // convert for proportional font
