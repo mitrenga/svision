@@ -5,7 +5,7 @@ require_once 'abstractPage.php';
 class AutoConfigPage extends AbstractPage {
   
   public function createPage() {
-    $srcVersion = md5(time());
+    $srcVersion = $this->srcVersion();
 
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
