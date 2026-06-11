@@ -1,0 +1,846 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * svtool — command line utility for manual operations on an svision app.
+ *
+ * It is meant to be run from the application root directory (the same place
+ * the PHP pages run from), so that the relative paths below resolve correctly:
+ *   - app/version.js               the application version source
+ *   - js/bundle.$version.min.js    the generated production bundle
+ */
+
+const APP_DIR      = 'app';
+const JS_DIR       = 'js';
+const VERSION_FILE = 'app/version.js';
+const CONFIG_FILE  = 'config/config.php';
+const COMPILE_FILE = 'config/compile.json';
+const INFODB_FILE  = 'config/infoDB.sql';
+const RECENT_LIMIT = 10;   // default number of recent DB records shown by `info`
+
+main($argv);
+
+function main($argv) {
+  $command = $argv[1] ?? 'help';
+
+  switch ($command) {
+    case 'help':    return cmdHelp();
+    case 'version': return cmdVersion();
+    case 'info':    return cmdInfo($argv[2] ?? null);
+    case 'build':   return cmdBuild($argv[2] ?? null);
+    case 'verify':  return cmdVerify();
+    case 'clean':   return cmdClean();
+    default:
+      fwrite(STDERR, "Unknown command: $command\n\n");
+      cmdHelp();
+      exit(1);
+  }
+} // main
+
+function cmdHelp() {
+  echo <<<HELP
+svtool — manual operations utility
+
+Usage:
+  svtool <command>
+
+Commands:
+  help      Show this help.
+  version   Show the current application version (from app/version.js).
+  info [count]
+            Show the state of the js/ directory (bundle and import-from files)
+            and, if config/infoDB.sql exists, the records returned by that
+            query (its ':limit' placeholder is set to <count>, default 10).
+  build [target]
+            Build a deploy variant from the config/compile.json file list.
+            target is 'bundle' (minified js/bundle.<version>.min.js) or
+            'import-from' (source mirrors copied into js/ with the header
+            marker rewritten from /**/ to /*/). In development mode the target
+            is required; in production it defaults to 'bundle'.
+  verify    Check the js/ directory: the bundle exists and matches the current
+            sources, the import-from files are present and valid, no unexpected
+            files are present, and the served JavaScript stays within ES2018
+            (via es-check, if installed; otherwise a heuristic scan).
+  clean     Remove every generated file from the js/ directory.
+
+HELP;
+} // cmdHelp
+
+function cmdVersion() {
+  $version = readVersion();
+  echo "Application version: $version\n";
+} // cmdVersion
+
+function cmdInfo($limitArg = null) {
+  $limit = RECENT_LIMIT;
+  if ($limitArg !== null) {
+    if (!ctype_digit($limitArg) || (int) $limitArg < 1) {
+      fwrite(STDERR, "info: count must be a positive integer.\n");
+      exit(1);
+    }
+    $limit = (int) $limitArg;
+  }
+
+  $version = readVersion();
+  echo "Application version: $version\n";
+
+  if (!is_dir(JS_DIR)) {
+    echo "js/ directory: missing\n";
+  } else {
+    $list = readCompileList();
+
+    // 1) The bundle deploy: the bundle file plus the standalone files (worker,
+    //    audio worklet, ...) — all equally needed for the app to run.
+    echo "Bundle files:\n";
+    foreach (bundleDeployFiles($version, $list) as $file) {
+      echo "  $file: " . (is_file($file) ? 'present' : 'missing') . "\n";
+    }
+
+    // 2) import-from variant files (source mirrors with the '/*/' header marker).
+    //    Note: the standalone files above are also '/*/' mirrors, so they count here too.
+    $importFrom = countImportFromFiles(JS_DIR);
+    if ($importFrom > 0) {
+      echo "Import-from files: present ($importFrom file(s))\n";
+    } else {
+      echo "Import-from files: none\n";
+    }
+  }
+
+  // 3) The most recent database records, as defined by config/infoDB.sql.
+  infoDatabase($limit);
+} // cmdInfo
+
+/**
+ * Run the project's info query (config/infoDB.sql) and print the result.
+ * The query defines its own table, columns and order; a ':limit' placeholder
+ * is substituted with the requested record count. If config/infoDB.sql does
+ * not exist the database section is skipped entirely. Connection details come
+ * from config/config.php (same as the db/*.php pages); any database problem is
+ * reported as a note rather than aborting the command.
+ */
+function infoDatabase($limit) {
+  if (!is_file(INFODB_FILE)) {
+    return;                          // no info query defined for this project
+  }
+  if (!class_exists('mysqli')) {
+    echo "\nDatabase: the mysqli PHP extension is not available.\n";
+    return;
+  }
+
+  $cfg = readConfig();
+  if (empty($cfg['dbName'])) {
+    echo "\nDatabase: not configured in " . CONFIG_FILE . ".\n";
+    return;
+  }
+
+  $query = str_replace(':limit', (string) $limit, trim(file_get_contents(INFODB_FILE)));
+
+  mysqli_report(MYSQLI_REPORT_OFF);
+  $db = @new mysqli($cfg['dbHostname'], $cfg['dbUser'], $cfg['dbPassword'], $cfg['dbName']);
+  if ($db->connect_errno) {
+    echo "\nDatabase ({$cfg['dbName']}): unreachable — {$db->connect_error}\n";
+    return;
+  }
+  $res = $db->query($query);
+  if (!$res) {
+    echo "\nDatabase ({$cfg['dbName']}): query failed — {$db->error}\n";
+    $db->close();
+    return;
+  }
+
+  $cols = array_map(fn($f) => $f->name, $res->fetch_fields());
+  $rows = [];
+  while ($r = $res->fetch_assoc()) {
+    $rows[] = $r;
+  }
+  $db->close();
+
+  // The query is DESC (it selects the most recent rows); reverse for display
+  // so the rows read oldest-to-newest, with the newest at the bottom.
+  $rows = array_reverse($rows);
+
+  echo "\nDatabase ({$cfg['dbName']}): last " . count($rows) . " record(s)\n";
+  printTable($cols, $rows);
+} // infoDatabase
+
+/**
+ * Print rows as an aligned text table. Column widths fit their content;
+ * columns whose every value is numeric are right-aligned.
+ */
+function printTable($cols, $rows) {
+  if (!$cols) {
+    return;
+  }
+  $width = [];
+  $numeric = [];
+  foreach ($cols as $c) {
+    $width[$c] = mb_strlen($c);
+    $numeric[$c] = (bool) $rows;       // a column with no rows is left-aligned
+  }
+  foreach ($rows as $r) {
+    foreach ($cols as $c) {
+      $v = (string) ($r[$c] ?? '');
+      $width[$c] = max($width[$c], mb_strlen($v));
+      if ($r[$c] !== null && !is_numeric($r[$c])) {
+        $numeric[$c] = false;
+      }
+    }
+  }
+
+  $line = function ($cells) use ($cols, $width, $numeric) {
+    $out = [];
+    foreach ($cols as $c) {
+      $out[] = mbPad((string) $cells[$c], $width[$c], $numeric[$c]);
+    }
+    echo "  " . implode("  ", $out) . "\n";
+  };
+
+  $line(array_combine($cols, $cols));
+  $line(array_combine($cols, array_map(fn($c) => str_repeat('-', $width[$c]), $cols)));
+  foreach ($rows as $r) {
+    $line($r);
+  }
+} // printTable
+
+/**
+ * Pad a (possibly multibyte) string to a column width; right-aligned when
+ * the column is numeric, left-aligned otherwise.
+ */
+function mbPad($value, $width, $numeric) {
+  $gap = str_repeat(' ', max(0, $width - mb_strlen($value)));
+  return $numeric ? $gap . $value : $value . $gap;
+} // mbPad
+
+function cmdBuild($target) {
+  // In development mode the target must be given explicitly; in production a
+  // missing target defaults to the minified bundle.
+  if ($target === null) {
+    if (readDevMode()) {
+      fwrite(STDERR, "build: development mode requires a target: 'bundle' or 'import-from'.\n");
+      exit(1);
+    }
+    $target = 'bundle';
+  }
+
+  switch ($target) {
+    case 'bundle':      buildBundle(); break;
+    case 'import-from': buildImportFrom(); break;
+    default:
+      fwrite(STDERR, "build: unknown target '$target' (use 'bundle' or 'import-from').\n");
+      exit(1);
+  }
+
+  // Non-fatal compatibility warning; `verify` turns the same check into a gate.
+  echo "\n";
+  reportES2018(es2018Scan(es2018Targets(readCompileList())));
+} // cmdBuild
+
+/**
+ * Build the minified production bundle js/bundle.<version>.min.js by
+ * concatenating the compile.json sources (dependency-first) and piping the
+ * result through terser.
+ */
+function buildBundle() {
+  $version = readVersion();
+  $bundle  = bundlePath($version);
+  $list    = readCompileList();
+
+  $minified = runTerser(bundleSource($list['bundle']));
+
+  $stats = newBuildStats();
+  ensureDirs([dirname($bundle)], $stats);
+  putFile($bundle, $minified, $stats);
+
+  // The standalone files (worker, audio worklet, ...) are loaded by their own
+  // URL, so they live next to the bundle as separate files (header rewritten).
+  copyMirrors($list['standalone'], $stats);
+
+  echo "Bundle $bundle (" . count($list['bundle']) . " sources, "
+     . count($list['standalone']) . " standalone):\n";
+  printBuildStats($stats);
+} // buildBundle
+
+/**
+ * Concatenate the compile.json sources (dependency-first) into a single ES
+ * module ready for terser. Missing sources are warned about and skipped.
+ */
+function bundleSource($files) {
+  $parts = [];
+  foreach ($files as $rel) {
+    $src = APP_DIR . '/' . $rel;
+    if (!is_file($src)) {
+      fwrite(STDERR, "  WARN missing source: $rel\n");
+      continue;
+    }
+    $parts[] = bundleCode(file_get_contents($src), $rel);
+  }
+  return implode("\n", $parts);
+} // bundleSource
+
+/**
+ * Mirror every source (bundle + standalone) into js/ as the import-from
+ * deploy variant. The actual copying is done by copyMirrors().
+ */
+function buildImportFrom() {
+  $list  = readCompileList();
+  $files = array_merge($list['bundle'], $list['standalone']);
+  $stats = newBuildStats();
+
+  copyMirrors($files, $stats);
+
+  echo "Import-from (" . count($files) . " sources):\n";
+  printBuildStats($stats);
+} // buildImportFrom
+
+/**
+ * Mirror the given sources into js/ as the import-from deploy variant: the
+ * directory structure is preserved and the header marker is rewritten from
+ * /**' . '/ to /*' . '/. Mirrors AppPage::makeJSFiles4ImportFrom().
+ */
+function copyMirrors($files, &$stats) {
+  // Pre-create the whole target directory tree, counting created vs existing.
+  $dirs = [];
+  foreach ($files as $rel) {
+    $dirs[dirname(JS_DIR . '/' . $rel)] = true;
+  }
+  ensureDirs(array_keys($dirs), $stats);
+
+  foreach ($files as $rel) {
+    $src = APP_DIR . '/' . $rel;
+    if (!is_file($src)) {
+      fwrite(STDERR, "  WARN missing source: $rel\n");
+      continue;
+    }
+    putFile(JS_DIR . '/' . $rel, importFromHeader(file_get_contents($src)), $stats);
+  }
+} // copyMirrors
+
+/**
+ * Transform a source file for inclusion in the concatenated bundle: keep only
+ * the code after the '// begin code' marker, drop the 'export default X;'
+ * re-export lines and strip the leading 'export ' keyword from declarations.
+ */
+function bundleCode($data, $rel) {
+  $marker = '// begin code';
+  $pos = strpos($data, $marker);
+  if ($pos === false) {
+    fwrite(STDERR, "  WARN no '$marker' in $rel; including whole file.\n");
+    $code = $data;
+  } else {
+    $code = substr($data, $pos + strlen($marker));
+  }
+  // Drop `export default <name>;` lines (re-exports of an already-declared name).
+  $code = preg_replace('/^[ \t]*export[ \t]+default[ \t]+[^\n;]+;[ \t]*$/m', '', $code);
+  // Strip the `export ` keyword from declarations (class / const / function / ...).
+  $code = preg_replace('/^([ \t]*)export[ \t]+/m', '$1', $code);
+  return "// === $rel ===\n" . $code;
+} // bundleCode
+
+/**
+ * Rewrite the header marker of a source file to the import-from variant,
+ * i.e. replace the first line with /*' . '/. Mirrors the rewrite done in
+ * AppPage::makeJSFiles4ImportFrom() in php/appPage.php.
+ */
+function importFromHeader($data) {
+  $nl = strpos($data, "\n");
+  if ($nl === false) {
+    return $data;
+  }
+  return "/*/\n" . substr($data, $nl + 1);
+} // importFromHeader
+
+/**
+ * Source files whose syntax must stay within ES2018 (the oldest target engine,
+ * e.g. older smart TVs): everything that ships to the device — the bundle
+ * sources, the standalone files, and the raw-served maintenance page.
+ * Runtime API usage (AudioWorklet, etc.) is NOT checked — only language syntax.
+ */
+function es2018Targets($list) {
+  $files = array_merge($list['bundle'], $list['standalone']);
+  if (is_file(APP_DIR . '/maintenance.js')) {
+    $files[] = 'maintenance.js';
+  }
+  return $files;
+} // es2018Targets
+
+/**
+ * Heuristic scan for language syntax newer than ES2018. Catches the realistic
+ * slips (terser does not transpile, so these would ship as-is and fail to parse
+ * on an older engine, taking the whole file/bundle down). Returns a list of
+ * ['file','line','feature']. Object spread and async/await are ES2018/2017 and
+ * intentionally allowed.
+ */
+function es2018Scan($files) {
+  $patterns = [
+    'static class field (ES2022)'   => '/^\s*static\s+[A-Za-z_$][A-Za-z0-9_$]*\s*=(?![=])/',
+    'optional chaining ?. (ES2020)' => '/[A-Za-z0-9_$\)\]]\?\./',
+    'nullish ?? (ES2020)'           => '/\?\?/',
+    'logical assignment (ES2021)'   => '/\|\|=|&&=/',
+    'private field # (ES2022)'      => '/\.#[A-Za-z_]|^\s*#[A-Za-z_][A-Za-z0-9_$]*\s*[=(]/',
+  ];
+  $found = [];
+  foreach ($files as $rel) {
+    $abs = APP_DIR . '/' . $rel;
+    if (!is_file($abs)) {
+      continue;
+    }
+    $n = 0;
+    foreach (explode("\n", file_get_contents($abs)) as $line) {
+      $n++;
+      foreach ($patterns as $feature => $re) {
+        if (preg_match($re, $line)) {
+          $found[] = ['file' => $rel, 'line' => $n, 'feature' => $feature];
+        }
+      }
+    }
+  }
+  return $found;
+} // es2018Scan
+
+/**
+ * Print the ES2018 heuristic scan result. Caller decides whether findings are
+ * fatal. Used as the build-time warning and as the verify fallback when
+ * es-check is not installed.
+ */
+function reportES2018($findings) {
+  if (!$findings) {
+    echo "ES2018 compatibility: OK (heuristic)\n";
+    return;
+  }
+  echo "ES2018 compatibility: " . count($findings) . " issue(s) (heuristic, syntax newer than ES2018):\n";
+  foreach ($findings as $f) {
+    echo "  {$f['file']}:{$f['line']} — {$f['feature']}\n";
+  }
+} // reportES2018
+
+/**
+ * Locate the es-check CLI for the authoritative ES2018 parse check. Prefers a
+ * global install, then a locally installed copy via npx (never auto-downloads
+ * from the network). Returns the command prefix, or null if unavailable.
+ */
+function escheckCommand() {
+  if (trim((string) shell_exec('command -v es-check 2>/dev/null')) !== '') {
+    return 'es-check';                       // global install (npm i -g es-check)
+  }
+  if (is_file('node_modules/.bin/es-check')) {
+    return 'node_modules/.bin/es-check';     // local devDependency
+  }
+  return null;                               // -> heuristic fallback
+} // escheckCommand
+
+/**
+ * The built JavaScript actually served to the device: every .js in js/ (bundle,
+ * standalone, import-from mirrors) plus the raw-served maintenance page.
+ */
+function es2018Artifacts() {
+  $files = [];
+  if (is_dir(JS_DIR)) {
+    foreach (listFilesRel(JS_DIR) as $rel) {
+      if (substr($rel, -3) === '.js') {
+        $files[] = JS_DIR . '/' . $rel;
+      }
+    }
+  }
+  if (is_file(APP_DIR . '/maintenance.js')) {
+    $files[] = APP_DIR . '/maintenance.js';
+  }
+  return $files;
+} // es2018Artifacts
+
+/**
+ * Minify a combined ES module with terser, reading from stdin and returning
+ * the minified source. Exits on failure.
+ */
+function runTerser($source) {
+  $proc = proc_open(
+    'terser --module --compress --mangle',
+    [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => STDERR],
+    $pipes
+  );
+  if (!is_resource($proc)) {
+    fwrite(STDERR, "build: failed to start terser (is it installed?).\n");
+    exit(1);
+  }
+  fwrite($pipes[0], $source);
+  fclose($pipes[0]);
+  $out = stream_get_contents($pipes[1]);
+  fclose($pipes[1]);
+  $code = proc_close($proc);
+  if ($code !== 0) {
+    fwrite(STDERR, "build: terser failed (exit $code).\n");
+    exit(1);
+  }
+  return $out;
+} // runTerser
+
+/**
+ * Fresh build statistics: created/updated/unchanged for files, created/existing
+ * for directories (a directory cannot be "updated").
+ */
+function newBuildStats() {
+  return [
+    'files' => ['created' => 0, 'updated' => 0, 'unchanged' => 0],
+    'dirs'  => ['created' => 0, 'existing' => 0],
+  ];
+} // newBuildStats
+
+function printBuildStats($stats) {
+  $f = $stats['files'];
+  $d = $stats['dirs'];
+  echo "  Files:       {$f['created']} created, {$f['updated']} updated, {$f['unchanged']} unchanged\n";
+  echo "  Directories: {$d['created']} created, {$d['existing']} existing\n";
+} // printBuildStats
+
+/**
+ * Write a file, recording whether it was created (did not exist), updated
+ * (existed with different content) or left unchanged (existed, same content).
+ */
+function putFile($path, $content, &$stats) {
+  if (is_file($path)) {
+    if (file_get_contents($path) === $content) {
+      $stats['files']['unchanged']++;
+      return;
+    }
+    file_put_contents($path, $content);
+    $stats['files']['updated']++;
+    return;
+  }
+  file_put_contents($path, $content);
+  $stats['files']['created']++;
+} // putFile
+
+/**
+ * Ensure the given directories (and all their parents) exist, counting each
+ * path component as created or already existing. Parents are created first.
+ */
+function ensureDirs($dirs, &$stats) {
+  $chain = [];
+  foreach ($dirs as $dir) {
+    $acc = '';
+    foreach (explode('/', $dir) as $part) {
+      if ($part === '' || $part === '.') {
+        continue;
+      }
+      $acc = ($acc === '') ? $part : "$acc/$part";
+      $chain[$acc] = true;
+    }
+  }
+  // Shallowest first, so a parent is created before its children.
+  $paths = array_keys($chain);
+  usort($paths, fn($a, $b) => substr_count($a, '/') <=> substr_count($b, '/'));
+  foreach ($paths as $path) {
+    if (is_dir($path)) {
+      $stats['dirs']['existing']++;
+    } else {
+      mkdir($path, 0777);
+      $stats['dirs']['created']++;
+    }
+  }
+} // ensureDirs
+
+/**
+ * Read $devMode from config/config.php. The value is treated as a flag, so
+ * any non-empty value (true, 1, a future variant, ...) means development mode.
+ */
+function readDevMode() {
+  return readConfig()['devMode'];
+} // readDevMode
+
+/**
+ * Load config/config.php and return the values the CLI needs. $devMode is
+ * normalised to a bool via empty(); the database fields mirror the variables
+ * the PHP pages pass to mysqli (see the db/*.php command classes).
+ */
+function readConfig() {
+  if (!is_file(CONFIG_FILE)) {
+    fwrite(STDERR, "Cannot find " . CONFIG_FILE . " (run from the app root directory).\n");
+    exit(1);
+  }
+  $devMode = false;
+  $dbHostname = $dbUser = $dbPassword = $dbName = null;
+  include CONFIG_FILE;
+  return [
+    'devMode'    => !empty($devMode),
+    'dbHostname' => $dbHostname,
+    'dbUser'     => $dbUser,
+    'dbPassword' => $dbPassword,
+    'dbName'     => $dbName,
+  ];
+} // readConfig
+
+/**
+ * Read config/compile.json. It holds two lists of paths relative to app/:
+ *   - bundle:     concatenated (dependency-first) into the minified bundle;
+ *   - standalone: files loaded by their own URL at runtime (the entry worker,
+ *                 the audio worklet, ...) that must stay separate files and
+ *                 must never be inlined into the bundle.
+ * A legacy flat array is accepted as a bundle-only list.
+ */
+function readCompileList() {
+  if (!is_file(COMPILE_FILE)) {
+    fwrite(STDERR, "Cannot find " . COMPILE_FILE . " (run from the app root directory).\n");
+    exit(1);
+  }
+  $data = json_decode(file_get_contents(COMPILE_FILE), true);
+  if (is_array($data) && array_is_list($data)) {
+    return ['bundle' => $data, 'standalone' => []];
+  }
+  if (!is_array($data) || !isset($data['bundle']) || !is_array($data['bundle'])) {
+    fwrite(STDERR, COMPILE_FILE . " must be a JSON object with a 'bundle' array.\n");
+    exit(1);
+  }
+  return [
+    'bundle'     => $data['bundle'],
+    'standalone' => (isset($data['standalone']) && is_array($data['standalone'])) ? $data['standalone'] : [],
+  ];
+} // readCompileList
+
+function cmdVerify() {
+  $version = readVersion();
+  $bundle  = bundlePath($version);
+  $list    = readCompileList();
+  $problems = 0;
+
+  $devMode   = readDevMode();
+  $actual    = is_dir(JS_DIR) ? listFilesRel(JS_DIR) : [];
+  $hasBundle = is_file($bundle);
+
+  // 1) Bundle deploy: the bundle file plus the standalone files, evaluated as
+  //    one set of equally important files. A missing piece is only an error in
+  //    production, or once a bundle exists (then its companions must too); in
+  //    development with no bundle the app is served from the sources instead.
+  $requireDeploy = $hasBundle || !$devMode;
+  echo "Bundle files:\n";
+
+  if (!$hasBundle) {
+    echo "  $bundle: " . ($devMode ? "missing (development mode)" : "missing") . "\n";
+    if (!$devMode) $problems++;
+  } elseif (file_get_contents($bundle) === runTerser(bundleSource($list['bundle']))) {
+    echo "  $bundle: OK\n";
+  } else {
+    echo "  $bundle: INCORRECT — does not match current sources (rebuild)\n";
+    $problems++;
+  }
+
+  foreach ($list['standalone'] as $rel) {
+    $status = mirrorStatus($rel);
+    echo "  " . JS_DIR . "/$rel: $status\n";
+    if ($status !== 'OK' && $requireDeploy) $problems++;
+  }
+
+  // 2) Import-from mirrors: only relevant if the bundle sources are mirrored
+  //    into js/ (the import-from deploy).
+  if (!array_intersect($list['bundle'], $actual)) {
+    echo "Import-from: no files\n";
+  } else {
+    $problems += reportMirrors('Import-from', $list['bundle']);
+  }
+
+  // 3) Anything in js/ that is neither the current bundle nor a known source.
+  $expected = [ltrim(substr($bundle, strlen(JS_DIR)), '/') => true];
+  foreach (array_merge($list['bundle'], $list['standalone']) as $rel) {
+    $expected[$rel] = true;
+  }
+  $extra = array_filter($actual, fn($rel) => !isset($expected[$rel]));
+  if (count($extra) === 0) {
+    echo "Unexpected files: none\n";
+  } else {
+    echo "Unexpected files (" . count($extra) . "):\n";
+    foreach ($extra as $rel) echo "  $rel\n";
+    $problems++;
+  }
+
+  // 4) ES2018 gate for the oldest target engines (e.g. old smart TVs).
+  //    Authoritative parse check via es-check on the built artifacts; falls
+  //    back to the heuristic source scan when es-check is not installed.
+  $escheck   = escheckCommand();
+  $artifacts = es2018Artifacts();
+  if ($escheck !== null && $artifacts) {
+    $cmd = $escheck . ' es2018 --module ' . implode(' ', array_map('escapeshellarg', $artifacts)) . ' 2>&1';
+    exec($cmd, $out, $code);
+    if ($code === 0) {
+      echo "ES2018 compatibility: OK (es-check, " . count($artifacts) . " file(s))\n";
+    } else {
+      echo "ES2018 compatibility: FAILED (es-check):\n";
+      foreach (array_slice($out, 0, 12) as $l) {
+        echo "  $l\n";
+      }
+      echo "  (run: es-check es2018 --module 'js/**/*.js' for full detail)\n";
+      $problems++;
+    }
+  } else {
+    $findings = es2018Scan(es2018Targets($list));
+    reportES2018($findings);
+    if ($escheck === null) {
+      echo "  (install es-check for an authoritative check — see README)\n";
+    }
+    if ($findings) {
+      $problems++;
+    }
+  }
+
+  if ($problems > 0) {
+    exit(1);
+  }
+} // cmdVerify
+
+/**
+ * Check that each source is mirrored into js/ and matches its expected
+ * import-from content. Prints a summary plus the offending paths, and returns
+ * 1 if anything is missing or invalid (0 otherwise) so the caller can tally.
+ */
+function reportMirrors($label, $files) {
+  $ok = 0; $missing = []; $invalid = [];
+  foreach ($files as $rel) {
+    switch (mirrorStatus($rel)) {
+      case 'OK':      $ok++; break;
+      case 'missing': $missing[] = $rel; break;
+      default:        $invalid[] = $rel; break;
+    }
+  }
+  echo "$label: $ok OK, " . count($missing) . " missing, " . count($invalid) . " invalid (of " . count($files) . ")\n";
+  foreach ($missing as $rel) echo "  missing: $rel\n";
+  foreach ($invalid as $rel) echo "  invalid: $rel\n";
+  return ($missing || $invalid) ? 1 : 0;
+} // reportMirrors
+
+/**
+ * Status of one source mirrored into js/: 'OK' (present and matching the
+ * import-from content), 'missing' (not in js/) or 'invalid' (present but
+ * different from the expected content).
+ */
+function mirrorStatus($rel) {
+  $dst = JS_DIR . '/' . $rel;
+  $src = APP_DIR . '/' . $rel;
+  if (!is_file($dst)) {
+    return 'missing';
+  }
+  if (is_file($src) && file_get_contents($dst) === importFromHeader(file_get_contents($src))) {
+    return 'OK';
+  }
+  return 'invalid';
+} // mirrorStatus
+
+/**
+ * Recursively list files inside a directory, returning paths relative to it.
+ */
+function listFilesRel($base) {
+  return listFilesRecur($base, $base);
+} // listFilesRel
+
+function listFilesRecur($base, $dir) {
+  $out = [];
+  foreach (scandir($dir) as $entry) {
+    if ($entry === '.' || $entry === '..') {
+      continue;
+    }
+    $path = "$dir/$entry";
+    if (is_dir($path) && !is_link($path)) {
+      $out = array_merge($out, listFilesRecur($base, $path));
+    } else {
+      $out[] = ltrim(substr($path, strlen($base)), '/');
+    }
+  }
+  return $out;
+} // listFilesRecur
+
+function cmdClean() {
+  if (!is_dir(JS_DIR)) {
+    fwrite(STDERR, "Cannot find " . JS_DIR . "/ (run from the app root directory).\n");
+    exit(1);
+  }
+
+  $stats = ['files' => 0, 'dirs' => 0];
+  removeDirContents(JS_DIR, $stats);
+  echo "Cleaned " . JS_DIR . "/ ({$stats['files']} file(s), {$stats['dirs']} director(ies) removed).\n";
+} // cmdClean
+
+/**
+ * Recursively remove everything inside a directory, keeping the directory
+ * itself. Counts removed files and directories into $stats.
+ */
+function removeDirContents($dir, &$stats) {
+  foreach (scandir($dir) as $entry) {
+    if ($entry === '.' || $entry === '..') {
+      continue;
+    }
+    $path = "$dir/$entry";
+    if (is_dir($path) && !is_link($path)) {
+      removeDirContents($path, $stats);
+      rmdir($path);
+      $stats['dirs']++;
+    } else {
+      unlink($path);
+      $stats['files']++;
+    }
+  }
+} // removeDirContents
+
+/**
+ * Recursively count the import-from variant files inside a directory.
+ * Those are .js mirrors whose first line is the '/*' . '/' marker written by
+ * AppPage::makeJSFiles4ImportFrom(); source files start with '/**' . '/' instead.
+ */
+function countImportFromFiles($dir) {
+  $count = 0;
+  foreach (scandir($dir) as $entry) {
+    if ($entry === '.' || $entry === '..') {
+      continue;
+    }
+    $path = "$dir/$entry";
+    if (is_dir($path) && !is_link($path)) {
+      $count += countImportFromFiles($path);
+    } elseif (substr($entry, -3) === '.js' && firstLine($path) === '/*/') {
+      $count++;
+    }
+  }
+  return $count;
+} // countImportFromFiles
+
+/**
+ * Read and trim the first line of a file.
+ */
+function firstLine($path) {
+  $handle = fopen($path, 'r');
+  if ($handle === false) {
+    return '';
+  }
+  $line = fgets($handle);
+  fclose($handle);
+  return $line === false ? '' : rtrim($line, "\r\n");
+} // firstLine
+
+/**
+ * Read the application version from app/version.js.
+ * Mirrors AbstractPage::readVersion() in php/abstractPage.php.
+ */
+function readVersion() {
+  if (!is_file(VERSION_FILE)) {
+    fwrite(STDERR, "Cannot find " . VERSION_FILE . " (run from the app root directory).\n");
+    exit(1);
+  }
+  $source = file_get_contents(VERSION_FILE);
+  if (preg_match("/Version\s*=\s*'([^']+)'/", $source, $m)) {
+    return $m[1];
+  }
+  return 'unknown';
+} // readVersion
+
+/**
+ * Build the production bundle path for the given version.
+ */
+function bundlePath($version) {
+  return "js/bundle.$version.min.js";
+} // bundlePath
+
+/**
+ * The files that make up a bundle deploy, as js/ paths: the bundle itself
+ * followed by the standalone files. All are equally required for the app.
+ */
+function bundleDeployFiles($version, $list) {
+  $files = [bundlePath($version)];
+  foreach ($list['standalone'] as $rel) {
+    $files[] = JS_DIR . '/' . $rel;
+  }
+  return $files;
+} // bundleDeployFiles
