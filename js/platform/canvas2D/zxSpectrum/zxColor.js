@@ -7,28 +7,6 @@
 
 export class ZXColor {
 
-  static black         = '#000000';
-  static blue          = '#1435b2';
-  static red           = '#b6391e';
-  static magenta       = '#b442b4';
-  static green         = '#41a329';
-  static cyan          = '#4cb7a7';
-  static yellow        = '#dcb533';
-  static white         = '#b8b8b8';
-  static brightBlack   = '#000000';
-  static brightBlue    = '#1e48f7';
-  static brightRed     = '#fc3b34';
-  static brightMagenta = '#fb6ee9';
-  static brightGreen   = '#53d734';
-  static brightCyan    = '#4ddcfc';
-  static brightYellow  = '#ffe15a';
-  static brightWhite   = '#ffffff';
-
-  static colorsNames = [
-    'black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white',
-    'brightBlack', 'brightBlue', 'brightRed', 'brightMagenta', 'brightGreen', 'brightCyan', 'brightYellow', 'brightWhite'
-  ];
-
   static color(color) {
     if (color >= 0 && color < 16) {
       return this[this.colorsNames[color]];
@@ -49,5 +27,27 @@ export class ZXColor {
   } // bkAttrColor
 
 } // ZXColor
+
+ZXColor.black         = '#000000';
+ZXColor.blue          = '#1435b2';
+ZXColor.red           = '#b6391e';
+ZXColor.magenta       = '#b442b4';
+ZXColor.green         = '#41a329';
+ZXColor.cyan          = '#4cb7a7';
+ZXColor.yellow        = '#dcb533';
+ZXColor.white         = '#b8b8b8';
+ZXColor.brightBlack   = '#000000';
+ZXColor.brightBlue    = '#1e48f7';
+ZXColor.brightRed     = '#fc3b34';
+ZXColor.brightMagenta = '#fb6ee9';
+ZXColor.brightGreen   = '#53d734';
+ZXColor.brightCyan    = '#4ddcfc';
+ZXColor.brightYellow  = '#ffe15a';
+ZXColor.brightWhite   = '#ffffff';
+
+ZXColor.colorsNames = [
+  'black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white',
+  'brightBlack', 'brightBlue', 'brightRed', 'brightMagenta', 'brightGreen', 'brightCyan', 'brightYellow', 'brightWhite'
+];
 
 export default ZXColor;

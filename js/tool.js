@@ -31,8 +31,6 @@ export class Tool {
     return intNum.toString(36).padStart(len, '0').toUpperCase();
   } // intToLatin
 
-  static base90Alphabet = '!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~';
-
   static base90ToInt(base90Num) {
     var res = 0;
     for (var i = 0; i < base90Num.length; i++) {
@@ -187,5 +185,7 @@ export class Tool {
   } // readCookie
 
 } // Tool
+
+Tool.base90Alphabet = '!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~';
 
 export default Tool;
