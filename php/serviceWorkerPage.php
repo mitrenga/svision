@@ -30,7 +30,7 @@ class ServiceWorkerPage extends AbstractPage {
       './manifest.webmanifest',
       './favicon.ico',
     ];
-    $this->scanDir('app', $assets, ['js']);
+    $this->scanDir('js', $assets, ['js']);
     $this->scanDir('app/svision/css', $assets, ['css']);
     $this->scanDir('images', $assets, ['png', 'svg', 'jpg', 'gif', 'ico']);
     return $assets;
