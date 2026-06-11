@@ -33,55 +33,27 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <script>window.devMode = '.(empty($GLOBALS['devMode']) ? 'false' : 'true').';</script>';
     $this->data[] = '    <script>window.devModeName = '.((empty($GLOBALS['devModeName'])) ? 'false' : '"'.$GLOBALS['devModeName'].'"').';</script>';
     $this->data[] = '    <script>window.appIconSprite = false;</script>';
-    
-    if ($_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '    <script>window.importPath = "app";</script>';
-      $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
-    }
 
-    if ($_COOKIE['libImportMethod'] == 'import-from') {
-      $this->makeJSFiles4ImportFrom('app', 'js', '/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/html/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/adaptive/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/ibm/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/canvas2D/zxSpectrum/');
-      $this->makeJSFiles4ImportFrom('app', 'js', '/svision/js/platform/webGL2/');
+    $bundle = 'js/bundle.'.$this->readVersion().'.min.js';
 
+    if (file_exists($bundle)) {
       $this->data[] = '    <script>window.importPath = "js";</script>';
-      $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="'.$bundle.'?ver='.$srcVersion.'"></script>';
+    } elseif (!empty($GLOBALS['devMode'])) {
+      if ($_COOKIE['libImportMethod'] == 'await-import') {
+        $this->data[] = '    <script>window.importPath = "app";</script>';
+        $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
+      }
+      if ($_COOKIE['libImportMethod'] == 'import-from') {
+        $this->data[] = '    <script>window.importPath = "js";</script>';
+        $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
+      }
+    } else {
+      $this->data[] = '    <script>window.importPath = "app";</script>';
+      $this->data[] = '    <script type="module" src="app/maintenance.js?ver='.$srcVersion.'"></script>';
     }
-    
     $this->data[] = '  </body>';
     $this->data[] = '</html>';
   } // createPage
-
-  function makeJSFiles4ImportFrom($source, $target, $subdir) {
-    $oldmask = umask(0);
-    if (is_dir($source.$subdir)) {
-      if ($dh = opendir($source.$subdir)) {
-        while (($file = readdir($dh)) !== false) {
-          if (filetype($source.$subdir.$file) == 'file' && substr($file, -3) == '.js') {
-            $data = file_get_contents($source.$subdir.$file, true);
-            $data2 = "/*/\n".substr($data, strpos($data, "\n")+1);
-            if (!is_dir(substr($target.$subdir, 0, -1))) {
-              mkdir(substr($target.$subdir, 0, -1), 0777, true);
-            }
-            if (is_file($target.$subdir.$file)) {
-              if (filemtime($target.$subdir.$file) < filemtime($source.$subdir.$file)) {
-                unlink($target.$subdir.$file);
-                file_put_contents($target.$subdir.$file, $data2);
-              }
-            } else {
-              file_put_contents($target.$subdir.$file, $data2);
-            }
-          }
-        }
-      closedir($dh);
-      }
-    }
-    umask($oldmask);
-  } // makeJSFiles4ImportFrom
 
 } // AppPage
