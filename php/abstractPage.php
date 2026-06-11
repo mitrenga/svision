@@ -13,4 +13,17 @@ class AbstractPage {
     }
   } // showPage
 
+  protected function readVersion() {
+    $source = file_get_contents('app/version.js');
+    if (preg_match("/Version\s*=\s*'([^']+)'/", $source, $m)) {
+      return $m[1];
+    }
+    return 'unknown';
+  } // readVersion
+
+  protected function srcVersion() {
+    $version = $this->readVersion();
+    return !empty($GLOBALS['devMode']) ? md5(time()) : $version;
+  } // srcVersion
+
 } // AbstractPage
