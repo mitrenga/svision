@@ -99,10 +99,14 @@ module import method the browser supports.
 
 ## Runtime, compatibility & dev mode
 
-- **Progressive Web App.** Every app is installable and works offline out of the
-  box: the server generates the web app manifest and a service worker whose
-  pre-cache asset list is collected automatically, so you get an app icon,
-  full-screen launch and offline support without extra setup.
+- **Progressive Web App.** Every app is installable: the server generates the
+  web app manifest and a service worker whose pre-cache asset list is collected
+  automatically, so you get an app icon and full-screen launch.
+- **Offline mode (production).** Service worker support is built in and active in
+  the **production** build: the generated service worker pre-caches the app
+  assets and serves them from cache with a network fallback, so released
+  versions keep working offline. (Dev mode serves the unbundled sources instead
+  and does not cache.)
 - **Broad browser compatibility.** The runtime targets **ECMAScript 2018
   (ES9)** as its baseline, so it runs on a wide range of older browsers and
   devices, not just the latest ones.
