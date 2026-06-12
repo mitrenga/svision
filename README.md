@@ -121,6 +121,23 @@ module import method the browser supports.
   active import method and the current cookies — can be inspected and switched
   from the built-in diagnostics page at `https://<project-name>/config`.
 
+## Command-line tooling (`svtool`)
+
+`tools/svtool` is a PHP command-line utility for the manual build, deploy and
+verification operations on an svision app. It is run from the application root
+(the same place the PHP pages run from):
+
+| Command | What it does |
+|---|---|
+| `svtool version` | Print the current application version (from `app/version.js`). |
+| `svtool info [count]` | Show the state of the `js/` directory (bundle and import-from files) and, if configured, the most recent database records (default 10). |
+| `svtool build [target]` | Build a deploy variant from `config/compile.json`. `target` is **`bundle`** (a minified `js/bundle.<version>.min.js`) or **`import-from`** (source mirrors copied into `js/` with the header marker rewritten). In dev mode the target is required; in production it defaults to `bundle`. |
+| `svtool verify` | Check `js/`: the bundle exists and matches the current sources, the import-from files are present and valid, there are no unexpected files, and the served JavaScript stays within **ES2018** (via `es-check` if installed, otherwise a heuristic scan). |
+| `svtool clean` | Remove every generated file from the `js/` directory. |
+| `svtool help` | Show usage. |
+
+A bash completion script is provided in `tools/svtool-completion.bash`.
+
 ## Examples
 
 Full, working projects built with svision:
