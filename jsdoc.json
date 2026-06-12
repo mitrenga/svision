@@ -2,7 +2,7 @@
   "source": {
     "include": ["js", "README.md"],
     "includePattern": "\\.js$",
-    "excludePattern": "(^|[\\/\\\\])config[\\/\\\\]"
+    "excludePattern": "((^|[\\/\\\\])config[\\/\\\\]|(^|[\\/\\\\])maintenance\\.js$)"
   },
   "opts": {
     "destination": "docs",

@@ -61,7 +61,7 @@ class AppPage extends AbstractPage {
       }
     } else {
       $this->data[] = '    <script>window.importPath = "app";</script>';
-      $this->data[] = '    <script type="module" src="app/maintenance.js?ver='.$srcVersion.'"></script>';
+      $this->data[] = '    <script type="module" src="app/svision/js/maintenance.js?ver='.$srcVersion.'"></script>';
     }
     $this->data[] = '  </body>';
     $this->data[] = '</html>';
