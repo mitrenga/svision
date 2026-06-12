@@ -5,8 +5,26 @@ import AbstractEntity from '../../abstractEntity.js';
 /**/
 // begin code
 
+/**
+ * A scrolling text entity that renders a single line of text wider than its viewport
+ * and animates it horizontally (ping-pong, scroll-to-left, looping, or custom). The
+ * full text is cached once and a cropped window of it is drawn each frame.
+ */
 export class SlidingTextEntity extends AbstractEntity {
 
+  /**
+   * Creates a sliding text entity.
+   * @param {AbstractEntity} parentEntity - The parent entity this text is attached to.
+   * @param {Object} fonts - The font set used to render the text.
+   * @param {number} x - X position relative to the parent.
+   * @param {number} y - Y position relative to the parent.
+   * @param {number} width - Visible width of the text window.
+   * @param {number} height - Entity height.
+   * @param {string} text - The text to scroll.
+   * @param {string|false} penColor - Foreground (text) color.
+   * @param {string|false} bkColor - Background color.
+   * @param {Object} options - Margin, scale, animation, speed, and freezing options.
+   */
   constructor(parentEntity, fonts, x, y, width, height, text, penColor, bkColor, options) {
     super(parentEntity, x, y, width, height, penColor, bkColor);
     this.id = 'SlidingTextEntity';
@@ -64,6 +82,10 @@ export class SlidingTextEntity extends AbstractEntity {
     this.app.layout.newDrawingCropCache(this);
   } // constructor
   
+  /**
+   * Initializes the entity and resolves default hover and click colors from the
+   * stack configuration when they were not explicitly provided.
+   */
   init() {
     super.init();
 
@@ -88,6 +110,11 @@ export class SlidingTextEntity extends AbstractEntity {
     }
   } // init
 
+  /**
+   * Computes the total pixel width of the current text including margins and
+   * inter-character spacing.
+   * @returns {number} The total text width in pixels.
+   */
   textWidth() {
     var w = this.options.leftMargin+this.options.rightMargin;
     for (var ch = 0; ch < this.text.length; ch++) {
@@ -99,6 +126,11 @@ export class SlidingTextEntity extends AbstractEntity {
     return w;
   } // textWidth
 
+  /**
+   * Replaces the displayed text, recomputes the animation width, clears the cache,
+   * and resets the animation state.
+   * @param {string} text - The new text to display.
+   */
   setText(text) {
     this.text = text;
     this.animationWidth = this.textWidth();
@@ -109,6 +141,9 @@ export class SlidingTextEntity extends AbstractEntity {
     this.resetAnimation();
   } // setText
 
+  /**
+   * Resets the scrolling animation to its starting position, direction, and frozen state.
+   */
   resetAnimation() {
     this.animationPosition = 0;
     this.animationProgress = 0;
@@ -117,6 +152,10 @@ export class SlidingTextEntity extends AbstractEntity {
     this.animationTimestamp = false;
   } // resetAnimation
 
+  /**
+   * Renders the full text into the cache when needed and draws the currently
+   * visible window of it at the animation position.
+   */
   drawEntity() {
     super.drawEntity();
 
@@ -133,6 +172,12 @@ export class SlidingTextEntity extends AbstractEntity {
     this.app.layout.paintCropCache(this, 0, this.animationPosition, 0, 0, 0);
   } // drawEntity
 
+  /**
+   * Handles the mouseHover event, marking the entity as hovered when the pointer is
+   * over it and a hover color is defined.
+   * @param {Object} event - The input event to process.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
@@ -152,10 +197,18 @@ export class SlidingTextEntity extends AbstractEntity {
     return false;
   } // handleEvent
 
+  /**
+   * Marks the text drawing cache as dirty so it is re-rendered on the next draw.
+   */
   cleanCache() {
     this.drawingCache[0].cleanCache();
   } // cleanCache
 
+  /**
+   * Advances the scrolling animation based on the elapsed time and the configured
+   * animation mode (pingPong, toLeft, loopLeft, or custom).
+   * @param {number} timestamp - The current animation timestamp in milliseconds.
+   */
   loopEntity(timestamp) {
     if (this.animationTimestamp === false) {
       this.animationTimestamp = timestamp;

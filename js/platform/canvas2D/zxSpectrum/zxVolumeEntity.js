@@ -19,8 +19,24 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed dialog entity for adjusting the audio volume of a given
+ * channel. It renders a slider with buttons, persists the volume to a cookie,
+ * can play a sample sound and reports the active audio driver state.
+ */
 export class ZXVolumeEntity extends AbstractEntity {
 
+  /**
+   * Creates the volume dialog entity for a specific audio channel.
+   * @param {AbstractEntity} parentEntity - The parent entity in the entity tree.
+   * @param {number} x - The x position relative to the parent.
+   * @param {number} y - The y position relative to the parent.
+   * @param {number} width - The entity width.
+   * @param {number} height - The entity height.
+   * @param {string} channel - The audio channel identifier this dialog controls.
+   * @param {string} cookie - The cookie name used to persist the volume.
+   * @param {*} sampleSound - The sample sound played when previewing the volume.
+   */
   constructor(parentEntity, x, y, width, height, channel, cookie, sampleSound) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXVolumeEntity';
@@ -32,9 +48,13 @@ export class ZXVolumeEntity extends AbstractEntity {
     this.driverEntity = null;
   } // constructor
 
+  /**
+   * Builds the dialog layout: title, preset and step buttons, the volume slider
+   * with its cursor, the play-sample and close buttons and the driver status line.
+   */
   init() {
     super.init();
-    
+
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, this.channel, ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
     this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, ZXColor.yellow));
@@ -69,12 +89,24 @@ export class ZXVolumeEntity extends AbstractEntity {
     this.addEntity(this.driverEntity);
   } // init
 
+  /**
+   * Sets the channel volume, clamping it to the range 0-10, persists it to the
+   * cookie and repositions the slider cursor.
+   * @param {number} volume - The requested volume level (clamped to 0-10).
+   */
   changeVolume(volume) {
     this.app.audioManager.volume[this.channel] = Math.min(10, Math.max(0, Math.round(volume)));
     Tool.writeCookie(this.cookie, this.app.audioManager.volume[this.channel]);
     this.cursorEntity.x = 8+this.app.audioManager.volume[this.channel]*18;
   } // changeVolume
 
+  /**
+   * Handles the volume dialog events: setting/changing the volume, playing the
+   * sample sound (prompting for a user gesture when required), reporting audio
+   * errors and closing the dialog.
+   * @param {Object} event - The event object, identified by its id property.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;

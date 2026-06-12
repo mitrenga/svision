@@ -23,8 +23,22 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed control-settings panel. Lets the player choose an input
+ * device (keyboard, mouse, gamepad, touchscreen), view its current key bindings
+ * and launch the relevant remap/configuration dialogs.
+ */
 export class ZXControlsEntity extends AbstractEntity {
 
+  /**
+   * Creates the controls panel and initialises device selection state and palette.
+   * @param {AbstractEntity} parentEntity - The parent entity that owns this panel.
+   * @param {number} x - X position of the panel.
+   * @param {number} y - Y position of the panel.
+   * @param {number} width - Panel width.
+   * @param {number} height - Panel height.
+   * @param {Object} options - Per-device key/option definitions used to build the UI.
+   */
   constructor(parentEntity, x, y, width, height, options) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXControlsEntity';
@@ -52,6 +66,10 @@ export class ZXControlsEntity extends AbstractEntity {
     this.controlsEntites = {};
   } // constructor
 
+  /**
+   * Builds all child entities of the panel: the device list, separators, and the
+   * device-specific option rows and buttons for keyboard, mouse, gamepad and touchscreen.
+   */
   init() {
     super.init();
     
@@ -159,6 +177,14 @@ export class ZXControlsEntity extends AbstractEntity {
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', {id: 'closeZXControls'}, ['Escape', 'GamepadExit'], ZXColor.brightWhite, ZXColor.blue, {align: 'center', margin: 4}));
   } // init
 
+  /**
+   * Adds the label and current-binding text entities for every key of a device.
+   * @param {number} y - Top Y offset where the first option row is drawn.
+   * @param {string} device - Device options key (e.g. 'keyboard', 'mouse', 'gamepads').
+   * @param {string|false} gamepad - Selected gamepad id, or false when not a gamepad device.
+   * @param {string} group - Visibility group path assigned to the created entities.
+   * @param {boolean} hide - Whether the created entities start hidden.
+   */
   addOptionsEntities(y, device, gamepad, group, hide) {
     for (var k = 0; k < this.options[device].keys.length; k++) {
       this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, y+12*k, 74, 9, this.options[device].keys[k].label, ZXColor.black, false, {margin: 2, group: group, hide: hide}));
@@ -174,6 +200,12 @@ export class ZXControlsEntity extends AbstractEntity {
     }
   } // addOptionsEntities
 
+  /**
+   * Finds the human-readable button or axis label bound to a gamepad action on the
+   * currently selected gamepad.
+   * @param {string|false} action - The action name to look up, or false.
+   * @returns {string} A label such as 'B0' or 'A1+', or 'OFF' if unbound.
+   */
   prettyGamepadKey(action) {
     var result = 'OFF';
     if (action !== false) {
@@ -200,12 +232,20 @@ export class ZXControlsEntity extends AbstractEntity {
     return result;
   } // prettyGamepadKey
 
+  /**
+   * Refreshes the displayed label text of every device menu entity.
+   */
   refreshDevices() {
     for (var y = 0; y < this.devices.length; y++) {
       this.menuEntities[y].setText(this.devices[y].label);
     }
   } // refreshDevices
 
+  /**
+   * Switches the selected device, updates highlight colours and the selection bar,
+   * and shows/hides child entities according to their group path.
+   * @param {number} newDevice - Index of the device to select.
+   */
   changeGroup(newDevice) {
     if (newDevice < 0 || newDevice >= this.devices.length) {
       return;
@@ -232,6 +272,11 @@ export class ZXControlsEntity extends AbstractEntity {
     });
   } // changeGroup
 
+  /**
+   * Computes the current visibility group path for the selected device based on its
+   * runtime state (e.g. mouse enabled, gamepad connected/configured, touchscreen support).
+   * @returns {string} The dotted group path string.
+   */
   getGroupPath() {
     var group = this.devices[this.selectionDevice].type;
     switch (group) {
@@ -278,6 +323,10 @@ export class ZXControlsEntity extends AbstractEntity {
     return group;
   } // getGroupPath
 
+  /**
+   * Returns a display name for the currently selected gamepad.
+   * @returns {string} The gamepad id, or a placeholder prompt when none is selected.
+   */
   selectionGamepadName() {
     if (this.selectionGamepad === false) {
       return '--- select gamepad ---';
@@ -285,6 +334,10 @@ export class ZXControlsEntity extends AbstractEntity {
     return this.selectionGamepad;
   } // selectionGamepadName
 
+  /**
+   * Reconciles the selected gamepad against currently connected devices, defaulting
+   * to the first connected gamepad and clearing the selection when none are present.
+   */
   checkSelectionGamepad() {
     var connectedDevices = navigator.getGamepads();
     var firstConnectedGamepad = false;
@@ -313,6 +366,10 @@ export class ZXControlsEntity extends AbstractEntity {
     }
   } // checkSelectionGamepad
 
+  /**
+   * Refreshes the displayed binding text for every gamepad action and re-applies the
+   * current group visibility.
+   */
   gamepadActionsUpdate() {
     this.options.gamepads.keys.forEach((key) => {
       this.sendEvent(0, 0, {id: 'updateEntity', member: 'gamepads.'+key.action, text: this.prettyGamepadKey(key.action)});
@@ -320,6 +377,13 @@ export class ZXControlsEntity extends AbstractEntity {
     this.changeGroup(this.selectionDevice);
   } // gamepadActionsUpdate
 
+  /**
+   * Handles input and UI events for the panel: device navigation, opening remap and
+   * gamepad dialogs, enabling/disabling the mouse, ignoring gamepads and cycling
+   * touchscreen layouts.
+   * @param {Object} event - The event object, including its id and key fields.
+   * @returns {boolean} True if the event was handled.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
@@ -451,6 +515,11 @@ export class ZXControlsEntity extends AbstractEntity {
     return false;
   } // handleEvent
 
+  /**
+   * Per-frame update: detects gamepad connection changes and refreshes the gamepad
+   * selection/UI, then advances the sliding label and any modal child entity.
+   * @param {number} timestamp - Current animation timestamp.
+   */
   loopEntity(timestamp) {
     var updateGamepadSelection = false;
     if (this.selectionGamepad !== false) {

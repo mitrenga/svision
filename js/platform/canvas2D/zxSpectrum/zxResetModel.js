@@ -11,8 +11,18 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * Boot model that orchestrates the ZX Spectrum reset sequence: it plays the
+ * reset animation, then shows the copyright line, loads application data and
+ * finally hands over to the menu model.
+ */
 export class ZXResetModel extends AbstractModel {
-  
+
+  /**
+   * Creates the reset model and stores the copyright text to be displayed.
+   * @param {Object} app - The application instance.
+   * @param {string} copyright - The copyright text shown after the reset animation.
+   */
   constructor(app, copyright) {
     super(app);   
     this.id = 'ZXResetModel'
@@ -22,6 +32,10 @@ export class ZXResetModel extends AbstractModel {
     this.inputLineEntity = null;
   } // constructor
 
+  /**
+   * Builds the reset and copyright entities, schedules the reset animation
+   * event and starts fetching the application data.
+   */
   init() {
     super.init();
 
@@ -36,15 +50,25 @@ export class ZXResetModel extends AbstractModel {
     this.fetchData('appData.db', false, {});
   } // init
 
+  /**
+   * Receives the fetched application data and stores it as global data.
+   * @param {Object} data - The application data loaded from the data source.
+   */
   setData(data) {
     this.app.setGlobalData(data);
   } // setData
 
+  /**
+   * Handles the reset sequence events that advance through the reset animation,
+   * the copyright display and the transition to the menu model.
+   * @param {Object} event - The event object, identified by its id property.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
     }
-    
+
     switch (event.id) {
       case 'showReset':
         this.timer = this.app.now;
@@ -66,6 +90,10 @@ export class ZXResetModel extends AbstractModel {
     return false;
   } // handleEvent
 
+  /**
+   * Per-frame update that advances the reset entity animation and redraws the model.
+   * @param {number} timestamp - The current frame timestamp in milliseconds.
+   */
   loopModel(timestamp) {
     super.loopModel(timestamp);
 

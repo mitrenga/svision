@@ -9,8 +9,24 @@ import ButtonEntity from '../buttonEntity.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed full-width error panel shown when an unrecoverable runtime
+ * error occurs. Displays a panic message and offers restart/ignore (or continue)
+ * actions depending on the requested recovery action.
+ */
 export class ZXErrorEntity extends AbstractEntity {
 
+  /**
+   * Creates the error panel, vertically centred within the Spectrum screen area.
+   * @param {AbstractEntity} parentEntity - The parent entity that owns this panel.
+   * @param {number} x - X position of the panel.
+   * @param {number} y - Base Y position used to vertically centre the panel.
+   * @param {Object} fonts - Font set used to render the message and buttons.
+   * @param {string} message - The error message text.
+   * @param {string} action - Recovery action mode ('restart' or 'reopen').
+   * @param {string} penColor - Ink colour for text and button backgrounds.
+   * @param {string} bkColor - Paper colour for the panel and button text.
+   */
   constructor(parentEntity, x, y, fonts, message, action, penColor, bkColor) {
     super(parentEntity, x, y+(192-15*8)/2, 256, 15*8, penColor, bkColor);
 
@@ -20,6 +36,10 @@ export class ZXErrorEntity extends AbstractEntity {
     this.action = action;
   } // constructor
 
+  /**
+   * Builds the panel contents: the panic title, the explanatory message and the
+   * recovery buttons appropriate to the action mode, and logs the error to the console.
+   */
   init() {
     super.init();
 
@@ -39,6 +59,12 @@ export class ZXErrorEntity extends AbstractEntity {
     console.error(this.message);
   } // init
 
+  /**
+   * Handles the panel's button events: reloading the page on restart or destroying
+   * the panel on ignore/continue.
+   * @param {Object} event - The event object, including its id field.
+   * @returns {boolean} True if the event was handled.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;

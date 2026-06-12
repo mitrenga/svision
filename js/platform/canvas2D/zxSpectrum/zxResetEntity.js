@@ -7,8 +7,21 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * Entity that renders the ZX Spectrum power-on/reset screen animation,
+ * drawing the characteristic moving red border lines over a black background
+ * while the reset timer runs.
+ */
 export class ZXResetEntity extends AbstractEntity {
 
+  /**
+   * Creates the reset animation entity and initialises its animation state.
+   * @param {AbstractEntity} parentEntity - The parent entity in the entity tree.
+   * @param {number} x - The x position relative to the parent.
+   * @param {number} y - The y position relative to the parent.
+   * @param {number} width - The entity width.
+   * @param {number} height - The entity height.
+   */
   constructor(parentEntity, x, y, width, height) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXResetEntity';
@@ -19,6 +32,10 @@ export class ZXResetEntity extends AbstractEntity {
     this.calculatedSector = [2, 1, 0, 0, 1, 2];
   } // constructor
 
+  /**
+   * Paints the black background and, while the reset timer is active, draws the
+   * animated red border lines whose lengths are derived from the elapsed time.
+   */
   drawEntity() {
     this.app.layout.paint(this, 0, 0, this.width, this.height, ZXColor.black);
     var penColor = ZXColor.red;
@@ -37,6 +54,10 @@ export class ZXResetEntity extends AbstractEntity {
     }
   } // drawEntity
 
+  /**
+   * Per-frame update that recomputes the elapsed reset time from the model timer.
+   * @param {number} timestamp - The current frame timestamp in milliseconds.
+   */
   loopEntity(timestamp) {
     if (this.model.timer != false) {
       this.timeTrace = Math.round(timestamp-this.model.timer);

@@ -5,8 +5,28 @@ import TextEntity from './textEntity.js';
 /**/
 // begin code
 
+/**
+ * A clickable button entity built on top of TextEntity. It renders a text label
+ * and fires a configured event when activated by a hot key, a mouse click, or a
+ * touch within its bounds.
+ */
 export class ButtonEntity extends TextEntity {
 
+  /**
+   * Creates a button entity.
+   * @param {AbstractEntity} parentEntity - The parent entity this button is attached to.
+   * @param {Object} fonts - The font set used to render the button label.
+   * @param {number} x - X position relative to the parent.
+   * @param {number} y - Y position relative to the parent.
+   * @param {number} width - Button width.
+   * @param {number} height - Button height.
+   * @param {string} text - The label text shown on the button.
+   * @param {Object} event - The event object sent when the button is activated.
+   * @param {Array} hotKeys - Keys that trigger the button when pressed.
+   * @param {string|false} penColor - Foreground (text) color.
+   * @param {string|false} bkColor - Background color.
+   * @param {Object} options - Additional text/rendering options passed to TextEntity.
+   */
   constructor(parentEntity, fonts, x, y, width, height, text, event, hotKeys, penColor, bkColor, options) {
     super(parentEntity, fonts, x, y, width, height, text, penColor, bkColor, options);
     this.id = 'ButtonEntity';
@@ -15,6 +35,13 @@ export class ButtonEntity extends TextEntity {
     this.hotKeys = hotKeys;
   } // constructor
 
+  /**
+   * Handles input events for the button: pressing a configured hot key fires the
+   * event, while mouse/touch presses arm the button and matching releases over the
+   * button fire the event.
+   * @param {Object} event - The input event to process.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;

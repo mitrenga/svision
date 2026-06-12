@@ -2,8 +2,16 @@
 
 require_once 'abstractPage.php';
 
+/**
+ * Generates the PWA web app manifest (manifest.webmanifest) describing the app
+ * name, display mode, theme colours and icon set.
+ */
 class ManifestPage extends AbstractPage {
 
+  /**
+   * Builds the manifest structure into $data, including the icon entries for all
+   * supported dimensions plus the scalable SVG icon.
+   */
   public function createPage() {
     $this->data['name'] = $GLOBALS['appName'];
     $this->data['short_name'] = $GLOBALS['appName'];
@@ -28,6 +36,9 @@ class ManifestPage extends AbstractPage {
     $this->data['icons'][] = $icon;
   } // createPage
   
+  /**
+   * Sends $data as a manifest JSON response with the manifest content type.
+   */
   public function showPage() {
 		header ("Content-type: application/manifest+json");
 		header ('X-SendFile: manifest.webmanifest');

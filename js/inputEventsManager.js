@@ -5,8 +5,21 @@
 /**/
 // begin code
 
+/**
+ * Centralizes browser input handling for the application. It listens to
+ * keyboard, mouse, wheel, touch, gamepad, and window focus/blur events,
+ * tracks the set of currently active keys/touches/buttons, translates client
+ * coordinates into the application's layout space, and forwards normalized
+ * key/move/hover events to the application model.
+ */
 export class InputEventsManager {
 
+  /**
+   * Initializes the manager with empty input-state maps and a reference to the
+   * owning application.
+   * @param {Object} app - The owning application instance (provides model,
+   *   layout, controls, and timing).
+   */
   constructor(app) {
     this.app = app;
 
@@ -20,6 +33,12 @@ export class InputEventsManager {
     this.lastEventForAudio = false;
   } // constructor
   
+  /**
+   * Determines whether a fresh user gesture is needed to (re)enable audio,
+   * which is true when no qualifying event has been seen yet or the last one
+   * is older than five seconds.
+   * @returns {boolean} True if a new user event is required for audio.
+   */
   needEventForAudio() {
     if (this.lastEventForAudio === false) {
       return true;
@@ -30,6 +49,12 @@ export class InputEventsManager {
     return false;
   } // needEventForAudio
 
+  /**
+   * Handles a keydown event: records the key as active (respecting the model's
+   * autorepeat setting), updates the audio gesture timestamp for Enter, and
+   * sends a 'keyPress' event to the model.
+   * @param {KeyboardEvent} event - The native keydown event.
+   */
   eventKeyDown(event) {
     if (this.app.model.autorepeatKeys || !(event.key in this.keysMap)) {
       this.keysMap[event.key] = true;
@@ -42,6 +67,12 @@ export class InputEventsManager {
     }
   } // eventKeyDown
 
+  /**
+   * Handles a keyup event: removes the key from the active set, updates the
+   * audio gesture timestamp for Enter, and sends a 'keyRelease' event to the
+   * model.
+   * @param {KeyboardEvent} event - The native keyup event.
+   */
   eventKeyUp(event) {
     if (event.key in this.keysMap) {
       delete this.keysMap[event.key];
@@ -54,14 +85,28 @@ export class InputEventsManager {
     }
   } // eventKeyUp
 
+  /**
+   * Suppresses the browser's default click behavior.
+   * @param {MouseEvent} event - The native click event.
+   */
   eventClick(event) {
     event.preventDefault();
   } // eventClick
 
+  /**
+   * Suppresses the browser's default context menu.
+   * @param {MouseEvent} event - The native contextmenu event.
+   */
   eventContextMenu(event) {
     event.preventDefault();
   } // eventContextMenu
 
+  /**
+   * Handles a mousedown event: for each newly pressed mouse button, records it
+   * as active, updates the audio gesture timestamp for the primary button, and
+   * sends a 'keyPress' event with layout-converted coordinates to the model.
+   * @param {MouseEvent} event - The native mousedown event.
+   */
   eventMouseDown(event) {
     var buttons = event.buttons;
     if (buttons == 0) {
@@ -85,6 +130,13 @@ export class InputEventsManager {
     }
   } // eventMouseDown
 
+  /**
+   * Handles a mouseup event: for each released mouse button, sends a
+   * 'keyRelease' event with layout-converted coordinates, clears any tracked
+   * entity click state, updates the audio gesture timestamp for the primary
+   * button, and removes the button from the active set.
+   * @param {MouseEvent} event - The native mouseup event.
+   */
   eventMouseUp(event) {
     var buttons = event.buttons;
     for (var b = 0; b < 8; b++) {
@@ -108,6 +160,13 @@ export class InputEventsManager {
     }
   } // eventMouseUp
 
+  /**
+   * Handles a mousemove event: clears any stale hover state, converts the
+   * coordinates to layout space, and sends either a 'mouseHover' event or, when
+   * the primary button is held, a 'keyMove' event, updating the dragged
+   * entity's click state based on whether the pointer is over it.
+   * @param {MouseEvent} event - The native mousemove event.
+   */
   eventMouseMove(event) {
     if (this.mouseHover !== false) {
       this.mouseHover.hoverState = false;
@@ -132,6 +191,11 @@ export class InputEventsManager {
     }
   } // eventMouseMove
 
+  /**
+   * Handles a wheel event by sending a 'mouseWheel' event with the scroll
+   * deltas and layout-converted coordinates to the model.
+   * @param {WheelEvent} event - The native wheel event.
+   */
   eventWheel(event) {
     var deltaX = event.deltaX;
     var deltaY = event.deltaY;
@@ -142,6 +206,12 @@ export class InputEventsManager {
     }
   } // eventWheel
 
+  /**
+   * Handles a touchstart event: prevents the default, marks touchscreen
+   * support and the audio gesture timestamp, and for each new touch records it
+   * and sends a 'keyPress' 'Touch' event with layout-converted coordinates.
+   * @param {TouchEvent} event - The native touchstart event.
+   */
   eventTouchStart(event) {
     event.preventDefault();
     this.lastEventForAudio = this.app.now;
@@ -159,6 +229,13 @@ export class InputEventsManager {
     }
   } // eventTouchStart
 
+  /**
+   * Handles a touchend event: prevents the default, updates the audio gesture
+   * timestamp, and for each ended touch sends a 'keyRelease' 'Touch' event,
+   * clears any tracked entity click state, and removes the touch from the
+   * active set.
+   * @param {TouchEvent} event - The native touchend event.
+   */
   eventTouchEnd(event) {
     event.preventDefault();
     this.lastEventForAudio = this.app.now;
@@ -178,6 +255,13 @@ export class InputEventsManager {
     }
   } // eventTouchEnd
 
+  /**
+   * Handles a touchmove event: prevents the default and, for each moved touch
+   * that is bound to an entity, sends a 'keyMove' 'Touch' event with
+   * layout-converted coordinates and updates the entity's click state based on
+   * whether the touch point is over it.
+   * @param {TouchEvent} event - The native touchmove event.
+   */
   eventTouchMove(event) {
     event.preventDefault();
     for (var t = 0; t < event.changedTouches.length; t++) {
@@ -199,6 +283,13 @@ export class InputEventsManager {
     }
   } // eventTouchMove
 
+  /**
+   * Polls connected gamepads and emits 'keyPress'/'keyRelease' events for
+   * button and axis state transitions. When a gamepad is being configured
+   * (gamepadsConfig set) it reports raw button/axis identifiers; otherwise it
+   * maps physical buttons/axes to the configured event names defined in
+   * app.controls.gamepads.devices.
+   */
   updateGamepadsStates() {
     if (!('gamepads' in this.app.controls)) {
       return;
@@ -335,6 +426,12 @@ export class InputEventsManager {
     }
   } // updateGamepadsStates
 
+  /**
+   * Handles loss of window focus: marks the blur state, releases all active
+   * keys, notifies the model with a 'blurWindow' event, and clears any hover
+   * state.
+   * @param {FocusEvent} event - The native blur event.
+   */
   eventBlurWindow(event) {
     this.blurWindow = true;
     this.sendEventsActiveKeys('Release');
@@ -344,10 +441,20 @@ export class InputEventsManager {
     }
   } // eventOnBlurWindow
 
+  /**
+   * Handles regaining window focus by clearing the blur state.
+   * @param {FocusEvent} event - The native focus event.
+   */
   eventFocusWindow(event) {
     this.blurWindow = false;
   } // eventOnFocusWindow
 
+  /**
+   * Sends a 'key<type>' event to the model for every currently active key,
+   * touch game control, and gamepad mapping; when type is 'Release' it also
+   * resets all active-input maps to empty.
+   * @param {string} type - Event suffix, e.g. 'Press' or 'Release'.
+   */
   sendEventsActiveKeys(type) {
     Object.keys(this.keysMap).forEach((key) => {
       this.app.model.sendEvent(0, {id: 'key'+type, key: key});

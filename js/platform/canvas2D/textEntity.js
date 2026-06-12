@@ -5,8 +5,26 @@ import AbstractEntity from '../../abstractEntity.js';
 /**/
 // begin code
 
+/**
+ * A multi-line text rendering entity. It lays out and draws bitmap-font text with
+ * support for alignment (left/right/center/justify), word wrapping, per-glyph colors,
+ * flashing animation, caching, and optional crop-to-parent clipping.
+ */
 export class TextEntity  extends AbstractEntity {
 
+  /**
+   * Creates a text entity.
+   * @param {AbstractEntity} parentEntity - The parent entity this text is attached to.
+   * @param {Object} fonts - The font set used to render the text.
+   * @param {number} x - X position relative to the parent.
+   * @param {number} y - Y position relative to the parent.
+   * @param {number} width - Entity width.
+   * @param {number} height - Entity height.
+   * @param {string} text - The text to render.
+   * @param {string|false} penColor - Foreground (text) color.
+   * @param {string|false} bkColor - Background color.
+   * @param {Object} options - Alignment, wrapping, margin, scale, and animation options.
+   */
   constructor(parentEntity, fonts, x, y, width, height, text, penColor, bkColor, options) {
     super(parentEntity, x, y, width, height, penColor, bkColor);
     this.id = 'TextEntity';
@@ -61,6 +79,10 @@ export class TextEntity  extends AbstractEntity {
     this.cursorY = 0;
   } // constructor
 
+  /**
+   * Initializes the entity and resolves default hover and click colors from the
+   * stack configuration when they were not explicitly provided.
+   */
   init() {
     super.init();
 
@@ -85,22 +107,41 @@ export class TextEntity  extends AbstractEntity {
     }
   } // init
 
+  /**
+   * Enables crop-to-parent rendering by creating a crop drawing cache.
+   */
   enablePaintWithVisibility() {
     this.app.layout.newDrawingCropCache(this);
   } // enablePaintWithVisibility
 
+  /**
+   * Disables crop-to-parent rendering by discarding the crop drawing cache.
+   */
   disablePaintWithVisibility() {
     this.drawingCropCache = null;
   } // disablePaintWithVisibility
 
+  /**
+   * Marks the text drawing cache as dirty so it is re-rendered on the next draw.
+   */
   cleanCache() {
     this.drawingCache[0].cleanCache();
   } // cleanCache
-  
+
+  /**
+   * Returns the rendered width of a single character at the current scale.
+   * @param {string} char - The character to measure.
+   * @returns {number} The character width in pixels.
+   */
   charWidth(char) {
     return this.fonts.getCharData(char, '1', this.options.scale).width;
   } // charWidth
 
+  /**
+   * Computes the rendered width of a line of text including inter-character spacing.
+   * @param {string} text - The line of text to measure.
+   * @returns {number} The line width in pixels.
+   */
   lineWidth(text) {
     var width = 0;
     for (var i = 0; i < text.length; i++) {
@@ -112,6 +153,12 @@ export class TextEntity  extends AbstractEntity {
     return width;
   } // lineWidth
 
+  /**
+   * Word-wraps a single line of text to the entity's available width, inserting
+   * newlines and breaking at spaces where possible.
+   * @param {string} text - The text to wrap.
+   * @returns {string} The wrapped text with embedded newline characters.
+   */
   wrapLine(text) {
     var wrappedText = '';
     var pos = 0;
@@ -141,6 +188,12 @@ export class TextEntity  extends AbstractEntity {
     return wrappedText;
   } // wrapLine
   
+  /**
+   * Determines the pen color for the glyph at the given index, applying flash-color
+   * animation and any per-character color overrides.
+   * @param {number} i - The character index within the text.
+   * @returns {string|false} The color to use for the glyph.
+   */
   glyphColor(i) {
     var penColor = this.penColor;
     if (this.options.animationMode == 'flashPenColor' && this.app.stack.flashState) {
@@ -152,6 +205,12 @@ export class TextEntity  extends AbstractEntity {
     return penColor;
   } // glyphColor
 
+  /**
+   * Returns the font mask variant for the glyph at the given index, selecting the
+   * reverse mask while a flash-reverse-colors animation is active.
+   * @param {number} i - The character index within the text.
+   * @returns {string} The mask key ('0' for reversed, '1' for normal).
+   */
   glyphMask(i) {
     if (this.options.animationMode == 'flashReverseColors' && this.app.stack.flashState == true
         && (this.options.flashMask === false || this.options.flashMask[i] == '#')) {
@@ -160,12 +219,27 @@ export class TextEntity  extends AbstractEntity {
     return '1';
   } // glyphMask
 
+  /**
+   * Paints a single glyph's pixel rectangles into the drawing cache at the given base
+   * X position and current cursor Y.
+   * @param {Object} charData - The glyph data containing its pixel rectangle list.
+   * @param {number} baseX - The X position at which to draw the glyph.
+   * @param {string} penColor - The color to paint the glyph with.
+   */
   paintGlyph(charData, baseX, penColor) {
     for (var x = 0; x < charData.data.length; x++) {
       this.app.layout.paintRect(this.drawingCache[0].ctx, baseX+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
     }
   } // paintGlyph
 
+  /**
+   * Advances the cursor to the next line and extracts the text of that line from the
+   * formatted text, applying paragraph spacing after a wrapped space break.
+   * @param {string} formattedText - The full, already-formatted text.
+   * @param {number} textPos - The current parse position within the formatted text.
+   * @param {string} partText - The text of the line just rendered.
+   * @returns {Object} An object {text, pos} with the next line's text and updated position.
+   */
   nextLine(formattedText, textPos, partText) {
     var moveY = (this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale;
     if (this.options.textWrap && partText == ' ') {
@@ -187,6 +261,11 @@ export class TextEntity  extends AbstractEntity {
     return {text: text, pos: textPos};
   } // nextLine
 
+  /**
+   * Lays out and renders the text into the cache when needed (applying wrapping and
+   * the configured alignment) and draws the cached image to the main canvas, cropping
+   * to the parent bounds when crop rendering is enabled.
+   */
   drawEntity() {
     super.drawEntity();
 
@@ -306,6 +385,12 @@ export class TextEntity  extends AbstractEntity {
     }
   } // drawEntity
 
+  /**
+   * Handles events affecting the text: re-renders on flash-state changes when an
+   * animation mode is active, and marks the entity hovered on mouseHover within bounds.
+   * @param {Object} event - The input event to process.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;

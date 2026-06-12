@@ -17,8 +17,22 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed dialog for entering the player's name. Renders a text input
+ * with a character counter and an on-screen Spectrum-style keyboard, then persists
+ * the name and optionally starts the game on confirmation.
+ */
 export class ZXPlayerNameEntity extends AbstractEntity {
 
+  /**
+   * Creates the player-name dialog and defines its on-screen keyboard layout.
+   * @param {AbstractEntity} parentEntity - The parent entity that owns this dialog.
+   * @param {number} x - X position of the dialog.
+   * @param {number} y - Y position of the dialog.
+   * @param {number} width - Dialog width.
+   * @param {number} height - Dialog height.
+   * @param {boolean} autoStartGame - Whether confirming the name should start the game immediately.
+   */
   constructor(parentEntity, x, y, width, height, autoStartGame) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXPlayerNameEntity';
@@ -86,6 +100,10 @@ export class ZXPlayerNameEntity extends AbstractEntity {
     };
   } // constructor
 
+  /**
+   * Builds the dialog contents: title, prompt, name input, character counter,
+   * on-screen keyboard and the cancel/confirm buttons.
+   */
   init() {
     super.init();
 
@@ -105,6 +123,12 @@ export class ZXPlayerNameEntity extends AbstractEntity {
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-50, this.height-16, 46, 13, 'OK', {id: 'saveZXPlayerName'}, ['Enter', 'GamepadOK'], ZXColor.brightWhite, ZXColor.green, {align: 'center', margin: 4}));
   } // init
 
+  /**
+   * Handles the dialog's events: closing it, updating the character counter as the
+   * input changes, and saving the name (then starting the game or refreshing the menu).
+   * @param {Object} event - The event object, including its id and inputId fields.
+   * @returns {boolean} True if the event was handled.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;

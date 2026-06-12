@@ -1,0 +1,22 @@
+{
+  "source": {
+    "include": ["js", "README.md"],
+    "includePattern": "\\.js$",
+    "excludePattern": "(^|[\\/\\\\])config[\\/\\\\]"
+  },
+  "opts": {
+    "destination": "docs",
+    "recurse": true,
+    "readme": "README.md",
+    "template": "node_modules/clean-jsdoc-theme",
+    "theme_opts": {
+      "title": "svision",
+      "homepageTitle": "svision API documentation"
+    }
+  },
+  "plugins": ["plugins/markdown"],
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": false
+  }
+}

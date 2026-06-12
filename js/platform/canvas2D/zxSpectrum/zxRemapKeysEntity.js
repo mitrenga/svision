@@ -13,8 +13,23 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed dialog that walks the player through rebinding each action of
+ * a device (keyboard, mouse or gamepad) one key at a time, then persists the new
+ * bindings. A blinking cursor marks the action awaiting input.
+ */
 export class ZXRemapKeysEntity extends AbstractEntity {
 
+  /**
+   * Creates the remap dialog and initialises the new-bindings buffer and the table
+   * of valid function keys per device type.
+   * @param {AbstractEntity} parentEntity - The parent entity that owns this dialog.
+   * @param {number} x - X position of the dialog.
+   * @param {number} y - Y position of the dialog.
+   * @param {number} width - Dialog width.
+   * @param {number} height - Dialog height.
+   * @param {Object} options - Device definition with its name and list of remappable keys.
+   */
   constructor(parentEntity, x, y, width, height, options) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXRemapKeysEntity';
@@ -29,6 +44,10 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     };
   } // constructor
 
+  /**
+   * Builds the dialog contents: the framed background, title, one label/value row per
+   * remappable key, the skip button and the close button, and highlights the first action.
+   */
   init() {
     super.init();
 
@@ -46,6 +65,10 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', {id: 'closeZXRemapKeys'}, ['Escape', 'GamepadExit'], ZXColor.brightWhite, ZXColor.blue, {align: 'center', margin: 4}));
   } // init
 
+  /**
+   * Returns the blinking cursor glyph for the action currently awaiting input.
+   * @returns {string} The cursor block character when the flash is on, otherwise an empty string.
+   */
   cursorText() {
     var cursor = '';
     if (this.app.stack.flashState) {
@@ -54,6 +77,12 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     return cursor;
   } // cursorText
 
+  /**
+   * Handles the dialog's events: closing it, blinking the cursor, and capturing each
+   * pressed (or skipped) key, advancing through the action list and saving when done.
+   * @param {Object} event - The event object, including its id and key fields.
+   * @returns {boolean} True if the event was handled.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
@@ -106,6 +135,10 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     return false;
   } // handleEvent
 
+  /**
+   * Persists the collected bindings for the active device, writing them into the
+   * app's controls, saving cookies and (for gamepads) refreshing the gamepad actions.
+   */
   saveKeys() {
     switch (this.options.device) {
 
@@ -122,7 +155,6 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         this.app.controls.gamepads.devices[this.app.inputEventsManager.gamepadsConfig] = {buttons: {}, axes: {}};
         var device = this.app.controls.gamepads.devices[this.app.inputEventsManager.gamepadsConfig];
         this.newKeys.forEach((newKey, k) => {
-          //this.sendEvent(-1, 0, {id: 'updateEntity', member: this.options.device+'.'+newKey.action, text: Tool.prettyKey(newKey.key)});
           if (newKey.key[0] == 'B') {
             device.buttons[newKey.key.substring(1)] = {action: newKey.action, event: this.options.keys[k].eventKey};
           }
@@ -143,6 +175,13 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     }
   } // saveKeys
 
+  /**
+   * Reports whether a key is an acceptable binding for the given device, including
+   * gamepad button (B) and axis (A) codes and the device's whitelist of function keys.
+   * @param {string} device - Device type ('keyboard', 'mouse' or 'gamepads').
+   * @param {string} key - The candidate key identifier.
+   * @returns {boolean} True if the key is valid for the device.
+   */
   isValidFnKeys(device, key) {
     switch (device) {
       case 'gamepads':

@@ -5,8 +5,21 @@
 /**/
 // begin code
 
+/**
+ * AudioWorklet processor that synthesizes a square-wave audio stream from a
+ * pulse/fragment description. It receives play/pause/continue/mute commands
+ * over its message port, generates output by alternating an output bit
+ * between volume levels for each pulse length, supports looping with an
+ * optional follow-up sound and an infinite randomized-pulse mode, and posts
+ * timing-synchronized events back to the main thread.
+ */
 class AudioProcessor extends AudioWorkletProcessor {
 
+  /**
+   * Initializes playback state and installs the message-port handler that
+   * processes 'play', 'pause', 'continue', 'mute', and 'unmute' commands.
+   * @param {...*} args - Arguments forwarded to the AudioWorkletProcessor base constructor.
+   */
   constructor(...args) {
     super(...args);
     this.fragments = false;
@@ -71,6 +84,17 @@ class AudioProcessor extends AudioWorkletProcessor {
     
   } // constructor
 
+  /**
+   * Renders one audio quantum. While not paused and a pulse sequence is
+   * loaded, it fills the output channels by toggling the output bit per pulse,
+   * handles infinite randomized pulses, posts events at pulse boundaries, and
+   * either restarts (optionally switching to the next sound) on repeat or
+   * silences and clears state when the sequence ends.
+   * @param {Array<Array<Float32Array>>} inputs - Input audio buffers (unused).
+   * @param {Array<Array<Float32Array>>} outputs - Output audio buffers to fill.
+   * @param {Object} options - Processor parameter values (unused).
+   * @returns {boolean} Always true to keep the processor alive.
+   */
   process (inputs, outputs, options) {
     if ((!this.paused) && (this.pulses !== false)) {
       var writePtr = 0;

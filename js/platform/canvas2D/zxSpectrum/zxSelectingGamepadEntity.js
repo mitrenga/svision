@@ -9,8 +9,22 @@ import ZXColor from './zxColor.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed modal entity that lists the currently connected gamepads
+ * and lets the user select one via keyboard, mouse or touch, emitting a
+ * changeSelectionGamepad event with the chosen device.
+ */
 export class ZXSelectingGamepadEntity extends AbstractEntity {
 
+  /**
+   * Creates the gamepad selection entity and initialises its menu state and colours.
+   * @param {AbstractEntity} parentEntity - The parent entity in the entity tree.
+   * @param {number} x - The x position relative to the parent.
+   * @param {number} y - The y position relative to the parent.
+   * @param {number} width - The entity width.
+   * @param {number} height - The entity height.
+   * @param {string} selectionGamepad - The id of the gamepad currently selected.
+   */
   constructor(parentEntity, x, y, width, height, selectionGamepad) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXSelectingGamepadEntity';
@@ -28,6 +42,10 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     this.clickSelectionColor = '#7a7a7aff';
   } // constructor
 
+  /**
+   * Builds the border, the selection highlight and the eight menu text rows,
+   * then populates them with the connected gamepads.
+   */
   init() {
     super.init();
 
@@ -44,6 +62,10 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     this.setMenuItems();
   } // init
 
+  /**
+   * Rebuilds the menu list from the currently connected gamepads, destroying the
+   * entity if none are connected and highlighting the currently selected gamepad.
+   */
   setMenuItems() {
     var connectedDevices = navigator.getGamepads();
     var isConnectedGamepad = false;
@@ -86,6 +108,11 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     this.menuSelectionEntity.y = 2+this.selectionItem*10;
   } // setMenuItems
 
+  /**
+   * Moves the selection highlight to the given menu index and updates the
+   * selected gamepad accordingly, ignoring out-of-range indices.
+   * @param {number} newItem - The index of the menu item to select.
+   */
   changeMenuItem(newItem) {
     if (newItem < 0 || newItem >= this.menuItems.length) {
       return;
@@ -97,12 +124,18 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     this.menuSelectionEntity.y = 2+this.selectionItem*10;
   } // changeMenuItem
 
+  /**
+   * Handles key, mouse and touch events to navigate, confirm or cancel the
+   * gamepad selection, emitting changeSelectionGamepad on confirmation.
+   * @param {Object} event - The event object, identified by its id property.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
     }
 
-    switch (event.id) { 
+    switch (event.id) {
 
       case 'keyPress':
         switch (event.key) {
@@ -192,6 +225,11 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
     return false;
   } // handleEvent
 
+  /**
+   * Per-frame update that detects changes in the connected gamepads and
+   * rebuilds the menu list when the set of devices has changed.
+   * @param {number} timestamp - The current frame timestamp in milliseconds.
+   */
   loopEntity(timestamp) {
     var connectedDevices = navigator.getGamepads();
     var y = 0;

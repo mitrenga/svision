@@ -7,8 +7,23 @@ import ButtonEntity from './buttonEntity.js';
 /**/
 // begin code
 
+/**
+ * An on-screen virtual keyboard entity. It builds a grid of ButtonEntity keys from
+ * a layout definition, manages shift/alternate layout switching, and translates key
+ * presses into virtual keyPress events sent to the application.
+ */
 export class KeyboardEntity extends AbstractEntity {
 
+  /**
+   * Creates a virtual keyboard entity.
+   * @param {AbstractEntity} parentEntity - The parent entity this keyboard is attached to.
+   * @param {number} x - X position relative to the parent.
+   * @param {number} y - Y position relative to the parent.
+   * @param {number} width - Keyboard width.
+   * @param {number} height - Keyboard height.
+   * @param {Object} layout - The keyboard layout definition (keymap and options).
+   * @param {string|false} bkColor - Background color.
+   */
   constructor(parentEntity, x, y, width, height, layout, bkColor) {
     super(parentEntity, x, y, width, height, false, bkColor);
     this.id = 'KeyboardEntity';
@@ -17,6 +32,11 @@ export class KeyboardEntity extends AbstractEntity {
     this.shiftLayout = ' ';
   } // constructor
 
+  /**
+   * Builds and positions all key ButtonEntity instances for every layout in the
+   * keymap, assigning each key its event prefix, label, colors, and layout group,
+   * and hiding keys that do not belong to the default layout.
+   */
   init() {
     super.init();
 
@@ -77,6 +97,12 @@ export class KeyboardEntity extends AbstractEntity {
     });
   } // init
 
+  /**
+   * Handles key button events: blank keys are ignored, shift keys toggle the visible
+   * layout group, and virtual/function keys are forwarded as keyPress events to the app.
+   * @param {Object} event - The event emitted by a key button.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;

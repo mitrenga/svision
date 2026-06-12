@@ -7,8 +7,21 @@ import Tool from '../../../tool.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum 8x8 bitmap font. Holds the glyph bitmap table as a hex string where
+ * each character is 16 hex digits (8 rows of one byte, each byte a row of 8 pixels),
+ * indexed by the position of the character in fontsChars. Supports an optional
+ * proportional mode that trims blank columns from each glyph, and provides per-glyph
+ * pixel-rectangle data for rendering.
+ */
 export class ZXFonts8x8 extends AbstractFonts {
 
+  /**
+   * Initialises the font, its glyph data table, the supported character set and the
+   * extra (non-ASCII) glyph set, optionally configuring proportional spacing.
+   * @param {Object} app - The application instance.
+   * @param {boolean} proportional - Whether glyphs are trimmed to proportional widths.
+   */
   constructor(app, proportional) {
     super(app);
     this.id = 'ZXFonts8x8';
@@ -30,6 +43,14 @@ export class ZXFonts8x8 extends AbstractFonts {
     //this.fontsData = '00000000000000000010101010001000002424000000000014147E28FC505000107C507C14547C1042A44810244A8400001028102A443A00000810000000000000182020202018000030080808083000000014083E081400000008083E0808000000000000080810000000003E00000000000000001818000204081020408000007C4C5454647C000018280808083E00007C440438407C00007C441804447C00001828487E081C00007C407C04447C00007C407C44447C00007C440810101000007C443844447C00007C44447C047C000000001000001000000010000010102000000408100804000000003E003E00000000100804081000007C441C100010003C42BD85BDA5BE78003C42427E42E70000FC427C4242FC00007E424040427E0000FE42424242FE0000FE42784042FE0000FE42784040E000007E42404E427E0000E7427E4242E700007C101010107C00007E08080848780000E648705844E60000E040404242FE0000C3665A4242E70000C762524A46E700007E424242427E0000FE42427E40E000007E424242527E0800FE42427E44E700007E407E02427E0000FE92101010380000CE444444447E0000E742424224180000D7929292926C0000EE44382844EE0000EE442810103800007E440810227E001C10101010101C0000004020100804003808080808083800001038541010100000000000000000FF003C247020207C0000007C047C447E00C0407C4444447C0000007C4440407C000C047C4444447E0000007C447C407C003C2470202020700000007C44447C047CC0407C444444E6001000701010107C000800380808084878C0404C506058CC007010101010107C000000FC545454D6000000FC444444E60000007C4444447C0000007E22223E207000007C44447C040600007C242020700000007C407C04FC0000207820202038000000CC4444447E000000CE44442838000000D65454547E000000C6281028C6000000CC44447C047C00007E4418227E00000E083008080E0000080808080808000070100C1010700000142800000000003C4299A1A199423C'+this.extraFontsData;
   } // constructor
 
+  /**
+   * Decodes a single character's glyph into a list of scaled pixel rectangles, applying
+   * proportional left/right column trimming when proportional mode is enabled.
+   * @param {string} char - The character to render; unknown characters fall back to '?'.
+   * @param {string} bitMask - The bit value ('1' or '0') treated as a set pixel.
+   * @param {number} scale - Pixel scale factor applied to coordinates and sizes.
+   * @returns {Object} An object with a data array of [x, y, w, h] rects and the glyph width.
+   */
   getCharData(char, bitMask, scale) {
     var width = 8;
     var charObject = {data: []};
@@ -102,6 +123,11 @@ export class ZXFonts8x8 extends AbstractFonts {
     return charObject;
   } // getCharData
 
+  /**
+   * Reports whether a character has a glyph in this font.
+   * @param {string} char - The character to test.
+   * @returns {boolean} True if the character is part of the font's character set.
+   */
   validChar(char) {
     if (this.fontsChars.indexOf(char) >= 0) {
       return true;
@@ -109,6 +135,10 @@ export class ZXFonts8x8 extends AbstractFonts {
     return false;
   } // validChar
 
+  /**
+   * Replaces the base glyph data table, re-appending the extra glyph data.
+   * @param {string} fontsData - Hex glyph data for the base character set.
+   */
   setFontsData(fontsData) {
     this.fontsData = fontsData+this.extraFontsData;
   } // setFontsData

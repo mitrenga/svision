@@ -5,8 +5,21 @@ import InputEventsManager from './inputEventsManager.js';
 /**/
 // begin code
 
+/**
+ * Base class for an application. Owns the platform, layout, input handling,
+ * the active model and the data/storage plumbing, and drives the per-frame
+ * loop and resize lifecycle.
+ */
 export class AbstractApp {
-  
+
+  /**
+   * Creates the application, wiring up the platform, canvas element, layout
+   * and input manager, and initializing the control/state defaults.
+   * @param {AbstractPlatform} platform - The platform implementation used to create the canvas, layout and entities.
+   * @param {HTMLElement|string} parentElement - The parent element (or its id) that hosts the canvas.
+   * @param {string} importPath - Base path used when dynamically importing application modules.
+   * @param {string} wsURL - WebSocket URL associated with the application.
+   */
   constructor(platform, parentElement, importPath, wsURL) {
     this.parentElement = false;
     this.element = false;
@@ -39,6 +52,11 @@ export class AbstractApp {
     }
   } // constructor
 
+  /**
+   * Per-frame application loop. Triggers a resize when the element size has
+   * changed, stores the current timestamp and advances the active model.
+   * @param {number} timestamp - The current frame timestamp.
+   */
   loopApp(timestamp) {
     if (this.prevSize.width != this.element.clientWidth || this.prevSize.height != this.element.clientHeight) {
       this.resizeApp();
@@ -49,6 +67,10 @@ export class AbstractApp {
     }
   } // loopApp
   
+  /**
+   * Handles a change in the application/viewport size by updating the
+   * --app-height CSS variable, resizing the model and caching the new size.
+   */
   resizeApp() {
     if (window.innerHeight != this.element.height) {
       document.documentElement.style.setProperty('--app-height', window.innerHeight+'px');
@@ -59,10 +81,24 @@ export class AbstractApp {
     this.prevSize = {width: this.element.clientWidth, height: this.element.clientHeight};
   } // resizeApp
   
+  /**
+   * Window resize event handler that delegates to resizeApp.
+   * @param {Event} event - The window resize event.
+   */
   eventResizeWindow(event) {
     this.resizeApp();
   } // eventResizeWindow
 
+  /**
+   * Fetches data from a URL, optionally serving it from localStorage first
+   * depending on the storage policy and the current online/offline status,
+   * otherwise POSTing and resolving the result back to the receiver.
+   * @param {string} url - The endpoint to fetch data from.
+   * @param {Object|false} storage - Storage policy with `key` and `when` properties, or false to skip storage.
+   * @param {*} data - The payload to send in the request body.
+   * @param {Object} receiver - Object that receives results via setData/errorData and carries an id/fetchDataId.
+   * @returns {string|undefined} The generated fetchDataId, or undefined when served from storage or skipped while offline.
+   */
   fetchData(url, storage, data, receiver) {
     var connectionStatus = 'offline';
     if (navigator.onLine) {
@@ -125,10 +161,21 @@ export class AbstractApp {
     return fetchDataId;
   } // fetchData
 
+  /**
+   * Saves data to localStorage under the application-prefixed key.
+   * @param {string} key - The storage key (prefixed with the app prefix).
+   * @param {*} data - The value to serialize and store.
+   */
   saveDataToStorage(key, data) {
     localStorage.setItem(window.appPrefix+'.'+key, JSON.stringify(data));
   } // saveDataToStorage
 
+  /**
+   * Reports an error message to the user. The base implementation logs it to
+   * the console.
+   * @param {string} message - The error message to display.
+   * @param {string} action - The suggested follow-up action (e.g. 'restart').
+   */
   showErrorMessage(message, action) {
     console.error('ERROR: '+message);
   } // showErrorMessage

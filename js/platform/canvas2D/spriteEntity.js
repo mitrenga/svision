@@ -5,8 +5,23 @@ import AbstractEntity from '../../abstractEntity.js';
 /**/
 // begin code
 
+/**
+ * A pixel sprite entity. It decodes character-grid sprite definitions (mono or
+ * palette-colored) into pixel lists per frame/direction, caches the rendered frames,
+ * and draws the current frame with optional repetition and crop-to-parent clipping.
+ */
 export class SpriteEntity  extends AbstractEntity {
 
+  /**
+   * Creates a sprite entity.
+   * @param {AbstractEntity} parentEntity - The parent entity this sprite is attached to.
+   * @param {number} x - X position relative to the parent.
+   * @param {number} y - Y position relative to the parent.
+   * @param {string|false} penColor - Foreground color for mono sprites, or false when using a palette.
+   * @param {string|false} bkColor - Background color, or false for transparent.
+   * @param {number} frame - The initial frame index.
+   * @param {number} direction - The initial direction index.
+   */
   constructor(parentEntity, x, y, penColor, bkColor, frame, direction) {
     super(parentEntity, x, y, 0, 0, penColor, bkColor);
     this.id = 'SpriteEntity';
@@ -27,14 +42,26 @@ export class SpriteEntity  extends AbstractEntity {
     this.framePalettes = [];
   } // constructor
 
+  /**
+   * Enables crop-to-parent rendering by creating a crop drawing cache.
+   */
   enablePaintWithVisibility() {
     this.app.layout.newDrawingCropCache(this);
   } // enablePaintWithVisibility
 
+  /**
+   * Disables crop-to-parent rendering by discarding the crop drawing cache.
+   */
   disablePaintWithVisibility() {
     this.drawingCropCache = null;
   } // disablePaintWithVisibility
 
+  /**
+   * Forces a fixed sprite cell size, updating the entity dimensions according to the
+   * current repeat factors.
+   * @param {number} width - Fixed sprite cell width.
+   * @param {number} height - Fixed sprite cell height.
+   */
   setFixSize(width, height) {
     this.fixWidth = width;
     this.fixHeight = height;
@@ -44,39 +71,71 @@ export class SpriteEntity  extends AbstractEntity {
     this.spriteHeight = height;
   } // setFixSize
 
+  /**
+   * Sets how many times the sprite repeats horizontally and updates the width.
+   * @param {number} value - The horizontal repeat count.
+   */
   setRepeatX(value) {
     this.repeatX = value;
     this.width = this.spriteWidth*value;
   } // setRepeatX
 
+  /**
+   * Sets how many times the sprite repeats vertically and updates the height.
+   * @param {number} value - The vertical repeat count.
+   */
   setRepeatY(value) {
     this.repeatY = value;
     this.height = this.spriteHeight*value;
   } // setRepeatY
 
+  /**
+   * Sets the mono pen color, disables any shared palette, and clears the cache.
+   * @param {string} color - The new pen color.
+   */
   setPenColor(color) {
     this.penColor = color;
     this.sharedPalette = false;
     this.cleanCache();
   }
 
+  /**
+   * Sets the shared (sprite-wide) palette, disables the mono pen color, and clears the cache.
+   * @param {Object} palette - The palette mapping characters to colors.
+   */
   setSharedPalette(palette) {
     this.sharedPalette = palette;
     this.penColor = false;
     this.cleanCache();
   } // setSharedPalette
 
-  // a decoded frame is either an array of rows (mono hR2/lP1/lT2),
-  // or {grid:[...], colors?:{...}} (colored braille)
+  /**
+   * Extracts the character grid from a decoded frame. A decoded frame is either
+   * a plain array of rows (mono hR2/lP1/lT2) or an object {grid, colors?}
+   * (colored braille).
+   * @param {Array|Object} frame - The decoded frame (rows array or {grid, colors}).
+   * @returns {Array} The grid of rows.
+   */
   frameGrid(frame) {
     return (frame && frame.grid) ? frame.grid : frame;
   } // frameGrid
 
-  // palette priority: per-frame colors > this.sharedPalette > false (mono)
+  /**
+   * Resolves the palette to use for a frame. Priority: the frame's own per-frame
+   * colors > this.sharedPalette > false (mono rendering via penChar).
+   * @param {Array|Object} frame - The decoded frame.
+   * @returns {Object|false} The palette to use, or false for mono rendering.
+   */
   resolvePalette(frame) {
     return (frame && frame.colors) ? frame.colors : this.sharedPalette;
   } // resolvePalette
 
+  /**
+   * Loads sprite graphics data, configuring pen character, frame and direction
+   * counts, and shared palette, then decodes every frame into pixel data and
+   * allocates a drawing cache per frame.
+   * @param {Object} data - The graphics data (sprite definition, frames, directions, colors, penChar).
+   */
   setGraphicsData(data) {
     if ('penChar' in data) {
       this.penChar = data.penChar;
@@ -123,6 +182,14 @@ export class SpriteEntity  extends AbstractEntity {
     this.setDimensions();
   } // setGraphicsData
 
+  /**
+   * Decodes a character grid into a list of pixel descriptors, scanning each cell and
+   * recording set pixels (with their palette color key when colored), while tracking
+   * the sprite's overall width and height.
+   * @param {Array} grid - The grid of character rows describing the frame.
+   * @param {Object|false} palette - The palette mapping characters to colors, or false for mono.
+   * @returns {Array} The list of pixel descriptors for the frame.
+   */
   buildFrameData(grid, palette) {
     var spriteFrame = [];
     var spriteFrameWidth = 0;
@@ -163,6 +230,13 @@ export class SpriteEntity  extends AbstractEntity {
     return spriteFrame;
   } // buildFrameData
 
+  /**
+   * Decodes and appends an additional frame to the sprite, allocating a drawing cache
+   * for it and recomputing dimensions.
+   * @param {Array} grid - The grid of character rows describing the frame.
+   * @param {Object|false} palette - The per-frame palette, or false/undefined to use the shared palette.
+   * @returns {Array} The decoded pixel data for the new frame.
+   */
   // palette: per-frame palette, or false/undefined for mono (penChar) / sharedPalette
   addFrameData(grid, palette) {
     if (this.directions == 0) {
@@ -179,6 +253,10 @@ export class SpriteEntity  extends AbstractEntity {
     return this.spriteData[index];
   } // addFrameData
 
+  /**
+   * Recomputes the entity width and height from the sprite size (or fixed size) and
+   * the horizontal/vertical repeat factors.
+   */
   setDimensions() {
     if (this.fixWidth > 0) {
       this.width = this.fixWidth*this.repeatX;
@@ -194,6 +272,11 @@ export class SpriteEntity  extends AbstractEntity {
     }
   } // setDimensions
 
+  /**
+   * Renders the current frame/direction into its cache when needed (applying the
+   * resolved color per pixel and any repetition) and draws it to the main canvas,
+   * cropping to the parent bounds when crop rendering is enabled.
+   */
   drawEntity() {
     if (this.spriteData !== null) {
       var d = this.direction;
@@ -259,6 +342,9 @@ export class SpriteEntity  extends AbstractEntity {
     }
   } // drawEntity
 
+  /**
+   * Marks every frame/direction drawing cache as dirty so they are re-rendered.
+   */
   cleanCache() {
     for (var d = 0; d < this.directions; d++) {
       for (var f = 0; f < this.frames; f++) {

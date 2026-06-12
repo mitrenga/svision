@@ -5,8 +5,24 @@
 /**/
 // begin code
 
+/**
+ * Base class for a visual entity in the entity tree. Holds geometry, colors,
+ * hover/click/hide/modal state and child entities, and provides event
+ * dispatching, data fetching and clipped drawing of itself and its children.
+ */
 export class AbstractEntity {
 
+  /**
+   * Creates an entity, linking it to its parent (and inheriting that parent's
+   * model and app) and initializing geometry, colors and state.
+   * @param {AbstractEntity|null} parentEntity - The parent entity, or null for a root entity.
+   * @param {number} x - The x position relative to the parent.
+   * @param {number} y - The y position relative to the parent.
+   * @param {number} width - The entity width.
+   * @param {number} height - The entity height.
+   * @param {string|false} penColor - The pen/foreground color, or false for none.
+   * @param {string|false} bkColor - The background color, or false for none.
+   */
   constructor(parentEntity, x, y, width, height, penColor, bkColor) {
     this.id = 'AbstractEntity';
 
@@ -50,9 +66,17 @@ export class AbstractEntity {
     this.fetchDataId = '';
   } // constructor
   
+  /**
+   * Initializes the entity after construction. The base implementation does nothing.
+   */
   init() {
   } // init
 
+  /**
+   * Adds a child entity, sharing the app stack, applying any platform-provided
+   * objects, initializing it and appending it to the children list.
+   * @param {AbstractEntity} entity - The child entity to add.
+   */
   addEntity(entity) {
     entity.stack = this.app.stack;
     var entityObjects = this.app.platform.initEntity(entity);
@@ -65,16 +89,27 @@ export class AbstractEntity {
     this.entities.push(entity);
   } // addEntity
 
+  /**
+   * Adds a child entity and marks it as the current modal entity.
+   * @param {AbstractEntity} entity - The entity to add and treat as modal.
+   */
   addModalEntity(entity) {
     this.addEntity(entity);
     entity.modal = true;
     this.modalEntity = entity;
   } // addModalEntity
 
+  /**
+   * Requests destruction of this entity by sending a 'destroy' event so its
+   * parent can remove and shut it down.
+   */
   destroy() {
     this.sendEvent(0, 1, {id: 'destroy', entity: this});
   } // destroy
 
+  /**
+   * Recursively shuts down and removes all child entities.
+   */
   shutdown() {
     for (var v = 0; v < this.entities.length; v++) {
       this.entities[v].shutdown();
@@ -84,6 +119,13 @@ export class AbstractEntity {
     }
   } // shutdown
 
+  /**
+   * Dispatches an event in a given direction within the entity tree, or
+   * schedules it via the model when timing is non-zero.
+   * @param {number} direction - Routing for immediate events: -1 to the parent (and its children), 0 to the model, 1 to this entity's children.
+   * @param {number} timing - Delay in milliseconds; 0 dispatches now, otherwise it is scheduled on the model.
+   * @param {Object} event - The event object to dispatch.
+   */
   sendEvent(direction, timing, event) {
     if (timing == 0) {
       switch (direction) {
@@ -114,6 +156,10 @@ export class AbstractEntity {
     }
   } // sendEvent
 
+  /**
+   * Sets the entity text, invalidating the draw cache when it changes.
+   * @param {string} text - The new text value.
+   */
   setText(text) {
     if (this.text != text) {
       this.text = text;
@@ -121,6 +167,10 @@ export class AbstractEntity {
     }
   } // setText
 
+  /**
+   * Sets the pen/foreground color, invalidating the draw cache when it changes.
+   * @param {string|false} color - The new pen color.
+   */
   setPenColor(color) {
     if (color != this.penColor) {
       this.penColor = color;
@@ -128,6 +178,10 @@ export class AbstractEntity {
     }
   } // setPenColor
 
+  /**
+   * Sets the background color, invalidating the draw cache when it changes.
+   * @param {string|false} color - The new background color.
+   */
   setBkColor(color) {
     if (color != this.bkColor) {
       this.bkColor = color;
@@ -135,10 +189,22 @@ export class AbstractEntity {
     }
   } // setBkColor
 
+  /**
+   * Cancels scheduled events with the given id via the model.
+   * @param {string} id - The event id to cancel.
+   */
   cancelEvent(id) {
     this.model.cancelEvent(id);
   } // cancelEvent
 
+  /**
+   * Handles an event for this entity. While a modal entity is active, input
+   * events are routed to it; otherwise 'updateEntity' applies matching
+   * property changes and 'destroy' removes a child, falling back to
+   * propagating the event to children.
+   * @param {Object} event - The event object, identified by its `id`.
+   * @returns {boolean} True if the event was handled, false otherwise.
+   */
   handleEvent(event) {
     if (this.modalEntity != null && ['keyPress', 'mouseHover', 'blurWindow'].indexOf(event.id) >= 0) {
       this.modalEntity.handleEvent(event);
@@ -203,23 +269,47 @@ export class AbstractEntity {
     return false;
   } // handleEvent
   
+  /**
+   * Per-frame entity update hook. The base implementation does nothing.
+   * @param {number} timestamp - The current frame timestamp.
+   */
   loopEntity(timestamp) {
   } // loopEntity
 
+  /**
+   * Requests data from a URL via the application, recording the fetch id so
+   * results can be matched back to this entity.
+   * @param {string} url - The endpoint to fetch data from.
+   * @param {Object|false} storage - Storage policy passed through to the app, or false.
+   * @param {*} data - The payload to send.
+   */
   fetchData(url, storage, data) {
     this.fetchDataId = this.app.fetchData(url, storage, data, this);
   } // fetchData
 
+  /**
+   * Distributes fetched data to all child entities.
+   * @param {Object} data - The received data payload.
+   */
   setData(data) {
     for (var v = 0; v < this.entities.length; v++) {
       this.entities[v].setData(data);
     }
   } // setData
 
+  /**
+   * Handles a data-fetch error by showing an error message via the app.
+   * @param {Error} error - The error that occurred during fetching.
+   */
   errorData(error) {
     this.app.showErrorMessage(error.message, 'restart');
   } // errorData
 
+  /**
+   * Draws the entity unless hidden: selects the effective color based on
+   * hover/click state, clips its rectangle to the parent's visible area,
+   * paints the background and then draws its child entities.
+   */
   drawEntity() {
     if (this.hide == true) {
       return;
@@ -263,6 +353,11 @@ export class AbstractEntity {
     this.drawSubEntities();
   } // drawEntity
 
+  /**
+   * Computes a child entity's absolute parent offset and clipped parent
+   * cover/size, then draws it.
+   * @param {AbstractEntity} entity - The child entity to position and draw.
+   */
   drawSubEntity(entity) {
     entity.parentX = this.parentX+this.x;
     entity.parentY = this.parentY+this.y;
@@ -294,6 +389,9 @@ export class AbstractEntity {
     entity.drawEntity();
   } // drawSubEntity
 
+  /**
+   * Draws all non-hidden child entities.
+   */
   drawSubEntities() {
     this.entities.forEach ((entity) => {
       if (entity.hide == false) {
@@ -302,6 +400,11 @@ export class AbstractEntity {
     });
   } // drawSubEntities
   
+  /**
+   * Tests whether a point lies within the entity's absolute bounds.
+   * @param {Object} event - An object with `x` and `y` coordinates.
+   * @returns {boolean} True if the point is inside the entity, false otherwise.
+   */
   pointOnEntity(event) {
     if ((this.parentX+this.x <= event.x) && (this.parentY+this.y <= event.y) && (this.parentX+this.x+this.width >= event.x) && (this.parentY+this.y+this.height >= event.y)) {
       return true;
@@ -309,19 +412,34 @@ export class AbstractEntity {
     return false;
   }
 
+  /**
+   * Sets the pen/foreground color and invalidates the draw cache.
+   * @param {string|false} color - The new pen color.
+   */
   setPenColor(color) {
     this.penColor = color;
     this.cleanCache();
   } // setPenColor
 
+  /**
+   * Sets the background color and invalidates the draw cache.
+   * @param {string|false} color - The new background color.
+   */
   setBkColor(color) {
     this.bkColor = color;
     this.cleanCache();
   } // setBkColor
 
-  cleanCache() {    
+  /**
+   * Invalidates the entity's draw cache. The base implementation does nothing.
+   */
+  cleanCache() {
   } // cleanCache
 
+  /**
+   * Walks the modal chain to return the topmost active modal entity.
+   * @returns {AbstractEntity} The topmost modal entity, or this entity if none is modal.
+   */
   topModalEntity() {
     if (this.modalEntity == null) {
       return this;
@@ -329,6 +447,10 @@ export class AbstractEntity {
     return this.modalEntity.topModalEntity();
   } // topModalEntity
 
+  /**
+   * Computes the entity's absolute x position by summing parent offsets.
+   * @returns {number} The absolute x coordinate.
+   */
   absoluteX() {
     if (this.parentEntity == null) {
       return 0;
@@ -336,6 +458,10 @@ export class AbstractEntity {
     return this.parentEntity.absoluteX()+this.x;
   } // absolutePosX
 
+  /**
+   * Computes the entity's absolute y position by summing parent offsets.
+   * @returns {number} The absolute y coordinate.
+   */
   absoluteY() {
     if (this.parentEntity == null) {
       return 0;

@@ -7,8 +7,25 @@ import TextEntity from './textEntity.js';
 /**/
 // begin code
 
+/**
+ * A selectable list menu entity. It builds two-column text rows from a data source
+ * callback, highlights the current selection with a selection bar, and supports
+ * keyboard, gamepad, mouse, and touch navigation and activation.
+ */
 export class MenuEntity  extends AbstractEntity {
 
+  /**
+   * Creates a menu entity.
+   * @param {AbstractEntity} parentEntity - The parent entity this menu is attached to.
+   * @param {number} x - X position relative to the parent.
+   * @param {number} y - Y position relative to the parent.
+   * @param {number} width - Menu width.
+   * @param {number} height - Menu height.
+   * @param {string|false} bkColor - Background color.
+   * @param {Object} options - Layout, margin, and color options for the menu.
+   * @param {*} dataSender - The object passed back to onGetData as the data source.
+   * @param {Function} onGetData - Callback used to retrieve item count, texts, and events.
+   */
   constructor(parentEntity, x, y, width, height, bkColor, options, dataSender, onGetData) {
     super(parentEntity, x, y, width, height, false, bkColor);
     this.id = 'MenuEntity';
@@ -52,6 +69,11 @@ export class MenuEntity  extends AbstractEntity {
     }
   } // constructor
 
+  /**
+   * Builds the selection bar entity and the two text columns (primary and secondary)
+   * for every menu item reported by the data source, applying selection and
+   * hover/click colors.
+   */
   init() {
     super.init();
 
@@ -78,6 +100,10 @@ export class MenuEntity  extends AbstractEntity {
     }
   } // init
 
+  /**
+   * Re-reads the primary and secondary text of every menu item from the data source
+   * and updates the corresponding text entities.
+   */
   refreshMenu() {
     for (var y = 0; y < this.menuEntities.length; y++) {
       this.menuEntities[y][0].setText(this.onGetData(this.dataSender, 't1', y));
@@ -85,6 +111,11 @@ export class MenuEntity  extends AbstractEntity {
     }
   } // refreshMenu
 
+  /**
+   * Moves the selection to a new item, restoring colors on the previously selected
+   * row, applying selection colors to the new row, and repositioning the selection bar.
+   * @param {number} newSelection - The index of the item to select.
+   */
   changeMenuItem(newSelection) {
     if (newSelection < 0 || newSelection >= this.menuEntities.length) {
       return;
@@ -101,6 +132,13 @@ export class MenuEntity  extends AbstractEntity {
     this.selectionEntity.y = this.options.topMargin+this.selection*16;
   } // changeMenuItem
   
+  /**
+   * Handles menu events: refreshes item texts, moves the selection with arrow/gamepad
+   * keys, activates the selected item on Enter/OK, and arms/activates items via mouse
+   * and touch presses and releases.
+   * @param {Object} event - The input event to process.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
@@ -108,7 +146,7 @@ export class MenuEntity  extends AbstractEntity {
 
     switch (event.id) {
 
-      case 'refreshMenu': 
+      case 'refreshMenu':
         this.refreshMenu();
         return true;
         

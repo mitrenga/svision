@@ -2,8 +2,19 @@
 
 require_once 'abstractPage.php';
 
+/**
+ * Serves the application shell: the HTML document that loads the app's CSS and
+ * bootstraps the JavaScript entry point. It picks the script to load based on
+ * what is available — a built production bundle, the dev entry point for the
+ * active import method, or a maintenance page as the fallback.
+ */
 class AppPage extends AbstractPage {
-  
+
+  /**
+   * Builds the application shell HTML, injecting runtime globals (app name,
+   * client IP, websocket URL, version, dev flags) and the appropriate module
+   * script tag.
+   */
   public function createPage() {
     $srcVersion = $this->srcVersion();
 

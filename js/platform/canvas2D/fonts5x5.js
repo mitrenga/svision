@@ -5,8 +5,19 @@ import AbstractFonts from '../../abstractFonts.js';
 /**/
 // begin code
 
+/**
+ * A 5-pixel-tall bitmap font for the canvas 2D platform. Each character is
+ * defined in `fontsData` as a `{width, data}` entry, where `data` is an array
+ * of `[x, y, width, height]` rectangles describing the filled blocks that make
+ * up the glyph within its 5-pixel-high cell.
+ */
 export class Fonts5x5 extends AbstractFonts {
 
+  /**
+   * Initializes the font metrics (height, spacing) and the glyph rectangle
+   * table held in `fontsData`.
+   * @param {Object} app - The owning application instance.
+   */
   constructor(app) {
     super(app);
     this.id = 'Fonts5x5';
@@ -105,6 +116,16 @@ export class Fonts5x5 extends AbstractFonts {
     }
   } // constructor
 
+  /**
+   * Returns the rendering data for a single character, scaled by `scale`.
+   * Falls back to '?' when the character is not present in the font. The
+   * returned object holds the scaled width and an array of scaled
+   * `[x, y, width, height]` rectangles to draw.
+   * @param {string} char - The character to render.
+   * @param {*} bitMask - Unused for this font (kept for API compatibility).
+   * @param {number} scale - The scale factor applied to widths and rectangles.
+   * @returns {Object} An object with `width` and `data` (array of rectangles).
+   */
   getCharData(char, bitMask, scale) {
     var validChar = char.toUpperCase();
     if (!(validChar in this.fontsData)) {
@@ -122,6 +143,11 @@ export class Fonts5x5 extends AbstractFonts {
     return charObject;
   } // getCharData
 
+  /**
+   * Tests whether the given character has a glyph defined in this font.
+   * @param {string} char - The character to test.
+   * @returns {boolean} True if the character is defined, otherwise false.
+   */
   validChar(char) {
     if (char in this.fontsData) {
       return true;

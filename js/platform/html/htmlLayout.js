@@ -5,8 +5,23 @@ import AbstractLayout from '../../abstractLayout.js';
 /**/
 // begin code
 
+/**
+ * A layout that renders entities as absolutely positioned DOM elements. It
+ * maps logical model coordinates to real client pixel coordinates using
+ * precomputed lookup tables (`realX`, `realY`) so that the model grid scales
+ * to the element's actual size.
+ *
+ * **EXPERIMENTAL — WORK IN PROGRESS.** This layout is at a very early stage
+ * and exists only for testing. It is NOT usable for normal deployment and is
+ * expected to be moved to a separate branch in the future.
+ *
+ * @experimental
+ */
 export class HTMLLayout extends AbstractLayout {
-  
+
+  /**
+   * @param {Object} app - The owning application instance.
+   */
   constructor(app) {
     super(app);
     this.id = 'HTMLLayout';
@@ -15,6 +30,11 @@ export class HTMLLayout extends AbstractLayout {
     this.realY = [];
   } // constructor
 
+  /**
+   * Resizes the model's desktop entity to the configured logical dimensions
+   * and rebuilds the coordinate lookup tables.
+   * @param {Object} model - The model whose desktop entity is being resized.
+   */
   resizeModel(model) {
     super.resizeModel(model);
     
@@ -31,6 +51,12 @@ export class HTMLLayout extends AbstractLayout {
     this.prepareCoordinates(model);
   } // resizeModel
 
+  /**
+   * Builds the `realX` and `realY` lookup tables mapping each logical model
+   * coordinate to a real client pixel coordinate based on the current element
+   * size.
+   * @param {Object} model - The model providing the logical desktop dimensions.
+   */
   prepareCoordinates(model) {
     this.realX = [];
     var x = 0;
@@ -49,6 +75,13 @@ export class HTMLLayout extends AbstractLayout {
     this.realY.push(this.app.element.clientHeight);
   } // prepareCoordinates
 
+  /**
+   * Maps a logical model X coordinate to a real client pixel X coordinate,
+   * logging and clamping when the value is out of range.
+   * @param {Object} model - The model providing the logical desktop width.
+   * @param {number} x - The logical model X coordinate.
+   * @returns {number} The corresponding real client pixel X coordinate.
+   */
   nativeX(model, x) {
     if (x < 0) {
       console.log('ERROR: nativeX < 0 ->('+x+')');
@@ -61,6 +94,13 @@ export class HTMLLayout extends AbstractLayout {
     return this.realX[x];
   } // nativeX
 
+  /**
+   * Maps a logical model Y coordinate to a real client pixel Y coordinate,
+   * logging and clamping when the value is out of range.
+   * @param {Object} model - The model providing the logical desktop height.
+   * @param {number} y - The logical model Y coordinate.
+   * @returns {number} The corresponding real client pixel Y coordinate.
+   */
   nativeY(model, y) {
     if (y < 0) {
       console.log('ERROR: nativeY < 0 ->('+y+')');
@@ -73,6 +113,12 @@ export class HTMLLayout extends AbstractLayout {
     return this.realY[y];
   } // nativeY
 
+  /**
+   * Positions and sizes the entity's DOM element to match its logical bounds,
+   * applying the background color when one is set.
+   * @param {Object} entity - The entity to draw, carrying its DOM element and
+   *   logical position/size.
+   */
   drawEntity(entity) {
     var element = entity.stack.element;
     element.style.left = this.nativeX(entity.model, entity.x)+'px';

@@ -5,26 +5,57 @@ import AbstractAudioHandler from './abstractAudioHandler.js';
 /**/
 // begin code
 
+/**
+ * Audio handler used when sound output is disabled. It produces no audible
+ * output but still drives the timing-based event stream of a sound so that
+ * sound-synchronized game events keep firing.
+ */
 export class AudioDisableHandler extends AbstractAudioHandler {
-  
+
+  /**
+   * Creates the disabled handler.
+   * @param {Object} app - The owning application instance.
+   */
   constructor(app) {
     super(app);
     this.id = 'AudioDisableHandler';
   } // constructor
 
+  /**
+   * Opens the channel without creating an AudioContext, simply clearing the busy flag.
+   * @param {string} channel - Identifier of the channel.
+   * @param {Object} options - Channel configuration options.
+   * @returns {void}
+   */
   openChannel(channel, options) {
     this.busy = false;
   } // openChannel
 
+  /**
+   * Closes the channel, clearing the busy flag.
+   * @returns {boolean} Always true.
+   */
   closeChannel() {
     this.busy = false;
     return true;
   } // closeChannel
 
+  /**
+   * Returns the channel state, always reported as running so playback proceeds.
+   * @returns {string} The string 'running'.
+   */
   getState() {
     return 'running';
   } // getState
 
+  /**
+   * Produces no sound but walks the sound's pulse fragments to compute event
+   * timings and dispatches each associated event (converting samples to
+   * milliseconds at 44.1 kHz), including a final event after the last pulse.
+   * @param {Object} audioData - Sound data containing fragments, pulses, and optional events.
+   * @param {Object|boolean} options - Playback options (unused here).
+   * @returns {void}
+   */
   playSound(audioData, options) {
     if ('events' in audioData) {
       var timer = 0;
@@ -40,6 +71,10 @@ export class AudioDisableHandler extends AbstractAudioHandler {
     }
   } // playSound
 
+  /**
+   * Returns the fixed sample rate used for event-timing calculations.
+   * @returns {number} 44100.
+   */
   getSampleRate() {
     return 44100;
   } // getSampleRate

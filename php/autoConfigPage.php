@@ -2,8 +2,19 @@
 
 require_once 'abstractPage.php';
 
+/**
+ * Automatically probes which module import method the browser supports. It runs
+ * the probe in two passes driven by the libImportMethod cookie: first it tests
+ * "import from", and if that pass has already run ('false-await-import') it
+ * tests "await import". Each probe sets the cookie and reloads so the front
+ * controller can route to the next step.
+ */
 class AutoConfigPage extends AbstractPage {
-  
+
+  /**
+   * Builds the probe page for the current pass and schedules the reload that
+   * advances the auto-detection.
+   */
   public function createPage() {
     $srcVersion = $this->srcVersion();
 

@@ -7,16 +7,35 @@ import RichString from './richString.js';
 /**/
 // begin code
 
+/**
+ * Static collection of sprite encoding/decoding and geometry utilities.
+ *
+ * It implements several compression formats, each identified by a leading
+ * method marker:
+ *  - Monochrome sprites ("---####-" style):
+ *      hR2 - hex repetition, run lengths 00..FF
+ *      lP1 - latin pulses, 0..9A..Z
+ *      lT2 - latin trim, 00..99AA..ZZ
+ *  - Colored sprites (the maximum run length is derived dynamically from the
+ *    number of palette colors):
+ *      b90     - runs expressed as base90 characters (printable ASCII, no escaping needed)
+ *      braille - runs expressed as Braille characters
+ *
+ * Beyond (de)compression it also handles palette serialization, grid
+ * transformations (row rotation, shift/crop), and computation of per-frame
+ * "blank margins" used for pixel-perfect collision detection.
+ */
 export class SpriteTool {
-  // for monochrome sprites "---####-"
-  // hR2 - hex repetition 00..FF
-  // lP1 - latin pulses 0..9A..Z
-  // lT2 - latin trim 00..99AA..ZZ
 
-  // for colored sprites
-  // b90 - repeated characters expressed as base90 characters (printable ASCII, no escaping needed) — max repetitions calculated dynamically based on the number of colors
-  // braille - repeated characters expressed as Braille characters — max repetitions calculated dynamically based on the number of colors
-
+  /**
+   * Encodes sprite data using the named compression method, dispatching to the
+   * matching encoder.
+   * @param {Object} spriteData - The sprite data to encode.
+   * @param {string} method - The compression method ('hR2', 'lP1', 'lT2',
+   *   'b90', or 'braille').
+   * @returns {RichString|string} The encoded sprite string, or an error message
+   *   for an unknown method.
+   */
   static encode(spriteData, method) {
     switch (method) {
       case 'hR2': 
@@ -34,6 +53,13 @@ export class SpriteTool {
     }
   } // encode
 
+  /**
+   * Decodes an encoded sprite string by reading its leading method marker and
+   * dispatching to the matching decoder.
+   * @param {string} data - The encoded sprite string.
+   * @returns {Object|string} The decoded sprite data object, or an error
+   *   message for an unknown method.
+   */
   static decode(data) {
     var method = data.substring(0, 3);
     switch (method) {
@@ -52,6 +78,14 @@ export class SpriteTool {
     }
   } // decode
 
+  /**
+   * Encodes a monochrome sprite using the hR2 format: a header with hex
+   * width/height followed by a run-length stream of 2-hex-digit counts
+   * alternating between blank and solid pixels.
+   * @param {Object} spriteData - Sprite data with width, height, and sprite
+   *   row arrays.
+   * @returns {RichString} The hR2-encoded sprite string.
+   */
   static encode_hR2(spriteData) {
     var result = 'hR2'+Tool.intToHex(spriteData.width, 4)+Tool.intToHex(spriteData.height, 4);
     var counter = 0;
@@ -79,6 +113,13 @@ export class SpriteTool {
     return new RichString(result);
   } // encode_hR2
 
+  /**
+   * Decodes an hR2-format monochrome sprite string back into a sprite data
+   * object whose rows use '-' for blank and '#' for solid pixels.
+   * @param {string} data - The hR2-encoded sprite string.
+   * @returns {Object} The decoded sprite data (width, height, frames,
+   *   directions, sprite).
+   */
   static decode_hR2(data) {
     var result = {
       width: Tool.hexToInt(data.substring(3, 7)),
@@ -118,6 +159,15 @@ export class SpriteTool {
     return result;
   } // decode_hR2
 
+  /**
+   * Encodes a monochrome sprite using the lP1 format: a base-36 header, a
+   * deduplicated table of distinct run lengths ("pulses"), and a stream of
+   * single-character indices into that table. Returns an error string if a
+   * pulse exceeds 1296 or there are more than 36 distinct pulses.
+   * @param {Object} spriteData - Sprite data with width, height, and sprite
+   *   row arrays.
+   * @returns {RichString} The lP1-encoded sprite string, or an error message.
+   */
   static encode_lP1(spriteData) {
     var result = 'lP1'+Tool.intToLatin(spriteData.width, 3)+Tool.intToLatin(spriteData.height, 3);
     var pulses = [];
@@ -178,6 +228,13 @@ export class SpriteTool {
     return new RichString(result);
   } // encode_lP1
 
+  /**
+   * Decodes an lP1-format monochrome sprite string by reading the pulse table
+   * and expanding the index stream into '-'/'#' rows.
+   * @param {string} data - The lP1-encoded sprite string.
+   * @returns {Object} The decoded sprite data (width, height, frames,
+   *   directions, sprite).
+   */
   static decode_lP1(data) {
     var result = {
       width: Tool.latinToInt(data.substring(3, 6)),
@@ -225,6 +282,15 @@ export class SpriteTool {
     return result;
   } // decode_lP1
 
+  /**
+   * Encodes a monochrome sprite using the lT2 format: stores only the rows
+   * between the first and last non-empty row, each trimmed to its solid span
+   * and run-length encoded, with empty rows marked '-' and rows identical to
+   * the previous one marked 'S'. Returns an error string for an empty sprite.
+   * @param {Object} spriteData - Sprite data with width, height, and sprite
+   *   row arrays.
+   * @returns {RichString} The lT2-encoded sprite string, or an error message.
+   */
   static encode_lT2(spriteData) {
     var result = 'lT2';
     // find firstRow and lastRow
@@ -284,6 +350,14 @@ export class SpriteTool {
     return new RichString(result);
   } // encode_lT2
 
+  /**
+   * Decodes an lT2-format monochrome sprite string, reconstructing each row
+   * from its starting x, run-length values, '-' empty markers, and 'S'
+   * same-as-previous markers, padding to full width.
+   * @param {string} data - The lT2-encoded sprite string.
+   * @returns {Object} The decoded sprite data (width, height, frames,
+   *   directions, sprite).
+   */
   static decode_lT2(data) {
     var result = {
       width: Tool.latinToInt(data.substring(3, 6)),
@@ -341,6 +415,14 @@ export class SpriteTool {
     return result;
   } // decode_lT2
 
+  /**
+   * Serializes a color palette into base-90 form: for each code character its
+   * code point, the color string length (or sentinel 89 for a false/absent
+   * color), and the code points of the color string characters.
+   * @param {Object} palette - Map of single-character codes to color strings
+   *   (or false for transparent).
+   * @returns {string} The base-90 encoded palette section.
+   */
   static encodeB90Palette(palette) {
     var result = '';
     for (var ch in palette) {
@@ -356,6 +438,19 @@ export class SpriteTool {
     return result;
   } // encodeB90Palette
 
+  /**
+   * Encodes a single colored grid into a base-90 block: the bounding rows
+   * (startY/endY), and for each row its solid span plus run-length cells where
+   * each cell packs a repetition count and a palette color index. Transparent
+   * pixels (the palette's false-color code) are skipped via the bounds.
+   * @param {Array<string>} grid - Array of row strings for the frame.
+   * @param {Object} palette - Map of code characters to colors.
+   * @param {number} width - Grid width in pixels.
+   * @param {number} height - Grid height in pixels.
+   * @param {number} posLen - Number of base-90 chars used per position value.
+   * @param {number} cellBytes - Number of base-90 chars used per run cell.
+   * @returns {string} The base-90 encoded grid block.
+   */
   static encodeB90GridBlock(grid, palette, width, height, posLen, cellBytes) {
     var codeChars = Object.keys(palette);
     var codeIndex = {};
@@ -412,6 +507,17 @@ export class SpriteTool {
     return result;
   } // encodeB90GridBlock
 
+  /**
+   * Encodes a colored sprite (with frames and directions) using the b90
+   * format. It serializes either a shared palette or per-frame palettes plus
+   * each frame's grid block, trying both 1-byte and 2-byte run cells and
+   * keeping the shorter result, then prepends a header with version, cell-byte
+   * flag, dimensions, frames, and directions.
+   * @param {Object} spriteData - Sprite data with width, height, frames,
+   *   directions, colors (shared palette or false), and per-frame sprite
+   *   entries.
+   * @returns {RichString} The b90-encoded sprite string.
+   */
   static encode_b90(spriteData) {
     var width = spriteData.width;
     var height = spriteData.height;
@@ -461,13 +567,34 @@ export class SpriteTool {
     return new RichString(result);
   } // encode_b90
 
+  /**
+   * Decodes a b90-format colored sprite string into a sprite data object,
+   * reading the header, the shared or per-frame palettes, and each frame's
+   * run-length-encoded grid block, filling transparent cells with the palette's
+   * transparent code (or the first code when none is transparent).
+   * @param {string} data - The b90-encoded sprite string.
+   * @returns {Object} The decoded sprite data (width, height, frames,
+   *   directions, colors, sprite).
+   */
   static decode_b90(data) {
     var pos = 3;
+    /**
+     * Reads the next `len` characters from the data stream and advances the
+     * shared read pointer.
+     * @param {number} len - Number of characters to read.
+     * @returns {string} The read substring.
+     */
     function read(len) {
       var s = data.substring(pos, pos+len);
       pos += len;
       return s;
     }
+    /**
+     * Reads a base-90 palette of numCodes entries from the data stream.
+     * @param {number} numCodes - Number of palette entries to read.
+     * @returns {Object} An object with the palette map and an ordered
+     *   codeChars array.
+     */
     function readPalette(numCodes) {
       var palette = {};
       var codeChars = [];
@@ -564,6 +691,14 @@ export class SpriteTool {
     return result;
   } // decode_b90
 
+  /**
+   * Serializes a color palette into braille form: for each code character its
+   * code point, the color string length (or the false/absent sentinel), and
+   * the code points of the color string characters.
+   * @param {Object} palette - Map of single-character codes to color strings
+   *   (or false for transparent).
+   * @returns {string} The braille-encoded palette section.
+   */
   static encodeBraillePalette(palette) {
     var result = '';
     for (var ch in palette) {
@@ -579,6 +714,11 @@ export class SpriteTool {
     return result;
   } // encodeBraillePalette
 
+  /**
+   * Finds the palette code character whose color is false (transparent).
+   * @param {Object|false} palette - The palette map, or false if absent.
+   * @returns {string|null} The transparent code character, or null if none.
+   */
   static findBrailleTransparent(palette) {
     if (palette === false) return null;
     for (var ch in palette) {
@@ -587,6 +727,19 @@ export class SpriteTool {
     return null;
   } // findBrailleTransparent
 
+  /**
+   * Encodes a single colored grid into a braille block: the bounding rows
+   * (startY/endY), and for each row its solid span plus run-length cells where
+   * each cell packs a repetition count and a palette color index. Transparent
+   * pixels are skipped via the bounds.
+   * @param {Array<string>} grid - Array of row strings for the frame.
+   * @param {Object} palette - Map of code characters to colors.
+   * @param {number} width - Grid width in pixels.
+   * @param {number} height - Grid height in pixels.
+   * @param {number} posLen - Number of braille chars used per position value.
+   * @param {number} cellBytes - Number of braille chars used per run cell.
+   * @returns {string} The braille-encoded grid block.
+   */
   static encodeBrailleGridBlock(grid, palette, width, height, posLen, cellBytes) {
     var codeChars = Object.keys(palette);
     var codeIndex = {};
@@ -643,6 +796,17 @@ export class SpriteTool {
     return result;
   } // encodeBrailleGridBlock
 
+  /**
+   * Encodes a colored sprite using the braille format. It serializes either a
+   * shared palette or per-frame palettes plus each frame's grid block, trying
+   * both 1-byte and 2-byte run cells and keeping the shorter result, then
+   * prepends a braille header (three 0xFE marker chars, version, cell-byte
+   * flag, dimensions, frames, and directions).
+   * @param {Object} spriteData - Sprite data with width, height, frames,
+   *   directions, colors (shared palette or false), and per-frame sprite
+   *   entries.
+   * @returns {RichString} The braille-encoded sprite string.
+   */
   static encode_Braille(spriteData) {
     var width = spriteData.width;
     var height = spriteData.height;
@@ -691,13 +855,34 @@ export class SpriteTool {
     return new RichString(result);
   } // encode_Braille
 
+  /**
+   * Decodes a braille-format colored sprite string into a sprite data object,
+   * reading the header, the shared or per-frame palettes, and each frame's
+   * run-length-encoded grid block, filling transparent cells with the palette's
+   * transparent code (or the first code when none is transparent).
+   * @param {string} data - The braille-encoded sprite string.
+   * @returns {Object} The decoded sprite data (width, height, frames,
+   *   directions, colors, sprite).
+   */
   static decode_Braille(data) {
     var pos = 3;
+    /**
+     * Reads the next `len` characters from the data stream and advances the
+     * shared read pointer.
+     * @param {number} len - Number of characters to read.
+     * @returns {string} The read substring.
+     */
     function read(len) {
       var s = data.substring(pos, pos+len);
       pos += len;
       return s;
     }
+    /**
+     * Reads a braille palette of numCodes entries from the data stream.
+     * @param {number} numCodes - Number of palette entries to read.
+     * @returns {Object} An object with the palette map and an ordered
+     *   codeChars array.
+     */
     function readPalette(numCodes) {
       var palette = {};
       var codeChars = [];
@@ -793,6 +978,12 @@ export class SpriteTool {
     return result;
   } // decode_Braille
 
+  /**
+   * Decodes sprite data and runs its joined grid as a script (via Tool.script)
+   * bound to the given object, passing the decoded sprite as the argument.
+   * @param {Object} obj - The object bound as `this` during script execution.
+   * @param {string|false} data - The encoded sprite string, or false to skip.
+   */
   static scriptedSprite(obj, data) {
     if (data !== false) {
       var sprite = this.decode(data);
@@ -800,6 +991,13 @@ export class SpriteTool {
     }
   } // scriptedSprite
 
+  /**
+   * Decodes a 16-hex-digit string into an 8-row monochrome sprite, expanding
+   * each pair of hex digits into an 8-bit binary row.
+   * @param {string} str - A 16-character hexadecimal string (8 bytes).
+   * @returns {Object} An object with penChar '1' and an 8-element sprite array
+   *   of binary row strings.
+   */
   static decodeHexStr(str) {
     var sprite = [];
     for (var x = 0; x < 8; x++) {
@@ -808,7 +1006,14 @@ export class SpriteTool {
     return {penChar: '1', sprite: sprite};
   } // decodeHexStr
 
-  // returns a copy of the grid with one row circularly shifted by `shift` (positive = content moves right, wraps around the row width)
+  /**
+   * Returns a copy of the grid with one row circularly shifted.
+   * @param {Array<string>} grid - The grid as an array of row strings.
+   * @param {number} rowIndex - Index of the row to rotate.
+   * @param {number} shift - Shift amount; positive moves content right and
+   *   wraps around the row width.
+   * @returns {Array<string>} A new grid array with the row rotated.
+   */
   static rotateRow(grid, rowIndex, shift) {
     var result = grid.slice();
     var row = result[rowIndex];
@@ -820,7 +1025,16 @@ export class SpriteTool {
     return result;
   } // rotateRow
   
-  // returns a new w×h grid with the source shifted by (dx, dy); cells outside the source become ' ' (off)
+  /**
+   * Returns a new w×h grid with the source content shifted by (dx, dy); cells
+   * that fall outside the source become ' ' (off).
+   * @param {Array<string>} grid - The source grid as an array of row strings.
+   * @param {number} dx - Horizontal shift in pixels.
+   * @param {number} dy - Vertical shift in pixels.
+   * @param {number} w - Width of the resulting grid.
+   * @param {number} h - Height of the resulting grid.
+   * @returns {Array<string>} The shifted and cropped grid.
+   */
   static shiftCrop(grid, dx, dy, w, h) {
     var result = [];
     for (var y = 0; y < h; y++) {
@@ -839,18 +1053,26 @@ export class SpriteTool {
     return result;
   } // shiftCrop
 
-  // Per-frame "blank margins": for each row, the number of empty pixels before
-  // the first solid pixel counted from the left and from the right edge; for
-  // each column, the same counted from the top and from the bottom edge. This
-  // compactly describes the empty border around the sprite shape while treating
-  // interior holes as solid. A fully empty row/column gets a margin equal to the
-  // full perpendicular extent (width/height), so the solidity test below yields
-  // "no solid pixel" for it without a special case.
-  //
-  // Solidity test for a local pixel (x, y):
-  //   left[y] <= x < width - right[y]   AND   top[x] <= y < height - bottom[x]
-  //
-  // isSolid(ch) tells whether a grid character is a solid (non-transparent) pixel.
+  /**
+   * Computes the per-row and per-column blank margins of a single frame: for
+   * each row, the number of empty pixels before the first solid pixel and after
+   * the last, counted from the left and right edges; for each column, the same
+   * counted from the top and bottom edges. This compactly describes the empty
+   * border around the sprite shape while treating interior holes as solid. A
+   * fully empty row/column gets a margin equal to the full perpendicular extent
+   * (width/height), so the solidity test reports "no solid pixel" for it without
+   * a special case.
+   *
+   * Solidity test for a local pixel (x, y):
+   *   left[y] <= x < width - right[y]   AND   top[x] <= y < height - bottom[x]
+   *
+   * @param {Array<string>} grid - The frame grid as an array of row strings.
+   * @param {number} width - Frame width in pixels.
+   * @param {number} height - Frame height in pixels.
+   * @param {Function} isSolid - Predicate (ch) => boolean telling whether a
+   *   grid character is a solid (non-transparent) pixel.
+   * @returns {Object} An object with left, right, top, and bottom margin arrays.
+   */
   static buildFrameBlankMargins(grid, width, height, isSolid) {
     var left = new Array(height);
     var right = new Array(height);
@@ -893,16 +1115,18 @@ export class SpriteTool {
     return {left: left, right: right, top: top, bottom: bottom};
   } // buildFrameBlankMargins
 
-  // Builds blank margins for every frame of a sprite. `data` has the same shape
-  // produced by decode() and used in sprite JSON definitions:
-  //   { sprite, penChar?, colors? }   (frames/directions/width/height optional)
-  // A frame is either an array of row strings (mono) or {grid, colors?} (colored),
-  // mirroring SpriteEntity.frameGrid()/resolvePalette(). The solid-pixel rule
-  // matches SpriteEntity.buildFrameData(): mono -> ch === penChar, colored ->
-  // ch present in palette with a non-false color.
-  // Each frame's margins are measured against that frame's own grid dimensions
-  // (data.width/height are unreliable — e.g. mirrored frames can differ in width).
-  // Returns an array of {left, right, top, bottom} indexed by f = frame + d*frames.
+  /**
+   * Builds blank margins for every frame of a sprite. Accepts decode()-shaped
+   * data where each frame is either an array of mono row strings or a
+   * {grid, colors?} colored entry; the solid-pixel rule matches
+   * SpriteEntity.buildFrameData() (mono: ch === penChar, colored: ch present in
+   * the palette with a non-false color). Each frame is measured against its own
+   * grid dimensions rather than data.width/height.
+   * @param {Object} data - Sprite data with a sprite array and optional penChar
+   *   and colors (shared palette).
+   * @returns {Array<Object>} An array of {left, right, top, bottom} margin
+   *   objects indexed by f = frame + d*frames.
+   */
   static buildBlankMargins(data) {
     var penChar = ('penChar' in data) ? data.penChar : '#';
     var sharedPalette = ('colors' in data) ? data.colors : false;

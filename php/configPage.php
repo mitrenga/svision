@@ -2,8 +2,20 @@
 
 require_once 'abstractPage.php';
 
+/**
+ * Diagnostics / configuration page. Renders an HTML page that reports the
+ * browser environment and lets the user pick a module import method. It shows:
+ * the user agent, the detected ECMAScript version, support for the class
+ * syntax and for each import method (with buttons to enable one), a live canvas
+ * probe, server and device time, and the current cookies (with clear buttons).
+ */
 class ConfigPage extends AbstractPage {
-  
+
+  /**
+   * Builds the full diagnostics page. Several sections branch on the
+   * libImportMethod cookie to mark the active import method and to load the
+   * matching capability-check scripts.
+   */
   public function createPage() {
     $srcVersion = md5(time());
 
@@ -20,6 +32,8 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '    <script>var srcVersion = "'.$srcVersion.'";</script>';
 
     $this->data[] = '    <h1>Configuration</h1>';
+
+    // Section: Browser — report the raw user agent string.
     $this->data[] = '    <h2>Browser</h2>';
     $this->data[] = '    <ul>';
     $this->data[] = '      <li>';
@@ -29,6 +43,9 @@ class ConfigPage extends AbstractPage {
 
     $this->data[] = '';
 
+    // Section: JavaScript — detect the highest supported ECMAScript version by
+    // feature-probing successive built-ins (the nested ifs fall through to the
+    // newest feature present), then check class syntax and import-method support.
     $this->data[] = '    <h2>Javacript</h2>';
     $this->data[] = '    <ul>';
     $this->data[] = '      <li>';
@@ -135,6 +152,8 @@ class ConfigPage extends AbstractPage {
       $this->data[] = '    <script>document.write("<button onclick=\"document.cookie=\'libImportMethod=import-from;max-age=31536000;path=/\';location.reload();\">Enable \'import from\'</button>");</script>';
     }
   	$this->data[] = '';
+    // Section: Platform — run a live canvas probe using the check script for the
+    // active import method, and report an error if the canvas never starts.
     $this->data[] = '    <h2>Platform: <span id="platform"></span></h2>';
     $this->data[] = '    <div class="parentCanvas" id="parentCanvas"></div>';
     $this->data[] = '    <script> var canvasRunning = false; </script>';
@@ -153,6 +172,8 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      setTimeout(checkCanvas, 2000);';
     $this->data[] = '    </script>';
     $this->data[] = '';
+    // Section: Current time — show server time (rendered here) alongside device
+    // time (refreshed client-side, with the server part re-fetched periodically).
     $this->data[] = '    <h2>Current time</h2>';
     $this->data[] = '    <span class="time-info">';
     $this->data[] = '    <ul>';
@@ -203,6 +224,8 @@ class ConfigPage extends AbstractPage {
 
     $this->data[] = '    <div class="clear"></div>';
 
+    // Section: Cookies — list the current cookies client-side, each with a
+    // button to delete it, plus a "clear all" button.
     $this->data[] = '    <h2>Cookies</h2>';
     $this->data[] = '    <span class="cookies">';
     $this->data[] = '    <script>';

@@ -7,8 +7,24 @@ import TextEntity from '../textEntity.js';
 /**/
 // begin code
 
+/**
+ * ZX Spectrum themed modal entity shown when audio playback requires a user
+ * gesture. It prompts the user to press Enter, click or touch, then emits a
+ * configured continuation event so audio can start.
+ */
 export class ZXWaitForAudioEventEntity extends AbstractEntity {
 
+  /**
+   * Creates the wait-for-audio-event prompt entity.
+   * @param {AbstractEntity} parentEntity - The parent entity in the entity tree.
+   * @param {number} x - The x position relative to the parent.
+   * @param {number} y - The y position relative to the parent.
+   * @param {number} width - The entity width.
+   * @param {number} height - The entity height.
+   * @param {string} penColor - The foreground (text and frame) colour.
+   * @param {string} bkColor - The background colour.
+   * @param {string} continueEvent - The id of the event emitted once a user gesture is received.
+   */
   constructor(parentEntity, x, y, width, height, penColor, bkColor, continueEvent) {
     super(parentEntity, x, y, width, height, penColor, bkColor);
     this.id = 'ZXWaitForAudioEventEntity';    
@@ -16,6 +32,10 @@ export class ZXWaitForAudioEventEntity extends AbstractEntity {
     this.continueEvent = continueEvent;
   } // constructor
 
+  /**
+   * Builds the framed prompt box with the explanatory message and schedules an
+   * automatic close after a timeout.
+   */
   init() {
     super.init();
     this.addEntity(new AbstractEntity(this, 2, 2, this.width-4, this.height-4, false, this.penColor));
@@ -25,6 +45,12 @@ export class ZXWaitForAudioEventEntity extends AbstractEntity {
     this.sendEvent(0, 5000, {id: 'closePressAnyKey'});
   } // init
 
+  /**
+   * Handles key, mouse and touch events, emitting the configured continuation
+   * event on a confirming gesture and closing the prompt on timeout.
+   * @param {Object} event - The event object, identified by its id property.
+   * @returns {boolean} True if the event was handled, otherwise false.
+   */
   handleEvent(event) {
     if (super.handleEvent(event)) {
       return true;
