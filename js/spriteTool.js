@@ -819,7 +819,7 @@ export class SpriteTool {
     }
     return result;
   } // rotateRow
-
+  
   // returns a new w×h grid with the source shifted by (dx, dy); cells outside the source become ' ' (off)
   static shiftCrop(grid, dx, dy, w, h) {
     var result = [];
@@ -838,6 +838,91 @@ export class SpriteTool {
     }
     return result;
   } // shiftCrop
+
+  // Per-frame "blank margins": for each row, the number of empty pixels before
+  // the first solid pixel counted from the left and from the right edge; for
+  // each column, the same counted from the top and from the bottom edge. This
+  // compactly describes the empty border around the sprite shape while treating
+  // interior holes as solid. A fully empty row/column gets a margin equal to the
+  // full perpendicular extent (width/height), so the solidity test below yields
+  // "no solid pixel" for it without a special case.
+  //
+  // Solidity test for a local pixel (x, y):
+  //   left[y] <= x < width - right[y]   AND   top[x] <= y < height - bottom[x]
+  //
+  // isSolid(ch) tells whether a grid character is a solid (non-transparent) pixel.
+  static buildFrameBlankMargins(grid, width, height, isSolid) {
+    var left = new Array(height);
+    var right = new Array(height);
+    for (var y = 0; y < height; y++) {
+      var row = grid[y] || '';
+      var first = -1, last = -1;
+      for (var x = 0; x < width; x++) {
+        if (isSolid(row[x])) {
+          if (first === -1) first = x;
+          last = x;
+        }
+      }
+      if (first === -1) {
+        left[y] = width;
+        right[y] = width;
+      } else {
+        left[y] = first;
+        right[y] = width-1-last;
+      }
+    }
+    var top = new Array(width);
+    var bottom = new Array(width);
+    for (var x = 0; x < width; x++) {
+      var first = -1, last = -1;
+      for (var y = 0; y < height; y++) {
+        var row = grid[y] || '';
+        if (isSolid(row[x])) {
+          if (first === -1) first = y;
+          last = y;
+        }
+      }
+      if (first === -1) {
+        top[x] = height;
+        bottom[x] = height;
+      } else {
+        top[x] = first;
+        bottom[x] = height-1-last;
+      }
+    }
+    return {left: left, right: right, top: top, bottom: bottom};
+  } // buildFrameBlankMargins
+
+  // Builds blank margins for every frame of a sprite. `data` has the same shape
+  // produced by decode() and used in sprite JSON definitions:
+  //   { sprite, penChar?, colors? }   (frames/directions/width/height optional)
+  // A frame is either an array of row strings (mono) or {grid, colors?} (colored),
+  // mirroring SpriteEntity.frameGrid()/resolvePalette(). The solid-pixel rule
+  // matches SpriteEntity.buildFrameData(): mono -> ch === penChar, colored ->
+  // ch present in palette with a non-false color.
+  // Each frame's margins are measured against that frame's own grid dimensions
+  // (data.width/height are unreliable — e.g. mirrored frames can differ in width).
+  // Returns an array of {left, right, top, bottom} indexed by f = frame + d*frames.
+  static buildBlankMargins(data) {
+    var penChar = ('penChar' in data) ? data.penChar : '#';
+    var sharedPalette = ('colors' in data) ? data.colors : false;
+    var margins = [];
+    for (var s = 0; s < data.sprite.length; s++) {
+      var frame = data.sprite[s];
+      var grid = (frame && frame.grid) ? frame.grid : frame;
+      var palette = (frame && frame.colors) ? frame.colors : sharedPalette;
+      var height = grid.length;
+      var width = 0;
+      for (var r = 0; r < grid.length; r++) {
+        if (grid[r].length > width) width = grid[r].length;
+      }
+      var isSolid = (palette === false)
+        ? (ch) => ch === penChar
+        : (ch) => (ch in palette) && palette[ch] !== false;
+      margins[s] = this.buildFrameBlankMargins(grid, width, height, isSolid);
+    }
+    return margins;
+  } // buildBlankMargins
 
 } // SpriteTool
 
