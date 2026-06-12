@@ -6,11 +6,28 @@
 // begin code
 
 /**
- * Centralizes browser input handling for the application. It listens to
- * keyboard, mouse, wheel, touch, gamepad, and window focus/blur events,
- * tracks the set of currently active keys/touches/buttons, translates client
- * coordinates into the application's layout space, and forwards normalized
- * key/move/hover events to the application model.
+ * Centralizes all browser input handling for the application and forwards
+ * normalized key/move/hover events to the application model. It tracks the set
+ * of currently active inputs, converts client coordinates into the layout
+ * space, and supports four input sources:
+ *
+ *  - **Keyboard** — key capture via keydown/keyup, honouring the model's
+ *    autorepeat setting.
+ *  - **Mouse** — full support for up to 8 buttons, hover tracking, wheel
+ *    scrolling, and drag-and-drop (while a button is held, moves become keyMove
+ *    events with live "pointer over entity" click state). Mouse buttons are
+ *    exposed as bindable keys ('Mouse1', 'Mouse2', …) so they can be mapped to
+ *    extra actions.
+ *  - **Gamepad** — polling of compatible gamepads for button and axis state
+ *    transitions, with a configuration mode that reports raw button/axis
+ *    identifiers so the controls can be remapped; outside that mode physical
+ *    inputs are translated to the configured event names.
+ *  - **Touch** — multi-touch press/release and move ("gesture") handling, plus
+ *    the groundwork for an on-screen software joystick (touch game controls) as
+ *    preparation for controlling games on touch displays.
+ *
+ * It also tracks window focus/blur (releasing all active inputs on blur) and
+ * the timing of the user gesture needed to (re)enable audio.
  */
 export class InputEventsManager {
 

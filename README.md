@@ -70,8 +70,17 @@ send-up / send-down / send-to-model event system.
 - **`audioProcessor`** is the AudioWorklet processor that generates the samples.
 
 ### Input
-- **`InputEventsManager`** — unifies keyboard, mouse, gamepad and touch input
-  into a single event stream delivered to the model.
+**`InputEventsManager`** unifies every input source into a single event stream
+delivered to the model:
+
+- **Keyboard** — key capture with autorepeat awareness.
+- **Mouse** — full support for up to 8 buttons, hover tracking, wheel scrolling
+  and drag-and-drop. Mouse buttons are bindable keys, so they can be mapped to
+  extra actions.
+- **Gamepad** — compatible gamepads with button and axis support, including a
+  configuration mode for remapping the controls.
+- **Touch** — multi-touch press handling and gestures, plus the groundwork for
+  an on-screen software joystick for controlling games on touch displays.
 
 ### UI entities
 - **`ButtonEntity`**, **`MenuEntity`**, **`InputEntity`**, **`KeyboardEntity`**
@@ -87,6 +96,26 @@ A tiny PHP front controller (`php/`) serves the app shell, generates the PWA
 manifest and the service worker (with an auto-collected asset list for offline
 caching), provides `*.data` / `*.db` JSON endpoints, and auto-detects which ES
 module import method the browser supports.
+
+## Runtime, compatibility & dev mode
+
+- **Progressive Web App.** Every app is installable and works offline out of the
+  box: the server generates the web app manifest and a service worker whose
+  pre-cache asset list is collected automatically, so you get an app icon,
+  full-screen launch and offline support without extra setup.
+- **Broad browser compatibility.** The runtime targets **ECMAScript 2018
+  (ES9)** as its baseline, so it runs on a wide range of older browsers and
+  devices, not just the latest ones.
+- **Two module import methods.** svision can load its ES modules either via the
+  modern dynamic `await import(...)` or via the older static `import ... from`
+  syntax, so it works whether or not the browser supports the newer mechanism.
+- **Dev mode for full debugging.** A development mode serves the unbundled
+  sources for full step-through debugging, and works with **both** import
+  methods above (production serves a single minified bundle instead).
+- **The `/config` page.** All of the above — the detected ECMAScript version,
+  class-syntax and import-method support, a live platform/canvas probe, the
+  active import method and the current cookies — can be inspected and switched
+  from the built-in diagnostics page at `https://<project-name>/config`.
 
 ## Examples
 
