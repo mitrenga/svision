@@ -24,16 +24,16 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
   } // constructor
 
   /**
-   * Opens the channel via the base handler and clears the busy flag.
-   * @param {string} channel - Identifier of the channel.
-   * @param {Object} options - Channel configuration options.
+   * Opens the bus via the base handler and clears the busy flag.
+   * @param {string} bus - Identifier of the bus.
+   * @param {Object} options - Bus configuration options.
    * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
-  openChannel(channel, options, ctx) {
-    super.openChannel(channel, options, ctx);
+  openBus(bus, options, ctx) {
+    super.openBus(bus, options, ctx);
     this.busy = false;
-  } // openChannel
+  } // openBus
 
   /**
    * Toggles the oscillator: if a tone is currently playing it is stopped and

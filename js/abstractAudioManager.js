@@ -6,32 +6,32 @@ import AbstractAudioHandler from './abstractAudioHandler.js';
 // begin code
 
 /**
- * Coordinates multiple named audio channels, each backed by an audio
- * handler. Owns channel creation, lifecycle (open/close/stop/pause/
+ * Coordinates multiple named audio buses, each backed by an audio
+ * handler. Owns bus creation, lifecycle (open/close/stop/pause/
  * continue/mute), an audio-data cache, and the playSound dispatch logic
- * including resume retries while a channel's context is not yet running.
+ * including resume retries while a bus's context is not yet running.
  */
 export class AbstractAudioManager {
 
   /**
-   * Creates the manager with empty channel, cache, and restart-sound maps.
+   * Creates the manager with empty bus, cache, and restart-sound maps.
    * @param {Object} app - The owning application instance, providing access to the model for event dispatch.
    */
   constructor(app) {
     this.app = app;
     this.id = 'AbstractAudioManager';
     this.ctx = null;
-    this.channels = {};
-    this.unsupportedAudioChannel = false;
+    this.buses = {};
+    this.unsupportedAudioBus = false;
     this.audioDataCache = {};
     this.restartSounds = {};
   } // constructor
 
   /**
-   * Lazily creates the single shared AudioContext that backs every channel.
+   * Lazily creates the single shared AudioContext that backs every bus.
    * No-op when a context already exists. Leaves the context null when the Web
    * Audio API is unavailable or its constructor fails (e.g. on devices with no
-   * audio support); handlers then report the unsupported channel on a null
+   * audio support); handlers then report the unsupported bus on a null
    * context and the manager falls back to the silent handler.
    * @returns {void}
    */
@@ -50,7 +50,7 @@ export class AbstractAudioManager {
 
   /**
    * Closes and discards the shared AudioContext, releasing the audio hardware.
-   * Called once no channels remain open.
+   * Called once no buses remain open.
    * @returns {void}
    */
   closeAudioContext() {
@@ -74,175 +74,175 @@ export class AbstractAudioManager {
   } // getSampleRate
 
   /**
-   * Factory hook that creates the audio handler for a channel. Returns
+   * Factory hook that creates the audio handler for a bus. Returns
    * false in the base class; subclasses override to supply a concrete handler.
-   * @param {string} channel - Identifier of the channel.
-   * @param {Object} options - Channel configuration options.
+   * @param {string} bus - Identifier of the bus.
+   * @param {Object} options - Bus configuration options.
    * @returns {AbstractAudioHandler|boolean} A handler instance, or false when none can be created.
    */
-  createAudioHandler(channel, options) {
+  createAudioHandler(bus, options) {
     return false;
   } // createAudioHandler
   
   /**
-   * Opens a channel: creates and registers the channel's handler when not
+   * Opens a bus: creates and registers the bus's handler when not
    * already present, ensures the shared AudioContext exists when that handler
-   * needs one, passes the context to the handler, and resets the channel's
+   * needs one, passes the context to the handler, and resets the bus's
    * audio-data cache.
-   * @param {string} channel - Identifier of the channel to open.
-   * @param {Object} options - Channel configuration options.
+   * @param {string} bus - Identifier of the bus to open.
+   * @param {Object} options - Bus configuration options.
    * @returns {void}
    */
-  openChannel(channel, options) {
-    if (!(channel in this.channels)) {
-      var audioHandler = this.createAudioHandler(channel, options);
+  openBus(bus, options) {
+    if (!(bus in this.buses)) {
+      var audioHandler = this.createAudioHandler(bus, options);
       if (audioHandler != false) {
         if (audioHandler.needsContext()) {
           this.openAudioContext();
         }
-        audioHandler.openChannel(channel, options, this.ctx);
-        this.channels[channel] = audioHandler;
+        audioHandler.openBus(bus, options, this.ctx);
+        this.buses[bus] = audioHandler;
       }
     }
-    this.audioDataCache[channel] = {};
-  } // openChannel
+    this.audioDataCache[bus] = {};
+  } // openBus
 
   /**
-   * Closes a channel, removing its handler when the close succeeds, and
-   * resets the channel's audio-data cache. Discards the shared AudioContext
-   * once no channels remain open.
-   * @param {string} channel - Identifier of the channel to close.
+   * Closes a bus, removing its handler when the close succeeds, and
+   * resets the bus's audio-data cache. Discards the shared AudioContext
+   * once no buses remain open.
+   * @param {string} bus - Identifier of the bus to close.
    * @returns {void}
    */
-  closeChannel(channel) {
-    if (channel in this.channels) {
-      if (this.channels[channel].closeChannel() == true) {
-        delete this.channels[channel];
+  closeBus(bus) {
+    if (bus in this.buses) {
+      if (this.buses[bus].closeBus() == true) {
+        delete this.buses[bus];
       }
     }
-    this.audioDataCache[channel] = {};
-    if (Object.keys(this.channels).length == 0) {
+    this.audioDataCache[bus] = {};
+    if (Object.keys(this.buses).length == 0) {
       this.closeAudioContext();
     }
-  } // closeChannel
+  } // closeBus
 
   /**
-   * Closes every currently open channel.
+   * Closes every currently open bus.
    * @returns {void}
    */
-  closeAllChannels() {
-    while (Object.keys(this.channels).length > 0) {
-      this.closeChannel(Object.keys(this.channels)[0]);
+  closeAllBuses() {
+    while (Object.keys(this.buses).length > 0) {
+      this.closeBus(Object.keys(this.buses)[0]);
     }
     this.closeCounter++;
-  } // closeAllChannels
+  } // closeAllBuses
   
   /**
-   * Resumes the AudioContext of any channel that is not currently running,
-   * recording any resume error on the channel's handler.
+   * Resumes the AudioContext of any bus that is not currently running,
+   * recording any resume error on the bus's handler.
    * @returns {void}
    */
-  refreshAllChannels() {
-    Object.keys(this.channels).forEach(channel => {
-      if (this.channels[channel].getState() != 'running') {
-        if (this.channels[channel].ctx) {
-          this.channels[channel].ctx.resume()
+  refreshAllBuses() {
+    Object.keys(this.buses).forEach(bus => {
+      if (this.buses[bus].getState() != 'running') {
+        if (this.buses[bus].ctx) {
+          this.buses[bus].ctx.resume()
             .then(() => {
             })
             .catch(error => {
               console.error('AudioContext error: '+error.message);
-              this.channels[channel].error = error.message;
+              this.buses[bus].error = error.message;
             });
         }
       }
     });
-  } // refreshAllChannels
+  } // refreshAllBuses
 
   /**
-   * Stops playback on a single channel.
-   * @param {string} channel - Identifier of the channel to stop.
+   * Stops playback on a single bus.
+   * @param {string} bus - Identifier of the bus to stop.
    * @returns {void}
    */
-  stopChannel(channel) {
-    if (channel in this.channels) {
-      this.channels[channel].stopChannel();
+  stopBus(bus) {
+    if (bus in this.buses) {
+      this.buses[bus].stopBus();
     }
-  } // stopChannel
+  } // stopBus
 
   /**
-   * Stops playback on every open channel.
+   * Stops playback on every open bus.
    * @returns {void}
    */
-  stopAllChannels() {
-    Object.keys(this.channels).forEach(channel => {
-      this.stopChannel(channel);
+  stopAllBuses() {
+    Object.keys(this.buses).forEach(bus => {
+      this.stopBus(bus);
     });
-  } // stopAllChannels
+  } // stopAllBuses
 
   /**
-   * Pauses playback on a single channel.
-   * @param {string} channel - Identifier of the channel to pause.
+   * Pauses playback on a single bus.
+   * @param {string} bus - Identifier of the bus to pause.
    * @returns {void}
    */
-  pauseChannel(channel) {
-    if (channel in this.channels) {
-      this.channels[channel].pauseChannel();
+  pauseBus(bus) {
+    if (bus in this.buses) {
+      this.buses[bus].pauseBus();
     }
-  } // pauseChannel
+  } // pauseBus
 
   /**
-   * Pauses playback on every open channel.
+   * Pauses playback on every open bus.
    * @returns {void}
    */
-  pauseAllChannels() {
-    Object.keys(this.channels).forEach(channel => {
-      this.pauseChannel(channel);
+  pauseAllBuses() {
+    Object.keys(this.buses).forEach(bus => {
+      this.pauseBus(bus);
     });
-  } // pauseAllChannels
+  } // pauseAllBuses
 
   /**
-   * Resumes playback on a single channel.
-   * @param {string} channel - Identifier of the channel to resume.
+   * Resumes playback on a single bus.
+   * @param {string} bus - Identifier of the bus to resume.
    * @returns {void}
    */
-  continueChannel(channel) {
-    if (channel in this.channels) {
-      this.channels[channel].continueChannel();
+  continueBus(bus) {
+    if (bus in this.buses) {
+      this.buses[bus].continueBus();
     }
-  } // continueChannel
+  } // continueBus
 
   /**
-   * Resumes playback on every open channel.
+   * Resumes playback on every open bus.
    * @returns {void}
    */
-  continueAllChannels() {
-    Object.keys(this.channels).forEach(channel => {
-      this.continueChannel(channel);
+  continueAllBuses() {
+    Object.keys(this.buses).forEach(bus => {
+      this.continueBus(bus);
     });
-  } // continueAllChannels
+  } // continueAllBuses
 
   /**
-   * Mutes or unmutes a single channel.
-   * @param {string} channel - Identifier of the channel.
+   * Mutes or unmutes a single bus.
+   * @param {string} bus - Identifier of the bus.
    * @param {boolean} muted - True to mute, false to unmute.
    * @returns {void}
    */
-  muteChannel(channel, muted) {
-    if (channel in this.channels) {
-      this.channels[channel].muteChannel(muted);
+  muteBus(bus, muted) {
+    if (bus in this.buses) {
+      this.buses[bus].muteBus(muted);
     }
-  } // continueChannel
+  } // continueBus
 
   /**
-   * Plays a sound on a channel. If the channel's context is not yet running
+   * Plays a sound on a bus. If the bus's context is not yet running
    * it attempts to resume and reschedules the request (up to 64 attempts);
    * once running and ready it dispatches the cached audio data to the handler.
-   * @param {string} channel - Identifier of the channel.
+   * @param {string} bus - Identifier of the bus.
    * @param {string} sound - Identifier of the sound to play.
    * @param {Object|boolean} options - Playback options; false is normalized to a fresh options object.
    * @returns {void}
    */
-  playSound(channel, sound, options) {
+  playSound(bus, sound, options) {
     if (options === false) {
       options = {attempts: 0};
     }
@@ -250,46 +250,46 @@ export class AbstractAudioManager {
       options.attempts = 0;
     }
 
-    if (channel in this.channels) {
-      this.restartSounds[channel] = {sound: sound, options: options};
-      if (this.channels[channel].getState() != 'running' && options.attempts < 64) {
-        if (this.channels[channel].error === false) {
-          this.channels[channel].ctx.resume()
+    if (bus in this.buses) {
+      this.restartSounds[bus] = {sound: sound, options: options};
+      if (this.buses[bus].getState() != 'running' && options.attempts < 64) {
+        if (this.buses[bus].error === false) {
+          this.buses[bus].ctx.resume()
             .then(() => {
-              this.channels[channel].error = false;
+              this.buses[bus].error = false;
             })
             .catch(error => {
               console.error('AudioContext error: '+error.message);
-              this.channels[channel].error = error.message;
+              this.buses[bus].error = error.message;
             });
           options.attempts += 1;
-          this.app.model.sendEvent(1, {id: 'playSound', channel: channel, sound: sound, options: options});
+          this.app.model.sendEvent(1, {id: 'playSound', bus: bus, sound: sound, options: options});
         } else {
-          this.app.model.sendEvent(1, {id: 'errorAudioChannel', channel: channel, sound: sound, options: options, error: this.channels[channel].error});
+          this.app.model.sendEvent(1, {id: 'errorAudioBus', bus: bus, sound: sound, options: options, error: this.buses[bus].error});
         }
       } else {
-        if (this.channels[channel].channelIsReady()) {
-          delete this.restartSounds[channel];
-          this.channels[channel].playSound(this.audioData(channel, sound, options), options);
+        if (this.buses[bus].busIsReady()) {
+          delete this.restartSounds[bus];
+          this.buses[bus].playSound(this.audioData(bus, sound, options), options);
         } else if (options.attempts < 64) {
           options.attempts += 1;
-          this.app.model.sendEvent(1, {id: 'playSound', channel: channel, sound: sound, options: options});
+          this.app.model.sendEvent(1, {id: 'playSound', bus: bus, sound: sound, options: options});
         }
       }
     }
   } // playSound
 
   /**
-   * Looks up cached, decoded audio data for a sound on a channel.
-   * @param {string} channel - Identifier of the channel.
+   * Looks up cached, decoded audio data for a sound on a bus.
+   * @param {string} bus - Identifier of the bus.
    * @param {string} sound - Identifier of the sound.
    * @param {Object} options - Playback options (unused in the base lookup).
    * @returns {Object|boolean} The cached audio data, or false when not cached.
    */
-  audioData(channel, sound, options) {
-    if (channel in this.audioDataCache) {
-      if (sound in this.audioDataCache[channel]) {
-        return this.audioDataCache[channel][sound];
+  audioData(bus, sound, options) {
+    if (bus in this.audioDataCache) {
+      if (sound in this.audioDataCache[bus]) {
+        return this.audioDataCache[bus][sound];
       }
     }
     return false;

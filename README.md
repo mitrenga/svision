@@ -65,8 +65,8 @@ send-up / send-down / send-to-model event system.
 
 ### Audio
 - **`AbstractAudioManager`** owns a single shared `AudioContext` and organises
-  playback into named **channels** (e.g. `music`, `sounds`, `extra`) that mix
-  together on that one context. It dispatches each channel to the best
+  playback into named **buses** (e.g. `music`, `sounds`, `extra`) that mix
+  together on that one context. It dispatches each bus to the best
   available handler: **`AudioWorkletHandler`** (modern),
   **`AudioScriptProcessorHandler`** (fallback), **`AudioOscillatorHandler`**,
   and **`AudioSilentHandler`**.

@@ -23,25 +23,25 @@ export class AudioSilentHandler extends AbstractAudioHandler {
   } // constructor
 
   /**
-   * Opens the channel without using an AudioContext, simply clearing the busy
+   * Opens the bus without using an AudioContext, simply clearing the busy
    * flag. The shared context is ignored since this handler produces no output.
-   * @param {string} channel - Identifier of the channel.
-   * @param {Object} options - Channel configuration options.
+   * @param {string} bus - Identifier of the bus.
+   * @param {Object} options - Bus configuration options.
    * @param {AudioContext} ctx - The shared AudioContext (unused).
    * @returns {void}
    */
-  openChannel(channel, options, ctx) {
+  openBus(bus, options, ctx) {
     this.busy = false;
-  } // openChannel
+  } // openBus
 
   /**
-   * Closes the channel, clearing the busy flag.
+   * Closes the bus, clearing the busy flag.
    * @returns {boolean} Always true.
    */
-  closeChannel() {
+  closeBus() {
     this.busy = false;
     return true;
-  } // closeChannel
+  } // closeBus
 
   /**
    * Indicates that this handler needs no AudioContext, since it produces no
@@ -53,7 +53,7 @@ export class AudioSilentHandler extends AbstractAudioHandler {
   } // needsContext
 
   /**
-   * Returns the channel state, always reported as running so playback proceeds.
+   * Returns the bus state, always reported as running so playback proceeds.
    * @returns {string} The string 'running'.
    */
   getState() {

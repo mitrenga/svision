@@ -132,42 +132,42 @@ export class AbstractModel {
    */
   handleEvent(event) {
     switch (event.id) {
-      case 'openAudioChannel':
-        this.app.audioManager.openChannel(event.channel, event.options);
+      case 'openAudioBus':
+        this.app.audioManager.openBus(event.bus, event.options);
         return true;
-      case 'closeAudioChannel':
-        this.app.audioManager.closeChannel(event.channel);
+      case 'closeAudioBus':
+        this.app.audioManager.closeBus(event.bus);
         return true;
-      case 'closeAllAudioChannels':
-        this.app.audioManager.closeAllChannels();
+      case 'closeAllAudioBuses':
+        this.app.audioManager.closeAllBuses();
         return true;
-      case 'stopAudioChannel':
-        this.app.audioManager.stopChannel(event.channel);
+      case 'stopAudioBus':
+        this.app.audioManager.stopBus(event.bus);
         return true;
-      case 'stopAllAudioChannels':
-        this.app.audioManager.stopAllChannels();
+      case 'stopAllAudioBuses':
+        this.app.audioManager.stopAllBuses();
         return true;
-      case 'pauseAllAudioChannels':
-        this.app.audioManager.pauseAllChannels();
+      case 'pauseAllAudioBuses':
+        this.app.audioManager.pauseAllBuses();
         return true;
-      case 'continueAllAudioChannels':
-        this.app.audioManager.continueAllChannels();
+      case 'continueAllAudioBuses':
+        this.app.audioManager.continueAllBuses();
         return true;
-      case 'muteAudioChannel':
-        this.app.audioManager.muteChannel(event.channel, event.muted);
+      case 'muteAudioBus':
+        this.app.audioManager.muteBus(event.bus, event.muted);
         return true;
-      case 'unsupportedAudioChannel':
-        this.app.audioManager.unsupportedAudioChannel = this.app.audioManager.channels[event.channel].id;
-        this.sendEvent(50, {id: 'closeAudioChannel', channel: event.channel});
-        this.sendEvent(100, {id: 'openAudioChannel', channel: event.channel, options: {}});
+      case 'unsupportedAudioBus':
+        this.app.audioManager.unsupportedAudioBus = this.app.audioManager.buses[event.bus].id;
+        this.sendEvent(50, {id: 'closeAudioBus', bus: event.bus});
+        this.sendEvent(100, {id: 'openAudioBus', bus: event.bus, options: {}});
         return true;
       case 'playSound':
         if (event.options !== false) {
           if ('next' in event.options) {
-            event.options.nextSound = this.app.audioManager.audioData(event.channel, event.options.next, event.options);
+            event.options.nextSound = this.app.audioManager.audioData(event.bus, event.options.next, event.options);
           }
         }
-        this.app.audioManager.playSound(event.channel, event.sound, event.options);
+        this.app.audioManager.playSound(event.bus, event.sound, event.options);
         return true;
     }
 
@@ -229,7 +229,7 @@ export class AbstractModel {
 
   /**
    * Per-frame model loop. Updates gamepad states, dispatches any queued
-   * events whose timing has elapsed and refreshes audio channels.
+   * events whose timing has elapsed and refreshes audio buses.
    * @param {number} timestamp - The current frame timestamp.
    */
   loopModel(timestamp) {
@@ -241,7 +241,7 @@ export class AbstractModel {
       }
     }
     if (this.app.audioManager != false) {
-      this.app.audioManager.refreshAllChannels();
+      this.app.audioManager.refreshAllBuses();
     }
   } // loopModel
 

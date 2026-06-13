@@ -25,40 +25,40 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   } // constructor
 
   /**
-   * Opens the channel via the base handler and, when the context opened
+   * Opens the bus via the base handler and, when the context opened
    * successfully, initializes the audio worklet processor.
-   * @param {string} channel - Identifier of the channel.
-   * @param {Object} options - Channel configuration options.
+   * @param {string} bus - Identifier of the bus.
+   * @param {Object} options - Bus configuration options.
    * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
-  openChannel(channel, options, ctx) {
-    super.openChannel(channel, options, ctx);
+  openBus(bus, options, ctx) {
+    super.openBus(bus, options, ctx);
     if (this.error === false && this.ctx != null) {
       this.openProcessor(options);
     }
-  } // openChannel
+  } // openBus
 
   /**
    * Loads the AudioProcessor worklet module, creates the AudioWorkletNode and
    * connects it to the destination, applies the initial muted state, and
    * installs the port message handler that relays processor events to the
-   * application model; reports an unsupported-channel event on failure.
-   * @param {Object} options - Channel options; may include a `muted` flag.
+   * application model; reports an unsupported-bus event on failure.
+   * @param {Object} options - Bus options; may include a `muted` flag.
    * @returns {Promise<void>} Resolves once the processor is set up.
    */
   async openProcessor(options) {
     try {
       await this.ctx.audioWorklet.addModule(this.app.importPath+'/svision/js/audioProcessor.js')
         .catch(error => {
-          this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: this.channel});
+          this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
         });
       this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor');
       // stereo
       //this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor', {numberOfOutputs: 1, outputChannelCount: [Math.min(2, this.ctx.destination.channelCount)]});
       this.node.connect(this.ctx.destination);
     } catch(error) {
-      this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: this.channel});
+      this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
       this.busy = false;
     } finally {
       this.busy = false;
@@ -73,68 +73,68 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   } // openProcessor
 
   /**
-   * Disconnects the worklet node (when present) and closes the channel via the
+   * Disconnects the worklet node (when present) and closes the bus via the
    * base handler.
-   * @returns {boolean} True when the channel was closed, false if the handler was busy.
+   * @returns {boolean} True when the bus was closed, false if the handler was busy.
    */
-  closeChannel() {
-    if (this.waitForBusy('closeAudioChannel')) {
+  closeBus() {
+    if (this.waitForBusy('closeAudioBus')) {
       return false;
     }
     if (this.node) {
       this.node.disconnect();
     }
-    return super.closeChannel();
-  } // closeChannel
+    return super.closeBus();
+  } // closeBus
 
   /**
    * Stops playback by sending the processor an empty 'play' command.
    * @returns {void}
    */
-  stopChannel() {
+  stopBus() {
     if (this.node != null) {
       this.node.port.postMessage({id: 'play', audioData: {fragments: false, pulses: false}, options: false});
     }
-  } // stopChannel
+  } // stopBus
 
   /**
    * Pauses playback by sending the processor a 'pause' command.
    * @returns {void}
    */
-  pauseChannel() {
+  pauseBus() {
     if (this.node != null) {
       this.node.port.postMessage({id: 'pause'});
     }
-  } // pauseChannel
+  } // pauseBus
 
   /**
    * Resumes playback by sending the processor a 'continue' command.
    * @returns {void}
    */
-  continueChannel() {
+  continueBus() {
     if (this.node != null) {
       this.node.port.postMessage({id: 'continue'});
     }
-  } // continueChannel
+  } // continueBus
 
   /**
-   * Mutes or unmutes the channel by sending the processor the corresponding command.
+   * Mutes or unmutes the bus by sending the processor the corresponding command.
    * @param {boolean} muted - True to send 'mute', false to send 'unmute'.
    * @returns {void}
    */
-  muteChannel(muted) {
+  muteBus(muted) {
     if (this.node != null) {
       this.node.port.postMessage({id: {false: 'unmute', true: 'mute'}[muted]});
     }
-  } // muteChannel
+  } // muteBus
 
   /**
    * Indicates whether the worklet node has been created and is ready to play sounds.
    * @returns {boolean} True when the node exists.
    */
-  channelIsReady() {
+  busIsReady() {
     return this.node != null;
-  } // channelIsReady
+  } // busIsReady
 
   /**
    * Plays a sound by sending a 'play' command with the audio data and options to the processor.

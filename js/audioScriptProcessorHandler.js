@@ -42,22 +42,22 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
   } // constructor
 
   /**
-   * Opens the channel via the base handler, applies the initial muted state,
+   * Opens the bus via the base handler, applies the initial muted state,
    * and creates the script processor when the context opened successfully.
-   * @param {string} channel - Identifier of the channel.
-   * @param {Object} options - Channel options; may include a `muted` flag.
+   * @param {string} bus - Identifier of the bus.
+   * @param {Object} options - Bus options; may include a `muted` flag.
    * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
-  openChannel(channel, options, ctx) {
-    super.openChannel(channel, options, ctx);
+  openBus(bus, options, ctx) {
+    super.openBus(bus, options, ctx);
     if ('muted' in options) {
       this.muted = options.muted;
     }
     if (this.error === false && this.ctx != null) {
       this.openProcessor();
     }
-  } // openChannel
+  } // openBus
 
   /**
    * Creates the ScriptProcessorNode and installs its onaudioprocess callback,
@@ -157,55 +157,55 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
   } // openProcessor
 
   /**
-   * Disconnects the processor node (when present) and closes the channel via
+   * Disconnects the processor node (when present) and closes the bus via
    * the base handler.
-   * @returns {boolean} True when the channel was closed, false if the handler was busy.
+   * @returns {boolean} True when the bus was closed, false if the handler was busy.
    */
-  closeChannel() {
-    if (this.waitForBusy('closeAudioChannel')) {
+  closeBus() {
+    if (this.waitForBusy('closeAudioBus')) {
       return false;
     }
     if (this.node) {
       this.node.disconnect();
     }
-    return super.closeChannel();
-  } // closeChannel
+    return super.closeBus();
+  } // closeBus
 
   /**
    * Stops playback by clearing the current sound's fragments, pulses, options, and events.
    * @returns {void}
    */
-  stopChannel() {
+  stopBus() {
     this.fragments = false;
     this.pulses = false;
     this.options = false;
     this.events = false;
-  } // stopChannel
+  } // stopBus
 
   /**
    * Pauses playback by setting the paused flag.
    * @returns {void}
    */
-  pauseChannel() {
+  pauseBus() {
     this.paused = true;
-  } // pauseChannel
+  } // pauseBus
 
   /**
    * Resumes playback by clearing the paused flag.
    * @returns {void}
    */
-  continueChannel() {
+  continueBus() {
     this.paused = false;
-  } // continueChannel
+  } // continueBus
 
   /**
-   * Mutes or unmutes the channel by setting the muted flag.
+   * Mutes or unmutes the bus by setting the muted flag.
    * @param {boolean} muted - True to mute, false to unmute.
    * @returns {void}
    */
-  muteChannel(muted) {
+  muteBus(muted) {
     this.muted = muted;
-  } // muteChannel
+  } // muteBus
 
   /**
    * Loads a sound for playback, resetting all read pointers and state and

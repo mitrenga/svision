@@ -21,27 +21,27 @@ import ZXColor from './zxColor.js';
 
 /**
  * ZX Spectrum themed dialog entity for adjusting the audio volume of a given
- * channel. It renders a slider with buttons, persists the volume to a cookie,
+ * bus. It renders a slider with buttons, persists the volume to a cookie,
  * can play a sample sound and reports the active audio driver state.
  */
 export class ZXVolumeEntity extends AbstractEntity {
 
   /**
-   * Creates the volume dialog entity for a specific audio channel.
+   * Creates the volume dialog entity for a specific audio bus.
    * @param {AbstractEntity} parentEntity - The parent entity in the entity tree.
    * @param {number} x - The x position relative to the parent.
    * @param {number} y - The y position relative to the parent.
    * @param {number} width - The entity width.
    * @param {number} height - The entity height.
-   * @param {string} channel - The audio channel identifier this dialog controls.
+   * @param {string} bus - The audio bus identifier this dialog controls.
    * @param {string} cookie - The cookie name used to persist the volume.
    * @param {*} sampleSound - The sample sound played when previewing the volume.
    */
-  constructor(parentEntity, x, y, width, height, channel, cookie, sampleSound) {
+  constructor(parentEntity, x, y, width, height, bus, cookie, sampleSound) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXVolumeEntity';
 
-    this.channel = channel;
+    this.bus = bus;
     this.cookie = cookie;
     this.sampleSound = sampleSound;
     this.cursorEntity = null;
@@ -56,10 +56,10 @@ export class ZXVolumeEntity extends AbstractEntity {
     super.init();
 
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, this.channel, ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, this.bus, ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
     this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, ZXColor.yellow));
 
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 22, this.width, 9, 'CHANGE VOLUME FOR GAME '+this.channel, ZXColor.black, false, {align: 'center'}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 22, this.width, 9, 'CHANGE VOLUME FOR GAME '+this.bus, ZXColor.black, false, {align: 'center'}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 3, 36, 19, 13, 'OFF', {id: 'setVolume0'}, [], ZXColor.brightWhite, ZXColor.green, {topMargin: 4, leftMargin: 2}));
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 91, 36, 19, 13, '50%', {id: 'setVolume5'}, [], ZXColor.brightWhite, ZXColor.green, {topMargin: 4, leftMargin: 2}));
@@ -69,7 +69,7 @@ export class ZXVolumeEntity extends AbstractEntity {
     sliderEntity.setGraphicsData(SpriteTool.decode('lP10510070600012H020H530121232123414141414141414141454141414141414141414321232121'));
     this.addEntity(sliderEntity);
 
-    this.cursorEntity = new SpriteEntity(this, 8+this.app.audioManager.volume[this.channel]*18, 51, ZXColor.brightRed, false, 0, 0);
+    this.cursorEntity = new SpriteEntity(this, 8+this.app.audioManager.volume[this.bus]*18, 51, ZXColor.brightRed, false, 0, 0);
     this.cursorEntity.setGraphicsData(SpriteTool.decode('lP100500F05000501031D012332423321'));
     this.addEntity(this.cursorEntity);
 
@@ -90,14 +90,14 @@ export class ZXVolumeEntity extends AbstractEntity {
   } // init
 
   /**
-   * Sets the channel volume, clamping it to the range 0-10, persists it to the
+   * Sets the bus volume, clamping it to the range 0-10, persists it to the
    * cookie and repositions the slider cursor.
    * @param {number} volume - The requested volume level (clamped to 0-10).
    */
   changeVolume(volume) {
-    this.app.audioManager.volume[this.channel] = Math.min(10, Math.max(0, Math.round(volume)));
-    Tool.writeCookie(this.cookie, this.app.audioManager.volume[this.channel]);
-    this.cursorEntity.x = 8+this.app.audioManager.volume[this.channel]*18;
+    this.app.audioManager.volume[this.bus] = Math.min(10, Math.max(0, Math.round(volume)));
+    Tool.writeCookie(this.cookie, this.app.audioManager.volume[this.bus]);
+    this.cursorEntity.x = 8+this.app.audioManager.volume[this.bus]*18;
   } // changeVolume
 
   /**
@@ -117,10 +117,10 @@ export class ZXVolumeEntity extends AbstractEntity {
     }
     switch (event.id) {
       case 'changeVolumeUp':
-        this.changeVolume(this.app.audioManager.volume[this.channel]+1);
+        this.changeVolume(this.app.audioManager.volume[this.bus]+1);
         return true;
       case 'changeVolumeDown':
-        this.changeVolume(this.app.audioManager.volume[this.channel]-1);
+        this.changeVolume(this.app.audioManager.volume[this.bus]-1);
         return true;
       case 'playSample':
         if (this.app.inputEventsManager.needEventForAudio()) {
@@ -128,11 +128,11 @@ export class ZXVolumeEntity extends AbstractEntity {
           return true;
         }
       case 'playSample2':
-        this.sendEvent(0, 0, {id: 'openAudioChannel', channel: this.channel, options: {audioSilentHandler: 'silent'}});
-        if (this.app.audioManager.volume[this.channel] == 0.0) {
+        this.sendEvent(0, 0, {id: 'openAudioBus', bus: this.bus, options: {audioSilentHandler: 'disable'}});
+        if (this.app.audioManager.volume[this.bus] == 0.0) {
           this.driverEntity.setText('NOTE: AUDIO DRIVER IS OFF');
         } else {
-          switch (this.app.audioManager.channels[this.channel].id) {
+          switch (this.app.audioManager.buses[this.bus].id) {
             case 'AudioWorkletHandler':
               this.driverEntity.setText('');
               break;
@@ -145,14 +145,14 @@ export class ZXVolumeEntity extends AbstractEntity {
           }
         }
         this.sendEvent(1, 0, {id: 'closePressAnyKey'});
-        this.sendEvent(0, 0, {id: 'playSound', sound: this.sampleSound, channel: this.channel, options: false});
+        this.sendEvent(0, 0, {id: 'playSound', sound: this.sampleSound, bus: this.bus, options: false});
         return true;
-      case 'errorAudioChannel':
+      case 'errorAudioBus':
         this.driverEntity.setText(event.error);
         this.app.showErrorMessage(event.error, 'reopen');
         return true;
       case 'closeVolume':
-        this.sendEvent(0, 0, {id: 'closeAudioChannel', channel: this.channel});
+        this.sendEvent(0, 0, {id: 'closeAudioBus', bus: this.bus});
         this.sendEvent(0, 0, {id: 'refreshMenu'});
         this.destroy();
         return true;
