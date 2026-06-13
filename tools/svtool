@@ -448,12 +448,32 @@ function es2018Artifacts() {
 } // es2018Artifacts
 
 /**
+ * Locate the terser CLI used to minify the bundle. Prefers a global install,
+ * then a locally installed copy under node_modules/.bin (the declared dev
+ * dependency). Returns the command, or null when terser is unavailable.
+ */
+function terserCommand() {
+  if (trim((string) shell_exec('command -v terser 2>/dev/null')) !== '') {
+    return 'terser';                         // global install (npm i -g terser)
+  }
+  if (is_file('node_modules/.bin/terser')) {
+    return 'node_modules/.bin/terser';       // local devDependency
+  }
+  return null;
+} // terserCommand
+
+/**
  * Minify a combined ES module with terser, reading from stdin and returning
  * the minified source. Exits on failure.
  */
 function runTerser($source) {
+  $terser = terserCommand();
+  if ($terser === null) {
+    fwrite(STDERR, "build: terser not found (run: npm install, or npm i -g terser).\n");
+    exit(1);
+  }
   $proc = proc_open(
-    'terser --module --compress --mangle',
+    $terser . ' --module --compress --mangle',
     [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => STDERR],
     $pipes
   );
