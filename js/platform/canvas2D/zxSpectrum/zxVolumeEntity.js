@@ -128,7 +128,7 @@ export class ZXVolumeEntity extends AbstractEntity {
           return true;
         }
       case 'playSample2':
-        this.sendEvent(0, 0, {id: 'openAudioChannel', channel: this.channel, options: {audioDisableHandler: 'disable'}});
+        this.sendEvent(0, 0, {id: 'openAudioChannel', channel: this.channel, options: {audioSilentHandler: 'silent'}});
         if (this.app.audioManager.volume[this.channel] == 0.0) {
           this.driverEntity.setText('NOTE: AUDIO DRIVER IS OFF');
         } else {
@@ -139,7 +139,7 @@ export class ZXVolumeEntity extends AbstractEntity {
             case 'AudioScriptProcessorHandler':
               this.driverEntity.setText('WARNING: DRIVER IS DEPRECATED!');
               break;
-              case 'AudioDisableHandler':
+              case 'AudioSilentHandler':
                 this.driverEntity.setText('ERROR: AUDIO NOT STARTED!');
                 break;
           }

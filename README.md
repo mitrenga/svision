@@ -69,10 +69,10 @@ send-up / send-down / send-to-model event system.
   together on that one context. It dispatches each channel to the best
   available handler: **`AudioWorkletHandler`** (modern),
   **`AudioScriptProcessorHandler`** (fallback), **`AudioOscillatorHandler`**,
-  and **`AudioDisableHandler`**.
+  and **`AudioSilentHandler`**.
 - Handlers **borrow** the shared context from the manager to build their nodes;
   the manager alone creates and discards the context.
-- **`AudioDisableHandler`** needs no context: it produces no sound but still
+- **`AudioSilentHandler`** needs no context: it produces no sound but still
   walks the sound data to fire timed events, so game logic keeps running on
   devices with no audio support or when everything is muted.
 - **`audioProcessor`** is the AudioWorklet processor that generates the samples.

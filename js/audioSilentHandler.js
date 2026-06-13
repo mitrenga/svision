@@ -6,19 +6,20 @@ import AbstractAudioHandler from './abstractAudioHandler.js';
 // begin code
 
 /**
- * Audio handler used when sound output is disabled. It produces no audible
- * output but still drives the timing-based event stream of a sound so that
- * sound-synchronized game events keep firing.
+ * Audio handler used when there is no audible output (sound turned off or the
+ * device has no audio support). It produces no sound but still drives the
+ * timing-based event stream of a sound so that sound-synchronized game events
+ * keep firing.
  */
-export class AudioDisableHandler extends AbstractAudioHandler {
+export class AudioSilentHandler extends AbstractAudioHandler {
 
   /**
-   * Creates the disabled handler.
+   * Creates the silent handler.
    * @param {Object} app - The owning application instance.
    */
   constructor(app) {
     super(app);
-    this.id = 'AudioDisableHandler';
+    this.id = 'AudioSilentHandler';
   } // constructor
 
   /**
@@ -82,6 +83,6 @@ export class AudioDisableHandler extends AbstractAudioHandler {
     }
   } // playSound
 
-} // AudioDiableHandler
+} // AudioSilentHandler
 
-export default AudioDisableHandler;
+export default AudioSilentHandler;
