@@ -414,18 +414,36 @@ function reportES2018($findings) {
 } // reportES2018
 
 /**
- * Locate the es-check CLI for the authoritative ES2018 parse check. Prefers a
- * global install, then a locally installed copy via npx (never auto-downloads
- * from the network). Returns the command prefix, or null if unavailable.
+ * Resolve a Node CLI tool declared as a dev dependency. Prefers a global
+ * install, then a local node_modules/.bin copy — looked up both in the current
+ * working directory (svision repo) and next to svtool itself
+ * (svision/node_modules, where an app that bundles svision in a subdirectory
+ * installs it). Returns the command, or null when unavailable.
+ * @param {string} name - The CLI binary name (e.g. 'terser', 'es-check').
+ */
+function nodeBin($name) {
+  if (trim((string) shell_exec('command -v ' . escapeshellarg($name) . ' 2>/dev/null')) !== '') {
+    return $name;                                            // global install
+  }
+  $candidates = [
+    'node_modules/.bin/' . $name,                            // CWD (svision repo)
+    dirname(__DIR__) . '/node_modules/.bin/' . $name,        // next to svtool (svision/)
+  ];
+  foreach ($candidates as $path) {
+    if (is_file($path)) {
+      return $path;
+    }
+  }
+  return null;
+} // nodeBin
+
+/**
+ * Locate the es-check CLI for the authoritative ES2018 parse check (never
+ * auto-downloads from the network). Returns the command, or null if
+ * unavailable (the verify command then falls back to its heuristic scan).
  */
 function escheckCommand() {
-  if (trim((string) shell_exec('command -v es-check 2>/dev/null')) !== '') {
-    return 'es-check';                       // global install (npm i -g es-check)
-  }
-  if (is_file('node_modules/.bin/es-check')) {
-    return 'node_modules/.bin/es-check';     // local devDependency
-  }
-  return null;                               // -> heuristic fallback
+  return nodeBin('es-check');
 } // escheckCommand
 
 /**
@@ -453,13 +471,7 @@ function es2018Artifacts() {
  * dependency). Returns the command, or null when terser is unavailable.
  */
 function terserCommand() {
-  if (trim((string) shell_exec('command -v terser 2>/dev/null')) !== '') {
-    return 'terser';                         // global install (npm i -g terser)
-  }
-  if (is_file('node_modules/.bin/terser')) {
-    return 'node_modules/.bin/terser';       // local devDependency
-  }
-  return null;
+  return nodeBin('terser');
 } // terserCommand
 
 /**
