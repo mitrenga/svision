@@ -150,6 +150,22 @@ verification operations on an svision app. It is run from the application root
 
 A bash completion script is provided in `tools/svtool-completion.bash`.
 
+### Prerequisites
+
+`svtool` itself runs under **PHP** (CLI) — that alone is enough for `version`,
+`info`, `clean` and `help`. Some commands need extra tools:
+
+- **`build`** requires **terser** — the bundle is minified through it.
+- **`verify`** uses **es-check** for the authoritative ES2018 check; without it
+  it falls back to a heuristic source scan.
+- **`info`**'s database listing needs the PHP **`mysqli`** extension (optional —
+  skipped with a notice when it is absent).
+
+`terser` and `es-check` are declared as dev dependencies, so a one-time
+`npm install` (which also needs **Node.js**) makes them available to `svtool`
+under `node_modules/.bin`. Alternatively install them globally with
+`npm i -g terser es-check`.
+
 ## Examples
 
 Full, working projects built with svision:
