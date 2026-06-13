@@ -20,11 +20,58 @@ export class AbstractAudioManager {
   constructor(app) {
     this.app = app;
     this.id = 'AbstractAudioManager';
+    this.ctx = null;
     this.channels = {};
     this.unsupportedAudioChannel = false;
     this.audioDataCache = {};
     this.restartSounds = {};
   } // constructor
+
+  /**
+   * Lazily creates the single shared AudioContext that backs every channel.
+   * No-op when a context already exists. Leaves the context null when the Web
+   * Audio API is unavailable or its constructor fails (e.g. on devices with no
+   * audio support); handlers then report the unsupported channel on a null
+   * context and the manager falls back to the silent handler.
+   * @returns {void}
+   */
+  openAudioContext() {
+    if (this.ctx == null) {
+      var classAudioCtx = (window.AudioContext || window.webkitAudioContext);
+      if (classAudioCtx != null) {
+        try {
+          this.ctx = new (classAudioCtx)({sampleRate: 44100, latencyHint: 'interactive'});
+        } catch(error) {
+          this.ctx = null;
+        }
+      }
+    }
+  } // openAudioContext
+
+  /**
+   * Closes and discards the shared AudioContext, releasing the audio hardware.
+   * Called once no channels remain open.
+   * @returns {void}
+   */
+  closeAudioContext() {
+    if (this.ctx != null) {
+      this.ctx.close();
+      this.ctx = null;
+    }
+  } // closeAudioContext
+
+  /**
+   * Returns the sample rate of the shared AudioContext, falling back to the
+   * fixed 44100 Hz used for event timing when no context exists (e.g. while
+   * audio is disabled).
+   * @returns {number} The sample rate in Hz.
+   */
+  getSampleRate() {
+    if (this.ctx == null) {
+      return 44100;
+    }
+    return this.ctx.sampleRate;
+  } // getSampleRate
 
   /**
    * Factory hook that creates the audio handler for a channel. Returns
@@ -38,8 +85,10 @@ export class AbstractAudioManager {
   } // createAudioHandler
   
   /**
-   * Opens a channel, creating and registering its handler when not already
-   * present, and resets the channel's audio-data cache.
+   * Opens a channel: creates and registers the channel's handler when not
+   * already present, ensures the shared AudioContext exists when that handler
+   * needs one, passes the context to the handler, and resets the channel's
+   * audio-data cache.
    * @param {string} channel - Identifier of the channel to open.
    * @param {Object} options - Channel configuration options.
    * @returns {void}
@@ -48,7 +97,10 @@ export class AbstractAudioManager {
     if (!(channel in this.channels)) {
       var audioHandler = this.createAudioHandler(channel, options);
       if (audioHandler != false) {
-        audioHandler.openChannel(channel, options);
+        if (audioHandler.needsContext()) {
+          this.openAudioContext();
+        }
+        audioHandler.openChannel(channel, options, this.ctx);
         this.channels[channel] = audioHandler;
       }
     }
@@ -57,7 +109,8 @@ export class AbstractAudioManager {
 
   /**
    * Closes a channel, removing its handler when the close succeeds, and
-   * resets the channel's audio-data cache.
+   * resets the channel's audio-data cache. Discards the shared AudioContext
+   * once no channels remain open.
    * @param {string} channel - Identifier of the channel to close.
    * @returns {void}
    */
@@ -68,6 +121,9 @@ export class AbstractAudioManager {
       }
     }
     this.audioDataCache[channel] = {};
+    if (Object.keys(this.channels).length == 0) {
+      this.closeAudioContext();
+    }
   } // closeChannel
 
   /**

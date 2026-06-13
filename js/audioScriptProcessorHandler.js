@@ -46,10 +46,11 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
    * and creates the script processor when the context opened successfully.
    * @param {string} channel - Identifier of the channel.
    * @param {Object} options - Channel options; may include a `muted` flag.
+   * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
-  openChannel(channel, options) {
-    super.openChannel(channel, options);
+  openChannel(channel, options, ctx) {
+    super.openChannel(channel, options, ctx);
     if ('muted' in options) {
       this.muted = options.muted;
     }

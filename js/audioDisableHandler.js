@@ -22,12 +22,14 @@ export class AudioDisableHandler extends AbstractAudioHandler {
   } // constructor
 
   /**
-   * Opens the channel without creating an AudioContext, simply clearing the busy flag.
+   * Opens the channel without using an AudioContext, simply clearing the busy
+   * flag. The shared context is ignored since this handler produces no output.
    * @param {string} channel - Identifier of the channel.
    * @param {Object} options - Channel configuration options.
+   * @param {AudioContext} ctx - The shared AudioContext (unused).
    * @returns {void}
    */
-  openChannel(channel, options) {
+  openChannel(channel, options, ctx) {
     this.busy = false;
   } // openChannel
 
@@ -39,6 +41,15 @@ export class AudioDisableHandler extends AbstractAudioHandler {
     this.busy = false;
     return true;
   } // closeChannel
+
+  /**
+   * Indicates that this handler needs no AudioContext, since it produces no
+   * audio output and only walks sound data to fire timed events.
+   * @returns {boolean} Always false.
+   */
+  needsContext() {
+    return false;
+  } // needsContext
 
   /**
    * Returns the channel state, always reported as running so playback proceeds.
@@ -70,14 +81,6 @@ export class AudioDisableHandler extends AbstractAudioHandler {
       }
     }
   } // playSound
-
-  /**
-   * Returns the fixed sample rate used for event-timing calculations.
-   * @returns {number} 44100.
-   */
-  getSampleRate() {
-    return 44100;
-  } // getSampleRate
 
 } // AudioDiableHandler
 

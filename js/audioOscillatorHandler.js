@@ -27,10 +27,11 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
    * Opens the channel via the base handler and clears the busy flag.
    * @param {string} channel - Identifier of the channel.
    * @param {Object} options - Channel configuration options.
+   * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
-  openChannel(channel, options) {
-    super.openChannel(channel, options);
+  openChannel(channel, options, ctx) {
+    super.openChannel(channel, options, ctx);
     this.busy = false;
   } // openChannel
 

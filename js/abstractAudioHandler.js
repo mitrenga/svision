@@ -28,16 +28,17 @@ export class AbstractAudioHandler {
   } // constructor
 
   /**
-   * Opens the audio channel by creating a new AudioContext. Reports an
-   * unsupported-channel event when the Web Audio API is unavailable and
-   * skips the operation while the handler is busy.
+   * Opens the audio channel by borrowing the shared AudioContext owned by the
+   * audio manager. Reports an unsupported-channel event when no context is
+   * available (the Web Audio API is unavailable) and skips the operation while
+   * the handler is busy.
    * @param {string} channel - Identifier of the channel being opened.
    * @param {Object} options - Channel configuration options.
+   * @param {AudioContext} ctx - The shared AudioContext to use, or null when unavailable.
    * @returns {void}
    */
-  openChannel(channel, options) {
-    var classAudioCtx = (window.AudioContext || window.webkitAudioContext);
-    if (classAudioCtx == null) {
+  openChannel(channel, options, ctx) {
+    if (ctx == null) {
       this.error = 'AudioContext not started';
       this.app.model.sendEvent(1, {id: 'unsupportedAudioChannel', channel: channel});
       return;
@@ -48,11 +49,13 @@ export class AbstractAudioHandler {
     this.busy = true;
     this.error = false;
     this.channel = channel;
-    this.ctx = new (classAudioCtx)({sampleRate:44100, latencyHint: 'interactive'});
+    this.ctx = ctx;
   } // openChannel
 
   /**
-   * Closes the channel and releases its AudioContext.
+   * Closes the channel by releasing its borrowed reference to the shared
+   * AudioContext. The context itself is owned and discarded by the manager,
+   * so it is not closed here.
    * @returns {boolean} True when the channel was closed, false if the handler was busy.
    */
   closeChannel() {
@@ -60,9 +63,6 @@ export class AbstractAudioHandler {
       return false;
     }
     this.busy = true;
-    if (this.ctx != null) {
-      this.ctx.close();
-    }
     this.ctx = null;
     this.busy = false;
     return true;
@@ -83,12 +83,14 @@ export class AbstractAudioHandler {
   } // waitForBusy
 
   /**
-   * Returns the sample rate of the current AudioContext.
-   * @returns {number} The AudioContext sample rate in Hz.
+   * Indicates whether this handler needs the shared AudioContext to function.
+   * True in the base class; subclasses that produce no audio output override
+   * it so the manager can skip creating a context for them.
+   * @returns {boolean} True when a context is required.
    */
-  getSampleRate() {
-    return this.ctx.sampleRate;
-  } // getSampleRate
+  needsContext() {
+    return true;
+  } // needsContext
 
   /**
    * Returns the current state of the channel.

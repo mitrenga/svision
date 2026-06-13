@@ -29,10 +29,11 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
    * successfully, initializes the audio worklet processor.
    * @param {string} channel - Identifier of the channel.
    * @param {Object} options - Channel configuration options.
+   * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
-  openChannel(channel, options) {
-    super.openChannel(channel, options);
+  openChannel(channel, options, ctx) {
+    super.openChannel(channel, options, ctx);
     if (this.error === false && this.ctx != null) {
       this.openProcessor(options);
     }
