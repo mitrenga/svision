@@ -44,7 +44,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
    * connects it to the destination, applies the initial muted state, and
    * installs the port message handler that relays processor events to the
    * application model; reports an unsupported-bus event on failure.
-   * @param {Object} options - Bus options; may include a `muted` flag.
+   * @param {Object} options - Bus options; may include `muted` and `channelCount` (1 = mono, 2 = stereo).
    * @returns {Promise<void>} Resolves once the processor is set up.
    */
   async openProcessor(options) {
@@ -53,9 +53,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
         .catch(error => {
           this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
         });
-      this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor');
-      // stereo
-      //this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor', {numberOfOutputs: 1, outputChannelCount: [Math.min(2, this.ctx.destination.channelCount)]});
+      this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor', {numberOfOutputs: 1, outputChannelCount: [Math.min(this.channelCount, this.ctx.destination.maxChannelCount)]});
       this.node.connect(this.ctx.destination);
     } catch(error) {
       this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
@@ -139,7 +137,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   /**
    * Plays a sound by sending a 'play' command with the audio data and options to the processor.
    * @param {Object} audioData - Sound data with fragments, pulses, volume, and optional events/infinityRndPulses.
-   * @param {Object|boolean} options - Playback options; may include `repeat` and `nextSound`. False when none.
+   * @param {Object|boolean} options - Playback options; may include `repeat`, `nextSound`, and `channelVolumes` (per-channel volume multipliers, e.g. [1, 0] for left-only). False when none.
    * @returns {void}
    */
   playSound(audioData, options) {

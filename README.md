@@ -75,6 +75,10 @@ send-up / send-down / send-to-model event system.
 - **`AudioSilentHandler`** needs no context: it produces no sound but still
   walks the sound data to fire timed events, so game logic keeps running on
   devices with no audio support or when everything is muted.
+- **Stereo**: a bus can be opened with several output **channels** (`channelCount`,
+  capped to the hardware maximum, mono fallback). Each played sound may carry
+  per-channel volume multipliers (`channelVolumes`, e.g. `[1, 0]` for left-only)
+  to place it in the stereo field — used in JSW to pan arrow shots left/right.
 - **`audioProcessor`** is the AudioWorklet processor that generates the samples.
 
 ### Input

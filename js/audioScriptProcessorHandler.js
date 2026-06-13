@@ -11,7 +11,9 @@ import AbstractAudioHandler from './abstractAudioHandler.js';
  * implementation). It generates output by alternating an output bit between
  * volume levels for each pulse length, supports looping with an optional
  * follow-up sound and an infinite randomized-pulse mode, and dispatches
- * timing-synchronized events through the application model.
+ * timing-synchronized events through the application model. Output channels can
+ * be scaled independently via the playSound `channelVolumes` option, enabling
+ * stereo positioning when the bus is opened with more than one channel.
  */
 export class AudioScriptProcessorHandler extends AbstractAudioHandler {
 
@@ -39,13 +41,27 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.nextSound = false;
     this.paused = false;
     this.muted = false;
+    this.channelVolumes = false;
   } // constructor
+
+  /**
+   * Returns the volume multiplier for an output channel: the value from the
+   * current sound's channelVolumes array, or 1 when none is given.
+   * @param {number} idChannel - Index of the output channel.
+   * @returns {number} The per-channel volume multiplier (default 1).
+   */
+  channelVolume(idChannel) {
+    if (this.channelVolumes !== false && this.channelVolumes[idChannel] != null) {
+      return this.channelVolumes[idChannel];
+    }
+    return 1;
+  } // channelVolume
 
   /**
    * Opens the bus via the base handler, applies the initial muted state,
    * and creates the script processor when the context opened successfully.
    * @param {string} bus - Identifier of the bus.
-   * @param {Object} options - Bus options; may include a `muted` flag.
+   * @param {Object} options - Bus options; may include `muted` and `channelCount` (1 = mono, 2 = stereo).
    * @param {AudioContext} ctx - The shared AudioContext to use.
    * @returns {void}
    */
@@ -67,9 +83,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
    * @returns {void}
    */
   openProcessor() {
-    this.node = this.ctx.createScriptProcessor(0, 0, 1);
-    //stereo
-    //this.node = this.ctx.createScriptProcessor(0, 0, Math.min(2, this.ctx.destination.channelCount));
+    this.node = this.ctx.createScriptProcessor(0, 0, Math.min(this.channelCount, this.ctx.destination.maxChannelCount));
 
     this.node.onaudioprocess = (event) => {
       var channelLength = event.outputBuffer.getChannelData(0).length;
@@ -98,7 +112,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
           if (writePtr+this.oneReadPulse <= channelLength) {
             for (var idChannel = 0; idChannel < event.outputBuffer.numberOfChannels; idChannel++) {
               var channel = event.outputBuffer.getChannelData(idChannel);
-              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr, writePtr+this.oneReadPulse);
+              channel.fill(this.outputVolume[this.muted][this.outputBit] * this.channelVolume(idChannel), writePtr, writePtr+this.oneReadPulse);
             }
             writePtr += this.oneReadPulse;
             this.oneReadPulse = 0;
@@ -107,7 +121,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
           } else {
             for (var idChannel = 0; idChannel < event.outputBuffer.numberOfChannels; idChannel++) {
               var channel = event.outputBuffer.getChannelData(idChannel);
-              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr);
+              channel.fill(this.outputVolume[this.muted][this.outputBit] * this.channelVolume(idChannel), writePtr);
             }
             this.oneReadPulse = this.oneReadPulse-(channelLength-writePtr);
             writePtr = channelLength;
@@ -212,7 +226,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
    * applying optional repeat and next-sound settings; rendering then proceeds
    * in the onaudioprocess callback.
    * @param {Object} audioData - Sound data with fragments, pulses, volume, and optional events/infinityRndPulses.
-   * @param {Object|boolean} options - Playback options; may include `repeat` and `nextSound`. False when none.
+   * @param {Object|boolean} options - Playback options; may include `repeat`, `nextSound`, and `channelVolumes` (per-channel volume multipliers, e.g. [1, 0] for left-only). False when none.
    * @returns {void}
    */
   playSound(audioData, options) {
@@ -234,12 +248,16 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.oneReadPulse = 0;
     this.repeat = false;
     this.nextSound = false;
+    this.channelVolumes = false;
     if (options !== false) {
       if ('repeat' in options) {
         this.repeat = options.repeat;
       }
       if ('nextSound' in options) {
         this.nextSound = options.nextSound;
+      }
+      if ('channelVolumes' in options) {
+        this.channelVolumes = options.channelVolumes;
       }
     }
   } // playSound

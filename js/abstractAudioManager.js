@@ -90,7 +90,7 @@ export class AbstractAudioManager {
    * needs one, passes the context to the handler, and resets the bus's
    * audio-data cache.
    * @param {string} bus - Identifier of the bus to open.
-   * @param {Object} options - Bus configuration options.
+   * @param {Object} options - Bus configuration options; may include `channelCount` (1 = mono, 2 = stereo).
    * @returns {void}
    */
   openBus(bus, options) {

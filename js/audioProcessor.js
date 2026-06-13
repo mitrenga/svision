@@ -11,7 +11,9 @@
  * over its message port, generates output by alternating an output bit
  * between volume levels for each pulse length, supports looping with an
  * optional follow-up sound and an infinite randomized-pulse mode, and posts
- * timing-synchronized events back to the main thread.
+ * timing-synchronized events back to the main thread. Output channels can be
+ * scaled independently via the play command's channelVolumes, enabling stereo
+ * positioning when the node is opened with more than one channel.
  */
 class AudioProcessor extends AudioWorkletProcessor {
 
@@ -36,6 +38,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.nextSound = false;
     this.paused = false;
     this.muted = false;
+    this.channelVolumes = false;
 
     this.port.onmessage = (event) => {
       switch (event.data.id) {
@@ -58,12 +61,16 @@ class AudioProcessor extends AudioWorkletProcessor {
           this.oneReadPulse = 0;
           this.repeat = false;
           this.nextSound = false;
+          this.channelVolumes = false;
           if (event.data.options !== false) {
             if ('repeat' in event.data.options) {
               this.repeat = event.data.options.repeat;
             }
             if ('nextSound' in event.data.options) {
               this.nextSound = event.data.options.nextSound;
+            }
+            if ('channelVolumes' in event.data.options) {
+              this.channelVolumes = event.data.options.channelVolumes;
             }
           }
           break;
@@ -83,6 +90,19 @@ class AudioProcessor extends AudioWorkletProcessor {
     } // onmessage
     
   } // constructor
+
+  /**
+   * Returns the volume multiplier for an output channel: the value from the
+   * current sound's channelVolumes array, or 1 when none is given.
+   * @param {number} idChannel - Index of the output channel.
+   * @returns {number} The per-channel volume multiplier (default 1).
+   */
+  channelVolume(idChannel) {
+    if (this.channelVolumes !== false && this.channelVolumes[idChannel] != null) {
+      return this.channelVolumes[idChannel];
+    }
+    return 1;
+  } // channelVolume
 
   /**
    * Renders one audio quantum. While not paused and a pulse sequence is
@@ -121,8 +141,8 @@ class AudioProcessor extends AudioWorkletProcessor {
         }
         if (writePtr+this.oneReadPulse <= channelLength) {
           outputs.forEach((output) => {
-            output.forEach((channel) => {
-              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr, writePtr+this.oneReadPulse);
+            output.forEach((channel, idChannel) => {
+              channel.fill(this.outputVolume[this.muted][this.outputBit] * this.channelVolume(idChannel), writePtr, writePtr+this.oneReadPulse);
             });
           });
           writePtr += this.oneReadPulse;
@@ -131,8 +151,8 @@ class AudioProcessor extends AudioWorkletProcessor {
           this.outputBit = 1-this.outputBit;
         } else {
           outputs.forEach((output) => {
-            output.forEach((channel) => {
-              channel.fill(this.outputVolume[this.muted][this.outputBit], writePtr);
+            output.forEach((channel, idChannel) => {
+              channel.fill(this.outputVolume[this.muted][this.outputBit] * this.channelVolume(idChannel), writePtr);
             });
           });
           this.oneReadPulse = this.oneReadPulse-(channelLength-writePtr);

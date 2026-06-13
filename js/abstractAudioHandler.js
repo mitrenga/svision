@@ -24,6 +24,7 @@ export class AbstractAudioHandler {
     this.busy = false;
     this.ctx = null;
     this.bus = false;
+    this.channelCount = 1;
     this.error = false;
   } // constructor
 
@@ -33,7 +34,7 @@ export class AbstractAudioHandler {
    * available (the Web Audio API is unavailable) and skips the operation while
    * the handler is busy.
    * @param {string} bus - Identifier of the bus being opened.
-   * @param {Object} options - Bus configuration options.
+   * @param {Object} options - Bus configuration options; may include `channelCount` (output channels: 1 = mono default, 2 = stereo, capped to the hardware maximum).
    * @param {AudioContext} ctx - The shared AudioContext to use, or null when unavailable.
    * @returns {void}
    */
@@ -49,6 +50,7 @@ export class AbstractAudioHandler {
     this.busy = true;
     this.error = false;
     this.bus = bus;
+    this.channelCount = ('channelCount' in options) ? options.channelCount : 1;
     this.ctx = ctx;
   } // openBus
 
