@@ -13,8 +13,6 @@ class ForwardToConfigPage extends AbstractPage {
    * Builds the minimal HTML page that redirects to the config page.
    */
   public function createPage() {
-    $scriptsVersion = md5(time());
-
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';

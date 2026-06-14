@@ -17,7 +17,7 @@ class ConfigPage extends AbstractPage {
    * matching capability-check scripts.
    */
   public function createPage() {
-    $srcVersion = md5(time());
+    $srcVersion = $this->srcVersion();
 
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
