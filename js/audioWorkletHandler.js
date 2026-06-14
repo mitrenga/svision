@@ -40,8 +40,40 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   } // openBus
 
   /**
-   * Loads the AudioProcessor worklet module (fetched and registered from a blob
-   * URL so the service worker can serve it from cache offline), creates the
+   * Ensures the AudioProcessor worklet module is registered on the shared
+   * context, exactly once per context. The module is loaded via fetch() and
+   * registered from a blob URL so the service worker can serve it from cache
+   * offline (addModule() requests bypass the service worker on some browsers).
+   * The registration promise is cached on the context so several buses sharing
+   * it do not register the processor twice, which would throw "a class with the
+   * same name is already registered"; on failure the cached promise is cleared
+   * so a later bus can retry.
+   * @returns {Promise<void>} Resolves once the processor class is registered.
+   */
+  loadProcessorModule() {
+    if (!this.ctx.audioProcessorModule) {
+      this.ctx.audioProcessorModule = (async () => {
+        const url = this.app.importPath+'/svision/js/audioProcessor.js';
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('audioProcessor '+response.status);
+        }
+        const blobURL = URL.createObjectURL(await response.blob());
+        try {
+          await this.ctx.audioWorklet.addModule(blobURL);
+        } finally {
+          URL.revokeObjectURL(blobURL);
+        }
+      })().catch((error) => {
+        this.ctx.audioProcessorModule = null;
+        throw error;
+      });
+    }
+    return this.ctx.audioProcessorModule;
+  } // loadProcessorModule
+
+  /**
+   * Registers the worklet module (once per context), creates the
    * AudioWorkletNode and connects it to the destination, applies the initial
    * muted state, and installs the port message handler that relays processor
    * events to the application model; on any failure it reports a single
@@ -51,21 +83,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
    */
   async openProcessor(options) {
     try {
-      const url = this.app.importPath+'/svision/js/audioProcessor.js';
-      // Load the worklet module through fetch() (which the service worker can
-      // serve from cache) and register it from a blob URL: addModule() requests
-      // bypass the service worker on some browsers and would otherwise fail
-      // offline.
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error('audioProcessor '+response.status);
-      }
-      const blobURL = URL.createObjectURL(await response.blob());
-      try {
-        await this.ctx.audioWorklet.addModule(blobURL);
-      } finally {
-        URL.revokeObjectURL(blobURL);
-      }
+      await this.loadProcessorModule();
       this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor', {numberOfOutputs: 1, outputChannelCount: [Math.min(this.channelCount, this.ctx.destination.maxChannelCount)]});
       this.node.connect(this.ctx.destination);
       if ('muted' in options && options.muted) {

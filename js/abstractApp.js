@@ -109,7 +109,7 @@ export class AbstractApp {
       if ('key' in storage) {
         if ('when' in storage) {
           if (storage.when == 'required' || storage.when == connectionStatus) {
-            if (localStorage.key(window.appPrefix+'.'+storage.key)) {
+            if (localStorage.getItem(window.appPrefix+'.'+storage.key) !== null) {
               try {
                 var dataJSON = localStorage.getItem(window.appPrefix+'.'+storage.key);
                 var data = {url: url, source: 'storage', data: JSON.parse(dataJSON)};

@@ -33,8 +33,8 @@ export class ZXResetModel extends AbstractModel {
   } // constructor
 
   /**
-   * Builds the reset and copyright entities, schedules the reset animation
-   * event and starts fetching the application data.
+   * Builds the reset and copyright entities and schedules the reset animation
+   * event. Application data is loaded by the app, not by this display model.
    */
   init() {
     super.init();
@@ -46,17 +46,7 @@ export class ZXResetModel extends AbstractModel {
     this.inputLineEntity.hide = true;
     this.desktopEntity.addEntity(this.inputLineEntity);
     this.sendEvent(500, {id: 'showReset'});
-
-    this.fetchData('appData.db', false, {});
   } // init
-
-  /**
-   * Receives the fetched application data and stores it as global data.
-   * @param {Object} data - The application data loaded from the data source.
-   */
-  setData(data) {
-    this.app.setGlobalData(data);
-  } // setData
 
   /**
    * Handles the reset sequence events that advance through the reset animation,
