@@ -40,33 +40,44 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   } // openBus
 
   /**
-   * Loads the AudioProcessor worklet module, creates the AudioWorkletNode and
-   * connects it to the destination, applies the initial muted state, and
-   * installs the port message handler that relays processor events to the
-   * application model; reports an unsupported-bus event on failure.
+   * Loads the AudioProcessor worklet module (fetched and registered from a blob
+   * URL so the service worker can serve it from cache offline), creates the
+   * AudioWorkletNode and connects it to the destination, applies the initial
+   * muted state, and installs the port message handler that relays processor
+   * events to the application model; on any failure it reports a single
+   * unsupported-bus event so the manager can fall back to another handler.
    * @param {Object} options - Bus options; may include `muted` and `channelCount` (1 = mono, 2 = stereo).
    * @returns {Promise<void>} Resolves once the processor is set up.
    */
   async openProcessor(options) {
     try {
-      await this.ctx.audioWorklet.addModule(this.app.importPath+'/svision/js/audioProcessor.js')
-        .catch(error => {
-          this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
-        });
+      const url = this.app.importPath+'/svision/js/audioProcessor.js';
+      // Load the worklet module through fetch() (which the service worker can
+      // serve from cache) and register it from a blob URL: addModule() requests
+      // bypass the service worker on some browsers and would otherwise fail
+      // offline.
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error('audioProcessor '+response.status);
+      }
+      const blobURL = URL.createObjectURL(await response.blob());
+      try {
+        await this.ctx.audioWorklet.addModule(blobURL);
+      } finally {
+        URL.revokeObjectURL(blobURL);
+      }
       this.node = new AudioWorkletNode(this.ctx, 'AudioProcessor', {numberOfOutputs: 1, outputChannelCount: [Math.min(this.channelCount, this.ctx.destination.maxChannelCount)]});
       this.node.connect(this.ctx.destination);
-    } catch(error) {
-      this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
-      this.busy = false;
-    } finally {
-      this.busy = false;
       if ('muted' in options && options.muted) {
         this.node.port.postMessage({id: 'mute'});
       }
-
       this.node.port.onmessage = (event) => {
         this.app.model.sendEvent(1, {id: event.data.id, data: event.data});
       } // onmessage
+    } catch(error) {
+      this.app.model.sendEvent(1, {id: 'unsupportedAudioBus', bus: this.bus});
+    } finally {
+      this.busy = false;
     }
   } // openProcessor
 

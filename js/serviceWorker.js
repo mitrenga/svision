@@ -18,15 +18,19 @@ const CACHE_NAME = CACHE_PREFIX+'v'+'PHP_VERSION_PLACEHOLDER';
 const ASSETS = [/* PHP_ASSETS_PLACEHOLDER */];
 
 /**
- * Install handler: opens the versioned cache and stores every asset listed in
- * ASSETS (forcing a fresh network fetch), then activates the new worker
- * immediately via skipWaiting.
+ * Install handler: opens the versioned cache and stores each asset listed in
+ * ASSETS individually (forcing a fresh network fetch). Caching is resilient —
+ * a single failing asset is logged and skipped instead of aborting the whole
+ * pre-cache — then the new worker activates immediately via skipWaiting.
  * @param {ExtendableEvent} event - The service worker install event.
  */
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(ASSETS.map((url) => new Request(url, { cache: 'reload' }))))
+      .then((cache) => Promise.allSettled(
+        ASSETS.map((url) => cache.add(new Request(url, { cache: 'reload' }))
+          .catch((error) => console.error('[sw] precache failed:', url, error)))
+      ))
       .then(() => self.skipWaiting())
   );
 });
