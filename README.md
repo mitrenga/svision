@@ -117,8 +117,9 @@ module import method the browser supports.
 - **Offline mode (production).** Service worker support is built in and active in
   the **production** build: the generated service worker pre-caches the app
   assets and serves them from cache with a network fallback, so released
-  versions keep working offline. (Dev mode serves the unbundled sources instead
-  and does not cache.)
+  versions keep working offline. Plain dev mode serves the unbundled sources and
+  does not cache, but you can opt the service worker into dev mode to test
+  offline on the dev server — see [Dev mode and the service worker](#dev-mode-and-the-service-worker).
 - **Broad browser compatibility.** The runtime targets **ECMAScript 2018
   (ES9)** as its baseline, so it runs on a wide range of older browsers and
   devices, not just the latest ones.
@@ -127,11 +128,68 @@ module import method the browser supports.
   syntax, so it works whether or not the browser supports the newer mechanism.
 - **Dev mode for full debugging.** A development mode serves the unbundled
   sources for full step-through debugging, and works with **both** import
-  methods above (production serves a single minified bundle instead).
+  methods above (production serves a single minified bundle instead). It can
+  optionally enable the service worker so offline behaviour can be tested
+  without a production build — see [below](#dev-mode-and-the-service-worker).
 - **The `/config` page.** All of the above — the detected ECMAScript version,
   class-syntax and import-method support, a live platform/canvas probe, the
   active import method and the current cookies — can be inspected and switched
   from the built-in diagnostics page at `https://<project-name>/config`.
+
+### Dev mode and the service worker
+
+Two settings in your project's `config/config.php` drive development behaviour:
+
+- **`$devMode`** selects how the app runs and whether the service worker is on:
+  - `$devMode = false;` (or unset) — **production**: the app loads the single
+    minified bundle and the service worker is **active** (offline caching on).
+  - `$devMode = true;` — **development**: the app loads the unbundled sources for
+    step-through debugging, asset URLs are cache-busted on every request, and the
+    service worker is **disabled**.
+  - `$devMode = ['serviceWorker' => true];` — **development with the service
+    worker enabled**, so you can test offline behaviour on the dev server. The
+    app still behaves as dev mode in every other respect, but the worker is
+    registered and asset versions become **stable** (read from `app/version.js`)
+    so the cache holds until you bump the version. Using an array also keeps the
+    door open for further per-feature dev switches in the future.
+- **`$devModeName`** is an optional dev-mode label. svision only exposes its
+  value to the client as `window.devModeName`; **what to do with it is entirely
+  up to the application** — render it on screen, log it to the console, or ignore
+  it. The example games (Manic Miner, Jet Set Willy) draw it in the ZX Spectrum
+  border and, by their own convention, read an optional leading JSON style block
+  `{penColor, bkColor, width}` from the value; that convention lives in the app,
+  not in the framework. A value as used by those games (the inner quotes are
+  escaped because it ends up embedded into a JavaScript string):
+
+  ```php
+  $devModeName = '.{\"penColor\":\"#000000\",\"bkColor\":\"#fefe00\",\"width\":185} DEVELOPER MODE ';
+  ```
+
+**How the service worker works.** The server generates the worker from the
+`serviceWorker.js` template, injecting the application version (used as the cache
+name) and an auto-collected asset list. The pre-cache list follows the active
+import path, so it caches the `js/` files for the bundle / *import-from* methods
+and the `app/` sources for the *await-import* method — the cache always matches
+what the app actually loads. On **install** it pre-caches every listed asset; on
+**activate** it deletes stale version caches; on **fetch** it serves same-origin
+GET requests cache-first with a network fallback, while passing dynamic data
+endpoints (`*.data` / `*.db` / `*.post`, and anything under `/data/`) straight
+through. Because the cache name carries the version, a new app version creates a
+fresh cache and old ones are pruned, so updates roll over cleanly.
+
+**Testing offline on the dev server.**
+
+1. Set `$devMode = ['serviceWorker' => true];` in `config/config.php`.
+2. Pick an import method from the `/config` page (the *import-from* method
+   mirrors the production layout most closely).
+3. Reload once so the worker installs and takes control (it becomes the
+   controller from the *second* load on).
+4. Switch your browser DevTools to **Offline** and reload again.
+
+> Firefox tip: test with **Offline** alone. Combining it with *Disable cache*
+> transiently empties the Cache Storage view in the inspector — that is a
+> DevTools artefact, not a caching problem; the entries reappear once *Disable
+> cache* is turned off.
 
 ## Command-line tooling (`svtool`)
 

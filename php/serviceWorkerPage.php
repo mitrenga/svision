@@ -39,8 +39,11 @@ class ServiceWorkerPage extends AbstractPage {
 
   /**
    * Collects the list of asset URLs the service worker should pre-cache: the
-   * app root, manifest and favicon, plus every js/, css/ and image file found
-   * by scanning the relevant directories.
+   * app root, manifest and favicon, plus every JavaScript (from the active
+   * import path directory), css and image file found by scanning the relevant
+   * directories. The JavaScript directory follows importPath() so the pre-cache
+   * matches whichever module set the app actually loads (js/ for the bundle and
+   * the import-from method, app/ for the await-import method).
    *
    * @return array The list of asset paths (relative, prefixed with './').
    */
@@ -50,7 +53,7 @@ class ServiceWorkerPage extends AbstractPage {
       './manifest.webmanifest',
       './favicon.ico',
     ];
-    $this->scanDir('js', $assets, ['js']);
+    $this->scanDir($this->importPath(), $assets, ['js']);
     $this->scanDir('app/svision/css', $assets, ['css']);
     $this->scanDir('images', $assets, ['png', 'svg', 'jpg', 'gif', 'ico']);
     return $assets;

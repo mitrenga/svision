@@ -40,15 +40,51 @@ class AbstractPage {
   } // readVersion
 
   /**
-   * Returns the version used for cache-busting asset URLs. In development mode
-   * it returns a fresh hash on every request (always bust the cache); otherwise
-   * it returns the stable application version.
+   * Returns the base directory the application loads its JavaScript modules from
+   * for this request: 'js' when the built production bundle exists or the
+   * import-from method is selected, otherwise 'app' (the await-import dev method
+   * or the maintenance fallback). Both the app shell and the service worker rely
+   * on this so the pre-cached assets always match what the app actually loads.
+   *
+   * @return string Either 'js' or 'app'.
+   */
+  protected function importPath() {
+    $bundle = 'js/bundle.'.$this->readVersion().'.min.js';
+    if (file_exists($bundle)) {
+      return 'js';
+    }
+    if (!empty($GLOBALS['devMode']) && ($_COOKIE['libImportMethod'] ?? '') === 'import-from') {
+      return 'js';
+    }
+    return 'app';
+  } // importPath
+
+  /**
+   * Decides whether the service worker should be active for this request. It is
+   * enabled in production (devMode empty) and, for development, only when the
+   * devMode flag is an array carrying a truthy 'serviceWorker' entry (e.g.
+   * $devMode = ['serviceWorker' => true]). Plain dev mode ($devMode = true)
+   * keeps the service worker disabled.
+   *
+   * @return bool True when the service worker should be registered/cached.
+   */
+  protected function isServiceWorkerEnabled() {
+    $devMode = $GLOBALS['devMode'] ?? false;
+    return empty($devMode) || (is_array($devMode) && !empty($devMode['serviceWorker']));
+  } // isServiceWorkerEnabled
+
+  /**
+   * Returns the version used for cache-busting asset URLs. In plain development
+   * mode it returns a fresh hash on every request (always bust the cache);
+   * otherwise (production, or dev mode with the service worker enabled) it
+   * returns the stable application version so the service worker cache holds
+   * until the next version change.
    *
    * @return string The cache-busting version token.
    */
   protected function srcVersion() {
     $version = $this->readVersion();
-    return !empty($GLOBALS['devMode']) ? md5(time()) : $version;
+    return $this->isServiceWorkerEnabled() ? $version : md5(time());
   } // srcVersion
 
 } // AbstractPage

@@ -41,26 +41,23 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <script>window.appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
     $this->data[] = '    <script>window.wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
     $this->data[] = '    <script>window.srcVersion = "'.$srcVersion.'";</script>';
-    $this->data[] = '    <script>window.devMode = '.(empty($GLOBALS['devMode']) ? 'false' : 'true').';</script>';
+    $this->data[] = '    <script>window.devMode = '.json_encode($GLOBALS['devMode'] ?? false).';</script>';
     $this->data[] = '    <script>window.devModeName = '.((empty($GLOBALS['devModeName'])) ? 'false' : '"'.$GLOBALS['devModeName'].'"').';</script>';
     $this->data[] = '    <script>window.appIconSprite = false;</script>';
 
-    $bundle = 'js/bundle.'.$this->readVersion().'.min.js';
+    $this->data[] = '    <script>window.importPath = "'.$this->importPath().'";</script>';
 
+    $bundle = 'js/bundle.'.$this->readVersion().'.min.js';
     if (file_exists($bundle)) {
-      $this->data[] = '    <script>window.importPath = "js";</script>';
       $this->data[] = '    <script type="module" src="'.$bundle.'?ver='.$srcVersion.'"></script>';
     } elseif (!empty($GLOBALS['devMode'])) {
       if ($_COOKIE['libImportMethod'] == 'await-import') {
-        $this->data[] = '    <script>window.importPath = "app";</script>';
         $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
       }
       if ($_COOKIE['libImportMethod'] == 'import-from') {
-        $this->data[] = '    <script>window.importPath = "js";</script>';
         $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
       }
     } else {
-      $this->data[] = '    <script>window.importPath = "app";</script>';
       $this->data[] = '    <script type="module" src="app/svision/js/maintenance.js?ver='.$srcVersion.'"></script>';
     }
     $this->data[] = '  </body>';
