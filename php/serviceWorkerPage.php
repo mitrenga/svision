@@ -75,7 +75,7 @@ class ServiceWorkerPage extends AbstractPage {
       if (!$file->isFile()) continue;
       $path = str_replace('\\', '/', $file->getPathname());
       if (strpos($path, '/.') !== false) continue;
-      if ($path === 'app/svision/js/serviceWorker.js') continue;
+      if (substr($path, -strlen('/svision/js/serviceWorker.js')) === '/svision/js/serviceWorker.js') continue;
       $ext = strtolower($file->getExtension());
       if (!in_array($ext, $extensions)) continue;
       $assets[] = './'.$path;
