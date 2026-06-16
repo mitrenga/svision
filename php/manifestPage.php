@@ -19,7 +19,7 @@ class ManifestPage extends AbstractPage {
     $this->data['display'] = 'standalone';
     $this->data['background_color'] = '#000000';
     $this->data['theme_color'] = '#000000';
-    $this->data['scope'] = '/';
+    $this->data['scope'] = $GLOBALS['webURL'];
     $this->data['icons'] = [];
     foreach (['192', '512', '1024', '1980'] as $dimension) {
       $icon = [];
