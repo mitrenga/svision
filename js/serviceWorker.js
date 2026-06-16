@@ -58,7 +58,7 @@ self.addEventListener('activate', (event) => {
  * On a cache miss the successful network response is also added to the cache
  * (runtime caching) so assets not covered by the pre-cache become available
  * offline after first use. Non-GET requests, cross-origin requests, and dynamic
- * data endpoints (paths containing '/data/' or query strings referencing
+ * data endpoints (paths containing '/data/' or query strings ending with
  * '.data', '.db', or '.post') are passed through untouched.
  * @param {FetchEvent} event - The service worker fetch event.
  */
@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.includes('/data/')) return;
-  if (url.search.includes('.data') || url.search.includes('.db') || url.search.includes('.post')) return;
+  if (url.search.endsWith('.data') || url.search.endsWith('.db') || url.search.endsWith('.post')) return;
 
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true })
