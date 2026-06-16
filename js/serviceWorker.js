@@ -55,9 +55,11 @@ self.addEventListener('activate', (event) => {
 /**
  * Fetch handler: serves cached responses for same-origin GET requests, falling
  * back to the network and, for navigation requests, to the cached root page.
- * Non-GET requests, cross-origin requests, and dynamic data endpoints
- * (paths containing '/data/' or query strings referencing '.data', '.db', or
- * '.post') are passed through untouched.
+ * On a cache miss the successful network response is also added to the cache
+ * (runtime caching) so assets not covered by the pre-cache become available
+ * offline after first use. Non-GET requests, cross-origin requests, and dynamic
+ * data endpoints (paths containing '/data/' or query strings referencing
+ * '.data', '.db', or '.post') are passed through untouched.
  * @param {FetchEvent} event - The service worker fetch event.
  */
 self.addEventListener('fetch', (event) => {
@@ -69,7 +71,13 @@ self.addEventListener('fetch', (event) => {
 
   event.respondWith(
     caches.match(event.request, { ignoreSearch: true })
-      .then((cached) => cached || fetch(event.request))
+      .then((cached) => cached || fetch(event.request).then((response) => {
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
+        return response;
+      }))
       .catch(() => event.request.mode === 'navigate' ? caches.match('./') : undefined)
   );
 });
