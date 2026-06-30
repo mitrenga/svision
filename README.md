@@ -133,8 +133,10 @@ module import method the browser supports.
   without a production build — see [below](#dev-mode-and-the-service-worker).
 - **The `/config` page.** All of the above — the detected ECMAScript version,
   class-syntax and import-method support, a live platform/canvas probe, the
-  active import method and the current cookies — can be inspected and switched
-  from the built-in diagnostics page at `https://<project-name>/config`.
+  service worker status (with buttons to unregister it, clear its cache, or
+  disable/enable it), the active import method and the current cookies — can be
+  inspected and switched from the built-in diagnostics page at
+  `https://<project-name>/config`.
 
 ### Dev mode and the service worker
 
@@ -172,10 +174,18 @@ import path, so it caches the `js/` files for the bundle / *import-from* methods
 and the `app/` sources for the *await-import* method — the cache always matches
 what the app actually loads. On **install** it pre-caches every listed asset; on
 **activate** it deletes stale version caches; on **fetch** it serves same-origin
-GET requests cache-first with a network fallback, while passing dynamic data
-endpoints (`*.data` / `*.db` / `*.post`, and anything under `/data/`) straight
-through. Because the cache name carries the version, a new app version creates a
+GET requests cache-first, adding any successful network response to the cache
+(runtime caching), while passing dynamic data endpoints (`*.data` / `*.db` /
+`*.post`, and anything under `/data/`) straight through. Because the cache name carries the version, a new app version creates a
 fresh cache and old ones are pruned, so updates roll over cleanly.
+
+**Inspecting and disabling the service worker.** The `/config` page lists the
+registered service workers and whether one controls the page, with a button to
+unregister them and clear the cache. A **Disable** button sets a
+`disableServiceWorker` cookie (and clears the current worker); while that cookie
+is set the app never registers a service worker — handy on a browser where a
+stale or misbehaving worker has to be turned off without dev tools. **Enable**
+removes the cookie.
 
 **Testing offline on the dev server.**
 

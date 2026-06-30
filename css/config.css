@@ -19,7 +19,7 @@ h2 {
 
 .error {
   color: #f80b0b;
-  min-width: 4em;
+  min-width: 8em;
   display: inline-block;
   font-weight: bold;
 }
@@ -27,7 +27,7 @@ h2 {
 .ok {
   color: #20d920;
   font-weight: bold;
-  min-width: 4em;
+  min-width: 8em;
   display: inline-block;
 }
 

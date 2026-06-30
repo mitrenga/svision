@@ -7,7 +7,9 @@ require_once 'abstractPage.php';
  * browser environment and lets the user pick a module import method. It shows:
  * the user agent, the detected ECMAScript version, support for the class
  * syntax and for each import method (with buttons to enable one), a live canvas
- * probe, server and device time, and the current cookies (with clear buttons).
+ * probe, the service worker status (with buttons to unregister it and clear its
+ * cache, and to disable/enable it via the disableServiceWorker cookie), server
+ * and device time, and the current cookies (with clear buttons).
  */
 class ConfigPage extends AbstractPage {
 
@@ -171,6 +173,68 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      }';
     $this->data[] = '      setTimeout(checkCanvas, 2000);';
     $this->data[] = '    </script>';
+    $this->data[] = '';
+    // Section: Service Worker — report whether a service worker is registered and
+    // whether it controls this page (diagnostics for stuck or leftover workers).
+    $this->data[] = '    <h2>Service Worker</h2>';
+    $this->data[] = '    <ul id="serviceWorkerInfo"><li>...</li></ul>';
+    $this->data[] = '    <div id="serviceWorkerActions"></div>';
+    $this->data[] = '    <script>';
+    $this->data[] = '      (function() {';
+    $this->data[] = '        var el = document.getElementById("serviceWorkerInfo");';
+    $this->data[] = '        if (!("serviceWorker" in navigator)) {';
+    $this->data[] = '          el.innerHTML = "<li><span class=\"item-label\">support:</span><span class=\"error\">not supported by this browser</span></li>";';
+    $this->data[] = '          return;';
+    $this->data[] = '        }';
+    $this->data[] = '        navigator.serviceWorker.getRegistrations().then(function(registrations) {';
+    $this->data[] = '          var html = "";';
+    $this->data[] = '          if (registrations.length === 0) {';
+    $this->data[] = '            html += "<li><span class=\"item-label\">registered:</span><span class=\"error\">no</span></li>";';
+    $this->data[] = '          } else {';
+    $this->data[] = '            html += "<li><span class=\"item-label\">registered:</span><span class=\"ok\">yes</span>" + (registrations.length > 1 ? "count: " + registrations.length : "") + "</li>";';
+    $this->data[] = '            for (var i = 0; i < registrations.length; i++) {';
+    $this->data[] = '              var worker = registrations[i].active || registrations[i].waiting || registrations[i].installing;';
+    $this->data[] = '              var stateClass = (worker && worker.state === "activated") ? "ok" : "error";';
+    $this->data[] = '              var stateText = worker ? worker.state : "unknown";';
+    $this->data[] = '              html += "<li><span class=\"item-label\">scope:</span><span class=\"" + stateClass + "\">" + stateText + "</span>" + registrations[i].scope + "</li>";';
+    $this->data[] = '            }';
+    $this->data[] = '          }';
+    $this->data[] = '          var controller = navigator.serviceWorker.controller;';
+    $this->data[] = '          html += "<li><span class=\"item-label\">controlling this page:</span>" + (controller ? ("<span class=\"ok\">yes</span>" + controller.scriptURL) : "<span class=\"error\">no</span>") + "</li>";';
+    $this->data[] = '          el.innerHTML = html;';
+    $this->data[] = '          if (registrations.length > 0) {';
+    $this->data[] = '            document.getElementById("serviceWorkerActions").innerHTML = "<button onclick=\"clearServiceWorkers()\">Unregister service workers and clear cache</button>";';
+    $this->data[] = '          }';
+    $this->data[] = '        }).catch(function(error) {';
+    $this->data[] = '          el.innerHTML = "<li><span class=\"error\">ERROR: " + error.message + "</span></li>";';
+    $this->data[] = '        });';
+    $this->data[] = '      })();';
+    $this->data[] = '    </script>';
+    $this->data[] = '    <script>';
+    $this->data[] = '      function clearServiceWorkers() {';
+    $this->data[] = '        var tasks = [];';
+    $this->data[] = '        if ("serviceWorker" in navigator) {';
+    $this->data[] = '          tasks.push(navigator.serviceWorker.getRegistrations().then(function(registrations) {';
+    $this->data[] = '            return Promise.all(registrations.map(function(registration) { return registration.unregister(); }));';
+    $this->data[] = '          }));';
+    $this->data[] = '        }';
+    $this->data[] = '        if (window.caches && caches.keys) {';
+    $this->data[] = '          tasks.push(caches.keys().then(function(keys) {';
+    $this->data[] = '            return Promise.all(keys.map(function(key) { return caches.delete(key); }));';
+    $this->data[] = '          }));';
+    $this->data[] = '        }';
+    $this->data[] = '        Promise.all(tasks).then(function() { location.reload(); }).catch(function() { location.reload(); });';
+    $this->data[] = '      } // clearServiceWorkers';
+    $this->data[] = '      function disableServiceWorker() {';
+    $this->data[] = '        document.cookie = "disableServiceWorker=true;max-age=31536000;path=/";';
+    $this->data[] = '        clearServiceWorkers();';
+    $this->data[] = '      } // disableServiceWorker';
+    $this->data[] = '    </script>';
+    if (isset($_COOKIE['disableServiceWorker']) && $_COOKIE['disableServiceWorker'] == 'true') {
+      $this->data[] = '    <script>document.write("<button onclick=\"document.cookie=\'disableServiceWorker=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/\';location.reload();\">Enable service worker</button>");</script>';
+    } else {
+      $this->data[] = '    <script>document.write("<button onclick=\"disableServiceWorker()\">Disable service worker</button>");</script>';
+    }
     $this->data[] = '';
     // Section: Current time — show server time (rendered here) alongside device
     // time (refreshed client-side, with the server part re-fetched periodically).
