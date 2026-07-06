@@ -1,7 +1,7 @@
 # svision
 
 [![API documentation](https://img.shields.io/badge/docs-API%20reference-blue)](https://mitrenga.github.io/svision/)
-[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0-green)](LICENSE)
+[![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/license-CC%20BY--NC--SA%204.0-lightgrey)](LICENSE)
 
 **svision** is a library and toolkit for building web-based graphics
 applications, especially retro games. It gives you a small, dependency-free
@@ -262,4 +262,4 @@ npm run docs   # generates the HTML reference into ./docs
 
 ## License
 
-svision is released under the [GNU General Public License v3.0](LICENSE).
+svision is released under the [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International (CC BY-NC-SA 4.0)](LICENSE) license.
