@@ -1,7 +1,9 @@
 /**/
 const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+window.srcVersion);
+const { Tool } = await import('../tool.js?ver='+window.srcVersion);
 /*/
 import AbstractAudioHandler from './abstractAudioHandler.js';
+import Tool from '../tool.js';
 /**/
 // begin code
 
@@ -21,6 +23,14 @@ export class AbstractAudioManager {
     this.app = app;
     this.id = 'AbstractAudioManager';
     this.ctx = null;
+    // Rate requested for the shared context; lower = less audio-thread CPU (and
+    // duller sound). Persisted in the 'audioSampleRate' cookie; useful with the
+    // worklet (1-bit pulses adapt via getSampleRate) and oscillator handlers alike.
+    this.sampleRate = this.validSampleRate(Number(Tool.readCookie('audioSampleRate', 44100)));
+    // 'interactive' = small buffer / low latency (SFX-first); 'playback' = larger
+    // buffer, much more resistant to audio-thread underruns (music-first) at the
+    // cost of a slightly later sound start. Applied at context creation.
+    this.latencyHint = 'interactive';
     this.buses = {};
     this.unsupportedAudioBus = false;
     this.audioDataCache = {};
@@ -28,11 +38,40 @@ export class AbstractAudioManager {
   } // constructor
 
   /**
-   * Lazily creates the single shared AudioContext that backs every bus.
-   * No-op when a context already exists. Leaves the context null when the Web
-   * Audio API is unavailable or its constructor fails (e.g. on devices with no
-   * audio support); handlers then report the unsupported bus on a null
-   * context and the manager falls back to the silent handler.
+   * Normalizes a requested sample rate: rounded and kept within the Web Audio
+   * guaranteed range 8000..96000 Hz, anything else falls back to 44100.
+   * @param {number} rate - The requested sample rate in Hz.
+   * @returns {number} A usable sample rate.
+   */
+  validSampleRate(rate) {
+    rate = Math.round(rate);
+    if (isFinite(rate) && rate >= 8000 && rate <= 96000) {
+      return rate;
+    }
+    return 44100;
+  } // validSampleRate
+
+  /**
+   * Sets the requested sample rate of the shared AudioContext and persists it
+   * in the 'audioSampleRate' cookie. The rate is fixed at context creation, so
+   * it only takes effect after all buses are closed (discarding the context)
+   * and playback reopens them.
+   * @param {number} rate - The sample rate in Hz (8000..96000, e.g. 44100, 22050, 11025, 8000).
+   * @returns {void}
+   */
+  setSampleRate(rate) {
+    this.sampleRate = this.validSampleRate(rate);
+    Tool.writeCookie('audioSampleRate', this.sampleRate);
+  } // setSampleRate
+
+  /**
+   * Lazily creates the single shared AudioContext that backs every bus, using
+   * the manager's requested `sampleRate` (changing it therefore only takes
+   * effect after all buses close and the context is recreated). When the
+   * constructor rejects the requested rate the context is retried with the
+   * platform defaults, and only if that fails too it is left null (the Web
+   * Audio API is unavailable); handlers then report the unsupported bus on a
+   * null context and the manager falls back to the silent handler.
    * @returns {void}
    */
   openAudioContext() {
@@ -40,9 +79,13 @@ export class AbstractAudioManager {
       var classAudioCtx = (window.AudioContext || window.webkitAudioContext);
       if (classAudioCtx != null) {
         try {
-          this.ctx = new (classAudioCtx)({sampleRate: 44100, latencyHint: 'interactive'});
+          this.ctx = new (classAudioCtx)({sampleRate: this.sampleRate, latencyHint: this.latencyHint});
         } catch(error) {
-          this.ctx = null;
+          try {
+            this.ctx = new (classAudioCtx)();
+          } catch(error2) {
+            this.ctx = null;
+          }
         }
       }
     }

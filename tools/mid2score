@@ -1,0 +1,366 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * mid2score — converts a Standard MIDI File (.mid) into an svision score
+ * module for the AudioOscillatorHandler.
+ *
+ * It parses the MIDI file (format 0/1, metrical division), pairs note-on/off
+ * events into notes, converts MIDI ticks to the score's bar/tick grid
+ * (16 ticks per 4/4 bar, fractional ticks preserved so nothing is quantized
+ * away) and prints a ready-to-use JavaScript score module: one score track per
+ * MIDI track that contains notes, all playing a default piano descriptor that
+ * can be tuned afterwards in the generated file.
+ *
+ * Usage:
+ *   mid2score <input.mid> <ScoreName> [output.js] [--snap] [--min-vol=0.3] [--min-dur=0.08]
+ *
+ * ScoreName is PascalCase and becomes the exported factory name, e.g.
+ * `GravityFalls` -> `createGravityFallsScore()`. Without output.js the module
+ * is written to stdout; conversion statistics always go to stderr.
+ *
+ * Cleanup options for automatic audio transcriptions:
+ *   --snap        round (midi + pitch bend) to the nearest true semitone
+ *                 instead of emitting fractional hertz - use when the source
+ *                 recording is known to be at standard A440 and the bends are
+ *                 transcription artifacts
+ *   --min-vol=X   drop ghost notes quieter than X (0..1 velocity)
+ *   --min-dur=X   drop ghost notes shorter than X beats
+ */
+
+const SEMITONES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+main($argv);
+
+function main($argv) {
+  $options = ['snap' => false, 'ignoreBends' => false, 'minVol' => 0.0, 'minDur' => 0.0];
+  $positional = [];
+  for ($i = 1; $i < count($argv); $i++) {
+    $arg = $argv[$i];
+    if ($arg === '--snap') {
+      $options['snap'] = true;
+    } elseif ($arg === '--ignore-bends') {
+      $options['ignoreBends'] = true;
+    } elseif (preg_match('/^--min-vol=([\d.]+)$/', $arg, $m)) {
+      $options['minVol'] = (float)$m[1];
+    } elseif (preg_match('/^--min-dur=([\d.]+)$/', $arg, $m)) {
+      $options['minDur'] = (float)$m[1];
+    } else {
+      $positional[] = $arg;
+    }
+  }
+  $input = $positional[0] ?? null;
+  $name = $positional[1] ?? null;
+  $output = $positional[2] ?? null;
+
+  if ($input === null || $name === null) {
+    fwrite(STDERR, "Usage: mid2score <input.mid> <ScoreName> [output.js] [--snap] [--min-vol=X] [--min-dur=X]\n");
+    exit(1);
+  }
+  if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {
+    fwrite(STDERR, "ScoreName must be PascalCase (e.g. GravityFalls)\n");
+    exit(1);
+  }
+  $bytes = @file_get_contents($input);
+  if ($bytes === false) {
+    fwrite(STDERR, "Cannot read: $input\n");
+    exit(1);
+  }
+
+  $midi = parseMidiFile($bytes);
+  $module = generateModule($midi, $name, basename($input), $options);
+
+  if ($output !== null) {
+    file_put_contents($output, $module);
+    fwrite(STDERR, "Written: $output\n");
+  } else {
+    echo $module;
+  }
+} // main
+
+/**
+ * Reads a big-endian unsigned integer of $n bytes at $pos (advances $pos).
+ */
+function readInt($bytes, &$pos, $n) {
+  $value = 0;
+  for ($i = 0; $i < $n; $i++) {
+    $value = ($value << 8) | ord($bytes[$pos++]);
+  }
+  return $value;
+} // readInt
+
+/**
+ * Reads a MIDI variable-length quantity at $pos (advances $pos).
+ */
+function readVLQ($bytes, &$pos) {
+  $value = 0;
+  do {
+    $b = ord($bytes[$pos++]);
+    $value = ($value << 7) | ($b & 0x7F);
+  } while ($b & 0x80);
+  return $value;
+} // readVLQ
+
+/**
+ * Parses the whole MIDI file into tempo and per-track note lists.
+ * Returns ['bpm' => float, 'tempoCount' => int, 'division' => int,
+ *          'tracks' => [ ['name' => string, 'notes' => [[startTick, durTick, midiPitch, velocity, bendSemitones], ...]], ... ]].
+ */
+function parseMidiFile($bytes) {
+  $pos = 0;
+  if (substr($bytes, 0, 4) !== 'MThd') {
+    fwrite(STDERR, "Not a MIDI file (missing MThd)\n");
+    exit(1);
+  }
+  $pos = 4;
+  $headerLen = readInt($bytes, $pos, 4);
+  $format = readInt($bytes, $pos, 2);
+  $trackCount = readInt($bytes, $pos, 2);
+  $division = readInt($bytes, $pos, 2);
+  $pos = 8 + $headerLen;
+  if ($division & 0x8000) {
+    fwrite(STDERR, "SMPTE time division is not supported\n");
+    exit(1);
+  }
+
+  $tempos = [];
+  $tracks = [];
+
+  for ($t = 0; $t < $trackCount; $t++) {
+    if (substr($bytes, $pos, 4) !== 'MTrk') {
+      fwrite(STDERR, "Corrupt track chunk #$t\n");
+      exit(1);
+    }
+    $pos += 4;
+    $trackLen = readInt($bytes, $pos, 4);
+    $end = $pos + $trackLen;
+
+    $abs = 0;
+    $running = null;
+    $trackName = '';
+    $notes = [];
+    $open = [];   // key: channel<<8|pitch, value: list of start ticks (chronological)
+    $bend = [];   // per-channel pitch-bend state in semitones (default range +-2)
+
+    while ($pos < $end) {
+      $abs += readVLQ($bytes, $pos);
+      $b = ord($bytes[$pos]);
+
+      if ($b === 0xFF) {                       // meta event
+        $pos++;
+        $type = ord($bytes[$pos++]);
+        $len = readVLQ($bytes, $pos);
+        $data = substr($bytes, $pos, $len);
+        $pos += $len;
+        $running = null;
+        if ($type === 0x51 && $len === 3) {    // set tempo (microseconds per quarter)
+          $dummy = 0;
+          $tempos[] = readInt($data, $dummy, 3);
+        } elseif ($type === 0x03 && $trackName === '') {
+          $trackName = $data;
+        }
+        continue;
+      }
+      if ($b === 0xF0 || $b === 0xF7) {        // sysex - skip
+        $pos++;
+        $len = readVLQ($bytes, $pos);
+        $pos += $len;
+        $running = null;
+        continue;
+      }
+
+      if ($b & 0x80) {                          // new status byte
+        $status = $b;
+        $running = $b;
+        $pos++;
+      } else {                                  // running status reuses the previous one
+        if ($running === null) {
+          fwrite(STDERR, "Running status without a prior status byte\n");
+          exit(1);
+        }
+        $status = $running;
+      }
+
+      $kind = $status & 0xF0;
+      $channel = $status & 0x0F;
+      $d1 = ord($bytes[$pos++]);
+      $d2 = ($kind === 0xC0 || $kind === 0xD0) ? 0 : ord($bytes[$pos++]);
+
+      if ($kind === 0xE0) {                     // pitch bend: 14-bit, center 8192, default range +-2 semitones
+        $bend[$channel] = ((($d2 << 7) | $d1) - 8192) / 8192 * 2;
+      } elseif ($kind === 0x90 && $d2 > 0) {    // note on (remember start + velocity + current bend)
+        $open[($channel << 8) | $d1][] = [$abs, $d2, $bend[$channel] ?? 0.0];
+      } elseif ($kind === 0x80 || ($kind === 0x90 && $d2 === 0)) {   // note off
+        $key = ($channel << 8) | $d1;
+        if (!empty($open[$key])) {
+          $on = array_shift($open[$key]);
+          $notes[] = [$on[0], max(1, $abs - $on[0]), $d1, $on[1], $on[2]];
+        }
+      }
+    }
+
+    // close any notes left hanging at track end
+    foreach ($open as $key => $starts) {
+      $pitch = $key & 0xFF;
+      foreach ($starts as $on) {
+        $notes[] = [$on[0], max(1, $abs - $on[0]), $pitch, $on[1], $on[2]];
+      }
+    }
+    usort($notes, fn($a, $b2) => $a[0] <=> $b2[0]);
+    $tracks[] = ['name' => $trackName, 'notes' => $notes];
+    $pos = $end;
+  }
+
+  $bpm = 120.0;
+  if (count($tempos) > 0) {
+    $bpm = 60000000 / $tempos[0];
+  }
+  $distinct = count(array_unique($tempos));
+  if ($distinct > 1) {
+    fwrite(STDERR, "Warning: $distinct tempo changes found, using the first one only\n");
+  }
+
+  return ['bpm' => $bpm, 'tempoCount' => count($tempos), 'division' => $division, 'format' => $format, 'tracks' => $tracks];
+} // parseMidiFile
+
+/**
+ * Converts a MIDI pitch number to the svision note name (MIDI 60 = C4).
+ */
+function midiToName($midi) {
+  return SEMITONES[(($midi % 12) + 12) % 12] . (intdiv($midi, 12) - 1);
+} // midiToName
+
+/**
+ * Formats a number for the generated JS: up to 3 decimals, no trailing zeros.
+ */
+function num($value) {
+  return rtrim(rtrim(number_format($value, 3, '.', ''), '0'), '.');
+} // num
+
+/**
+ * Builds the generated JavaScript score module from the parsed MIDI data.
+ */
+function generateModule($midi, $name, $sourceFile, $options) {
+  $division = $midi['division'];
+  $dropped = 0;
+  $bpm = round($midi['bpm'], 2);
+  $funcName = 'create' . $name . 'Score';
+
+  // convert each MIDI track with notes to bars of {tick, pitch, dur}
+  $scoreTracks = [];
+  $maxBeat = 0;
+  foreach ($midi['tracks'] as $track) {
+    if (count($track['notes']) === 0) {
+      continue;
+    }
+    foreach ($track['notes'] as $note) {
+      $endBeat = ($note[0] + $note[1]) / $division;
+      if ($endBeat > $maxBeat) {
+        $maxBeat = $endBeat;
+      }
+    }
+    $scoreTracks[] = $track;
+  }
+  $bars = max(1, (int)ceil($maxBeat / 4));
+
+  $tracksJs = [];
+  $trackStats = [];
+  foreach ($scoreTracks as $index => $track) {
+    $pattern = array_fill(0, $bars, []);
+    foreach ($track['notes'] as $note) {
+      $startBeat = $note[0] / $division;
+      $durBeats = $note[1] / $division;
+      $vol = round($note[3] / 127, 2);   // MIDI velocity -> per-note volume (dynamics!)
+      // transcription cleanup: drop quiet/too-short ghost notes when asked to
+      if ($vol < $options['minVol'] || $durBeats < $options['minDur']) {
+        $dropped++;
+        continue;
+      }
+      $bar = (int)floor($startBeat / 4);
+      $tick = ($startBeat - $bar * 4) * 4;
+      $dur = $durBeats * 4;
+      // apply the pitch bend active at note-on. With --snap the bent pitch is
+      // rounded to the nearest true semitone (A440 sources whose bends are
+      // transcription artifacts); otherwise bent notes are emitted as raw
+      // hertz (fractional MIDI) and unbent ones keep readable note names.
+      $bendSemis = $options['ignoreBends'] ? 0.0 : $note[4];
+      if ($options['snap']) {
+        $pitchJs = "'" . midiToName((int)round($note[2] + $bendSemis)) . "'";
+      } elseif (abs($bendSemis) < 0.01) {
+        $pitchJs = "'" . midiToName($note[2]) . "'";
+      } else {
+        $pitchJs = num(round(440 * pow(2, ($note[2] + $bendSemis - 69) / 12), 2));
+      }
+      $pattern[$bar][] = '{tick: ' . num($tick) . ', pitch: ' . $pitchJs . ', dur: ' . num($dur) . ', vol: ' . num($vol) . '}';
+    }
+    $barsJs = [];
+    foreach ($pattern as $barNotes) {
+      $barsJs[] = '        [' . implode(', ', $barNotes) . ']';
+    }
+    $trackVar = 'piano' . ($index === 0 ? '' : $index + 1);
+    $tracksJs[] = "      {instrument: 'piano', pattern: [\n" . implode(",\n", $barsJs) . "\n      ]}";
+    $trackStats[] = sprintf("%s ('%s'): %d notes", $trackVar, $track['name'], count($track['notes']));
+  }
+
+  fwrite(STDERR, sprintf("Source: %s (format %d, division %d)\n", $sourceFile, $midi['format'], $division));
+  fwrite(STDERR, sprintf("Tempo: %s BPM, length: %d bars (~%.1f s)\n", num($bpm), $bars, $bars * 4 * 60 / $bpm));
+  foreach ($trackStats as $line) {
+    fwrite(STDERR, '  ' . $line . "\n");
+  }
+  if ($dropped > 0) {
+    fwrite(STDERR, "  dropped $dropped ghost notes (min-vol/min-dur)\n");
+  }
+
+  $tracksBlock = implode(",\n", $tracksJs);
+
+  return <<<JS
+/**/
+
+/*/
+
+/**/
+// begin code
+
+/**
+ * Piano score converted from '$sourceFile' by the mid2score tool. The note
+ * data (bars of {tick, pitch, dur, vol}, fractional ticks preserved, vol =
+ * MIDI velocity 0..1 driving per-note dynamics) is a faithful conversion of
+ * the MIDI file; the instrument descriptor below is a starting point meant to
+ * be tuned by hand.
+ */
+
+/**
+ * Returns the converted score (loops when played with repeat).
+ * @returns {Object} The score.
+ */
+export function $funcName() {
+  return {
+    tempo: {$bpm},
+    volume: 0.3,
+    defaultDuration: 4,
+    instruments: {
+      piano: {
+        class: 'OscillatorInstrument',
+        // main layer: piano-like spectrum (PeriodicWave harmonics); quiet detuned
+        // sine adds the second-string shimmer
+        osc: [
+          {type: 'custom', harmonics: [1, 1, 0.5, 0.5, 0.7, 0.7, 0.25, 0.25, 0.12, 0.12, 0.06, 0.06, 0.03, 0.03]},
+          {type: 'sine', detune: 2, gain: 0.3}
+        ],
+        attackNoise: {gain: 0.4, decay: 0.012},   // hammer strike transient
+        keyTrack: {ref: 'C4', decay: 0.5},        // low notes ring longer, high notes die faster
+        filterEnv: {type: 'lowpass', from: 5500, to: 800, decay: 0.4, Q: 0.4},
+        env: {attack: 0.002, decay: 2.2, sustain: 0, release: 0.4},   // release = damper at note end
+        gain: 0.2, damp: true
+      }
+    },
+    tracks: [
+$tracksBlock
+    ]
+  };
+} // $funcName
+
+export default $funcName;
+
+JS;
+} // generateModule

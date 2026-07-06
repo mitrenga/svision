@@ -1,0 +1,261 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * xml2score — converts a MusicXML file (score-partwise) into an svision score
+ * module for the AudioOscillatorHandler.
+ *
+ * Compared to mid2score this consumes the cleaner notation-level format:
+ * quantized pitches (step/alter/octave - no pitch-bend guesswork), explicit
+ * rests, tied notes (merged into one long note) and per-part lines. Each
+ * MusicXML part becomes one score track; all tracks play a default piano
+ * descriptor meant to be tuned by hand in the generated file.
+ *
+ * Usage:
+ *   xml2score <input.musicxml> <ScoreName> [output.js]
+ */
+
+const SEMITONES = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+const STEPS = ['C' => 0, 'D' => 2, 'E' => 4, 'F' => 5, 'G' => 7, 'A' => 9, 'B' => 11];
+
+main($argv);
+
+function main($argv) {
+  $input = $argv[1] ?? null;
+  $name = $argv[2] ?? null;
+  $output = $argv[3] ?? null;
+
+  if ($input === null || $name === null) {
+    fwrite(STDERR, "Usage: xml2score <input.musicxml> <ScoreName> [output.js]\n");
+    exit(1);
+  }
+  if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {
+    fwrite(STDERR, "ScoreName must be PascalCase (e.g. Time)\n");
+    exit(1);
+  }
+  $content = @file_get_contents($input);
+  if ($content === false) {
+    fwrite(STDERR, "Cannot read: $input\n");
+    exit(1);
+  }
+
+  $parsed = parseMusicXml($content);
+  $module = generateModule($parsed, $name, basename($input));
+
+  if ($output !== null) {
+    file_put_contents($output, $module);
+    fwrite(STDERR, "Written: $output\n");
+  } else {
+    echo $module;
+  }
+} // main
+
+/**
+ * Walks every part and collects notes as [startBeat, durBeats, midi, velocity].
+ * Handles divisions changes, rests, <chord/> (simultaneous onsets), tied notes
+ * (merged), grace notes (skipped) and <backup>/<forward> cursor moves. Parses
+ * with regular expressions (machine-generated MusicXML is regular enough and
+ * the CLI may lack the XML extension).
+ * Returns ['bpm' => float, 'parts' => [ ['name' => string, 'notes' => [...]], ... ]].
+ */
+function parseMusicXml($content) {
+  $bpm = 120.0;
+  if (preg_match('/<sound[^>]*tempo="([\d.]+)"/', $content, $m)) {
+    $bpm = (float)$m[1];
+  }
+
+  $partNames = [];
+  if (preg_match_all('/<score-part\s+id="([^"]+)".*?<part-name>(.*?)<\/part-name>/s', $content, $mm, PREG_SET_ORDER)) {
+    foreach ($mm as $m) {
+      $partNames[$m[1]] = trim($m[2]);
+    }
+  }
+
+  $parts = [];
+  if (!preg_match_all('/<part\s+id="([^"]+)"\s*>(.*?)<\/part>/s', $content, $partMatches, PREG_SET_ORDER)) {
+    fwrite(STDERR, "No <part> elements found\n");
+    exit(1);
+  }
+
+  foreach ($partMatches as $partMatch) {
+    $id = $partMatch[1];
+    $body = $partMatch[2];
+
+    $divisions = 1;
+    $beat = 0.0;          // cursor in quarter-note beats
+    $lastOnset = 0.0;     // onset of the previous note (for <chord/>)
+    $notes = [];
+    $openTies = [];       // midi => index into $notes awaiting a tie stop
+
+    // walk note/backup/forward/attributes elements in document order
+    preg_match_all('/<(note|backup|forward|attributes)[\s>].*?<\/\1>/s', $body, $tokens);
+    foreach ($tokens[0] as $token) {
+      if (strpos($token, '<attributes') === 0) {
+        if (preg_match('/<divisions>(\d+)<\/divisions>/', $token, $m)) {
+          $divisions = (int)$m[1];
+        }
+        continue;
+      }
+      $duration = preg_match('/<duration>(\d+)<\/duration>/', $token, $m) ? (int)$m[1] : 0;
+      if (strpos($token, '<backup') === 0) {
+        $beat -= $duration / $divisions;
+        continue;
+      }
+      if (strpos($token, '<forward') === 0) {
+        $beat += $duration / $divisions;
+        continue;
+      }
+      // <note>
+      if (strpos($token, '<grace') !== false) {
+        continue;                               // grace notes carry no duration
+      }
+      $durBeats = $duration / $divisions;
+      if (preg_match('/<rest\s*\/?\s*>/', $token)) {
+        $beat += $durBeats;
+        continue;
+      }
+      if (!preg_match('/<step>([A-G])<\/step>/', $token, $m)) {
+        continue;
+      }
+      $step = $m[1];
+      $alter = preg_match('/<alter>(-?[\d.]+)<\/alter>/', $token, $m) ? (float)$m[1] : 0;
+      $octave = preg_match('/<octave>(-?\d+)<\/octave>/', $token, $m) ? (int)$m[1] : 4;
+      $midi = (int)round(($octave + 1) * 12 + STEPS[$step] + $alter);
+
+      $isChord = (strpos($token, '<chord') !== false);
+      $onset = $isChord ? $lastOnset : $beat;
+      $tieStart = (strpos($token, '<tie type="start"') !== false);
+      $tieStop = (strpos($token, '<tie type="stop"') !== false);
+
+      if ($tieStop && isset($openTies[$midi])) {
+        // extend the note this one is tied from
+        $notes[$openTies[$midi]][1] += $durBeats;
+        if (!$tieStart) {
+          unset($openTies[$midi]);
+        }
+      } else {
+        $velocity = 0.75;
+        if (preg_match('/<sound[^>]*dynamics="([\d.]+)"/', $token, $m)) {
+          $velocity = min(1.0, ((float)$m[1]) / 127);
+        }
+        $notes[] = [$onset, $durBeats, $midi, $velocity];
+        if ($tieStart) {
+          $openTies[$midi] = count($notes) - 1;
+        }
+      }
+
+      $lastOnset = $onset;
+      if (!$isChord) {
+        $beat += $durBeats;
+      }
+    }
+
+    usort($notes, fn($a, $b) => $a[0] <=> $b[0]);
+    $parts[] = ['name' => $partNames[$id] ?? $id, 'notes' => $notes];
+  }
+
+  return ['bpm' => $bpm, 'parts' => $parts];
+} // parseMusicXml
+
+/**
+ * Converts a MIDI note number to the svision note name (MIDI 60 = C4).
+ */
+function midiToName($midi) {
+  return SEMITONES[(($midi % 12) + 12) % 12] . (intdiv($midi, 12) - 1);
+} // midiToName
+
+/**
+ * Formats a number for the generated JS: up to 3 decimals, no trailing zeros.
+ */
+function num($value) {
+  return rtrim(rtrim(number_format($value, 3, '.', ''), '0'), '.');
+} // num
+
+/**
+ * Builds the generated JavaScript score module.
+ */
+function generateModule($parsed, $name, $sourceFile) {
+  $bpm = round($parsed['bpm'], 2);
+  $funcName = 'create' . $name . 'Score';
+
+  $maxBeat = 0;
+  foreach ($parsed['parts'] as $part) {
+    foreach ($part['notes'] as $note) {
+      $maxBeat = max($maxBeat, $note[0] + $note[1]);
+    }
+  }
+  $bars = max(1, (int)ceil($maxBeat / 4));
+
+  $tracksJs = [];
+  foreach ($parsed['parts'] as $part) {
+    if (count($part['notes']) === 0) {
+      continue;
+    }
+    $pattern = array_fill(0, $bars, []);
+    foreach ($part['notes'] as $note) {
+      $bar = (int)floor($note[0] / 4);
+      $tick = ($note[0] - $bar * 4) * 4;
+      $pattern[$bar][] = '{tick: ' . num($tick) . ", pitch: '" . midiToName($note[2]) . "', dur: " . num($note[1] * 4) . ', vol: ' . num(round($note[3], 2)) . '}';
+    }
+    $barsJs = [];
+    foreach ($pattern as $barNotes) {
+      $barsJs[] = '        [' . implode(', ', $barNotes) . ']';
+    }
+    $tracksJs[] = "      {instrument: 'piano', pattern: [\n" . implode(",\n", $barsJs) . "\n      ]}";
+    fwrite(STDERR, sprintf("  part '%s': %d notes\n", $part['name'], count($part['notes'])));
+  }
+
+  fwrite(STDERR, sprintf("Source: %s\nTempo: %s BPM, length: %d bars (~%.1f s)\n", $sourceFile, num($bpm), $bars, $bars * 4 * 60 / $bpm));
+
+  $tracksBlock = implode(",\n", $tracksJs);
+
+  return <<<JS
+/**/
+
+/*/
+
+/**/
+// begin code
+
+/**
+ * Piano score converted from '$sourceFile' by the xml2score tool. The note
+ * data (bars of {tick, pitch, dur, vol}) comes from the notation-level
+ * MusicXML (quantized pitches, merged ties), one track per part; the
+ * instrument descriptor below is a starting point meant to be tuned by hand.
+ */
+
+/**
+ * Returns the converted score.
+ * @returns {Object} The score.
+ */
+export function $funcName() {
+  return {
+    tempo: {$bpm},
+    volume: 0.3,
+    defaultDuration: 4,
+    instruments: {
+      piano: {
+        class: 'OscillatorInstrument',
+        // main layer: piano-like spectrum (PeriodicWave harmonics); quiet detuned
+        // sine adds the second-string shimmer
+        osc: [
+          {type: 'custom', harmonics: [1, 1, 0.5, 0.5, 0.7, 0.7, 0.25, 0.25, 0.12, 0.12, 0.06, 0.06, 0.03, 0.03]},
+          {type: 'sine', detune: 2, gain: 0.3}
+        ],
+        attackNoise: {gain: 0.4, decay: 0.012},   // hammer strike transient
+        keyTrack: {ref: 'C4', decay: 0.5},        // low notes ring longer, high notes die faster
+        filterEnv: {type: 'lowpass', from: 5500, to: 800, decay: 0.4, Q: 0.4},
+        env: {attack: 0.002, decay: 2.2, sustain: 0, release: 0.4},   // release = damper at note end
+        gain: 0.2, damp: true
+      }
+    },
+    tracks: [
+$tracksBlock
+    ]
+  };
+} // $funcName
+
+export default $funcName;
+
+JS;
+} // generateModule

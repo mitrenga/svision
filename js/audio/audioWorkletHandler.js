@@ -53,7 +53,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   loadProcessorModule() {
     if (!this.ctx.audioProcessorModule) {
       this.ctx.audioProcessorModule = (async () => {
-        const url = this.app.importPath+'/svision/js/audioProcessor.js';
+        const url = this.app.importPath+'/svision/js/audio/worker/audioProcessor.js';
         const response = await fetch(url);
         if (!response.ok) {
           throw new Error('audioProcessor '+response.status);
