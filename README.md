@@ -62,6 +62,13 @@ send-up / send-down / send-to-model event system.
 - **`TextEntity`** and **`SlidingTextEntity`** (scrolling text).
 - **`AbstractFonts`** plus built-in bitmap fonts: `Fonts3x3`, `Fonts5x5`,
   the ZX `ZXFonts8x8` and `IBMFonts8x16`.
+- Core fonts ship printable ASCII plus one normal (breaking) space — no
+  application-specific graphics. Spaces are data-driven: each font holds a
+  `spaces` table of `{width, breaking, stretch}` entries that drive word
+  wrapping and justified fill. An app registers any extra graphic glyphs and
+  hard/short spaces it needs with `addGlyphs()` and `addSpace()`, choosing the
+  marker characters itself (the same character can be a blank space in one font
+  and a real glyph in another).
 
 ### Audio
 - **`AbstractAudioManager`** owns a single shared `AudioContext` and organises

@@ -110,7 +110,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         
         var newKey = false;
         if (event.key.length == 1) {
-          if (this.options.device == 'keyboard' && event.key.toUpperCase() in this.app.fonts.fonts5x5.fontsData) {
+          if (this.options.device == 'keyboard' && this.app.fonts.fonts5x5.validChar(event.key.toUpperCase())) {
             newKey = event.key.toUpperCase();
           }
         } else if (this.isValidFnKeys(this.options.device, event.key)) {

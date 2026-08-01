@@ -27,8 +27,11 @@ export class Fonts3x3 extends AbstractFonts {
     this.lineSpacing = 2;
     this.paragraphSpacing = 5;
 
+    this.spaces = {
+      ' ': {width: 1, breaking: true, stretch: true}   // normal (breaking) space; games add hard/short via addSpace()
+    };
+
     this.fontsData = {
-      ' ': {width: 1, data: []},
       '\'': {width: 1, data: [[0,0,1,2]]},
       '+': {width: 3, data: [[1,0,1,1], [0,1,3,1], [1,2,1,1]]},
       ',': {width: 1, data: [[1,1,1,2]]},
@@ -81,21 +84,6 @@ export class Fonts3x3 extends AbstractFonts {
       ']': {width: 2, data: [[0,0,1,1], [0,2,1,1], [1,0,1,3]]},
       '^': {width: 3, data: [[0,1,1,1], [1,0,1,1], [2,1,1,1]]},
       '_': {width: 3, data: [[0,2,3,1]]},
-      '\u00A0': {width: 1, data: []},
-      '‗': {width: 2, data: [[0,2,2,1]]},
-      '←': {width: 2, data: [[0,1,1,1], [1,0,1,3]]},
-      '↓': {width: 3, data: [[0,1,3,1], [1,2,1,1]]},
-      '↑': {width: 3, data: [[1,0,1,1], [0,1,3,1]]},
-      '➔': {width: 2, data: [[0,0,1,3], [1,1,1,1]]},
-      '█': {width: 2, data: [[0,0,2,3]]},
-      '▲': {width: 2, data: [[1,0,1,1], [0,1,3,1], [0,2,3,1]]},
-      '▼': {width: 2, data: [[0,0,3,1], [0,1,3,1], [1,2,1,1]]},
-      '◀': {width: 2, data: [[1,0,2,1], [0,1,3,1], [1,2,2,1]]},
-      '▶': {width: 2, data: [[0,0,2,1], [0,1,3,1], [0,2,2,1]]},
-      '◢': {width: 2, data: [[2,0,1,1], [1,1,2,1], [0,2,3,1]]},
-      '◣': {width: 2, data: [[0,0,1,1], [0,1,2,1], [0,2,3,1]]},
-      '◥': {width: 2, data: [[0,0,3,1], [1,1,2,1], [2,2,1,1]]},
-      '◤': {width: 2, data: [[0,0,3,1], [0,1,2,1], [0,2,1,1]]}
     }
   } // constructor
 
@@ -110,6 +98,11 @@ export class Fonts3x3 extends AbstractFonts {
    * @returns {Object} An object with `width` and `data` (array of rectangles).
    */
   getCharData(char, bitMask, scale) {
+    var spaceData = this.spaceCharData(char, null, scale);
+    if (spaceData !== null) {
+      return spaceData;
+    }
+
     var validChar = char.toUpperCase();
     if (!(validChar in this.fontsData)) {
       validChar = '?';
@@ -132,11 +125,23 @@ export class Fonts3x3 extends AbstractFonts {
    * @returns {boolean} True if the character is defined, otherwise false.
    */
   validChar(char) {
+    if (char in this.spaces) {
+      return true;
+    }
     if (char in this.fontsData) {
       return true;
     }
     return false;
   } // validChar
+
+  /**
+   * Adds extra glyphs to the font's glyph table. The core font ships ASCII only;
+   * games register their own graphic glyphs this way.
+   * @param {Object} glyphs - Map of char -> {width, data} entries to merge in.
+   */
+  addGlyphs(glyphs) {
+    Object.assign(this.fontsData, glyphs);
+  } // addGlyphs
 
 } // Fonts3x3
 

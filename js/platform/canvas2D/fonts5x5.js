@@ -26,9 +26,12 @@ export class Fonts5x5 extends AbstractFonts {
     this.charsSpacing = 1;
     this.lineSpacing = 2;
     this.paragraphSpacing = 7;
-    
+
+    this.spaces = {
+      ' ': {width: 2, breaking: true, stretch: true}   // normal (breaking) space; games add hard/short via addSpace()
+    };
+
     this.fontsData = {
-      ' ': {width: 2, data: []},
       '!': {width: 1, data: [[0,0,1,3], [0,4,1,1]]},
       '"': {width: 3, data: [[0,0,1,2], [2,0,1,2]]},
       '#': {width: 5, data: [[0,1,5,1], [0,3,5,1], [1,0,1,1], [3,0,1,1], [1,2,1,1], [3,2,1,1], [1,4,1,1], [3,4,1,1]]},
@@ -98,21 +101,6 @@ export class Fonts5x5 extends AbstractFonts {
       '}': {width: 3, data: [[0,0,2,1], [1,1,1,3], [0,4,2,1], [2,2,1,1]]},
       '~': {width: 5, data: [[0,2,1,1], [1,1,1,1], [2,2,1,1], [3,3,1,1], [4,2,1,1]]},
       '©': {width: 6, data: [[1,0,4,1], [0,1,2,3], [1,4,4,1], [4,1,2,3], [3,2,1,1]]},
-      '\u00A0': {width: 2, data: []},
-      '‗': {width: 3, data: [[0,4,3,1]]},
-      '←': {width: 6, data: [[0,2,6,1], [1,1,1,3], [2,0,1,5]]},
-      '↓': {width: 5, data: [[2,0,1,5], [1,3,3,1], [0,2,5,1]]},
-      '↑': {width: 5, data: [[2,0,1,5], [1,1,3,1], [0,2,5,1]]},
-      '➔': {width: 6, data: [[0,2,6,1], [4,1,1,3], [3,0,1,5]]},
-      '█': {width: 4, data: [[0,0,4,5]]},
-      '▲': {width: 4, data: [[2,0,1,1], [2,1,1,1], [1,2,3,1], [1,3,3,1], [0,4,5,1]]},
-      '▼': {width: 4, data: [[0,0,5,1], [1,1,3,1], [1,2,3,1], [2,3,1,1], [2,4,1,1]]},
-      '◀': {width: 4, data: [[4,0,1,1], [2,1,3,1], [0,2,5,1], [2,3,3,1], [4,4,1,1]]},
-      '▶': {width: 4, data: [[0,0,1,1], [0,1,3,1], [0,2,5,1], [0,3,3,1], [0,4,1,1]]},
-      '◢': {width: 4, data: [[4,0,1,1], [3,1,2,1], [2,2,3,1], [1,3,4,1], [0,4,5,1]]},
-      '◣': {width: 4, data: [[0,0,1,1], [0,1,2,1], [0,2,3,1], [0,3,4,1], [0,4,5,1]]},
-      '◥': {width: 4, data: [[0,0,5,1], [1,1,4,1], [2,2,3,1], [3,3,2,1], [4,4,1,1]]},
-      '◤': {width: 4, data: [[0,0,5,1], [0,1,4,1], [0,2,3,1], [0,3,2,1], [0,4,1,1]]}
     }
   } // constructor
 
@@ -127,6 +115,11 @@ export class Fonts5x5 extends AbstractFonts {
    * @returns {Object} An object with `width` and `data` (array of rectangles).
    */
   getCharData(char, bitMask, scale) {
+    var spaceData = this.spaceCharData(char, null, scale);
+    if (spaceData !== null) {
+      return spaceData;
+    }
+
     var validChar = char.toUpperCase();
     if (!(validChar in this.fontsData)) {
       validChar = '?';
@@ -149,11 +142,23 @@ export class Fonts5x5 extends AbstractFonts {
    * @returns {boolean} True if the character is defined, otherwise false.
    */
   validChar(char) {
+    if (char in this.spaces) {
+      return true;
+    }
     if (char in this.fontsData) {
       return true;
     }
     return false;
   } // validChar
+
+  /**
+   * Adds extra glyphs to the font's glyph table. The core font ships ASCII only;
+   * games register their own graphic glyphs this way.
+   * @param {Object} glyphs - Map of char -> {width, data} entries to merge in.
+   */
+  addGlyphs(glyphs) {
+    Object.assign(this.fontsData, glyphs);
+  } // addGlyphs
 
 } // Fonts5x5
 

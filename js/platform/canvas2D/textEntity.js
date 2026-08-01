@@ -77,6 +77,7 @@ export class TextEntity  extends AbstractEntity {
     this.app.layout.newDrawingCache(this, 0);
     this.cursorX = 0;
     this.cursorY = 0;
+    this.usedHeight = 0;   // total laid-out text height, set during drawEntity
   } // constructor
 
   /**
@@ -167,7 +168,7 @@ export class TextEntity  extends AbstractEntity {
       var lastSpacePos = -1;
       var lastPos = pos;
       while (pos < text.length) {
-        if (text[pos] == ' ') {
+        if (this.fonts.isBreakingSpace(text[pos])) {
           lastSpacePos = pos;
         }
         var w = this.charWidth(text[pos]);
@@ -315,7 +316,11 @@ export class TextEntity  extends AbstractEntity {
             if (this.options.align == 'justify') {
               if (formattedText.length > textPos && formattedText[textPos] != '\n') {
                 filling = this.width-this.options.leftMargin-this.options.rightMargin-textWidth;
-                spaces = partText.split(' ').length+partText.split('\u00A0').length-2;
+                for (var s = 0; s < partText.length; s++) {
+                  if (this.fonts.isStretchSpace(partText[s])) {
+                    spaces++;
+                  }
+                }
               }
             }
 
@@ -324,7 +329,7 @@ export class TextEntity  extends AbstractEntity {
               this.paintGlyph(charData, this.cursorX+this.options.leftMargin, this.glyphColor(lineOffset+ch));
               this.cursorX += charData.width+this.fonts.charsSpacing;
 
-              if (filling > 0 && (partText[ch] == ' ' || partText[ch] == '\u00A0')) {
+              if (filling > 0 && this.fonts.isStretchSpace(partText[ch])) {
                 var useFilling = Math.round(filling/spaces);
                 this.cursorX += useFilling;
                 filling -= useFilling;
@@ -358,6 +363,10 @@ export class TextEntity  extends AbstractEntity {
           }
           break;
       }
+
+      // Total laid-out height (entity top to the bottom of the last line), so a
+      // container such as ScrollViewEntity can size to the wrapped content.
+      this.usedHeight = this.cursorY+(this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale+this.options.bottomMargin;
     }
 
     if (this.drawingCropCache == null) {
