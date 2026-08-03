@@ -8,6 +8,7 @@
     "destination": "docs",
     "recurse": true,
     "readme": "README.md",
+    "tutorials": "tutorials",
     "template": "node_modules/clean-jsdoc-theme",
     "theme_opts": {
       "title": "svision",

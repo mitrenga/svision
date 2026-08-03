@@ -112,9 +112,10 @@ export class AbstractFonts {
    * The core library fonts ship with only the normal space; games use this to add
    * hard/short/custom spaces, choosing the marker character themselves.
    * @param {string} char - The character that acts as a space.
-   * @param {{width: number, breaking?: boolean, stretch?: boolean}} opts - Metrics:
-   *   width in pixels (proportional mode), breaking = line wrapping may break here,
-   *   stretch = justified alignment may widen it.
+   * @param {Object} opts - Space metrics.
+   * @param {number} opts.width - Width in pixels (proportional mode).
+   * @param {boolean} [opts.breaking=false] - Line wrapping may break here.
+   * @param {boolean} [opts.stretch=false] - Justified alignment may widen it.
    */
   addSpace(char, opts) {
     this.spaces[char] = {

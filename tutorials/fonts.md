@@ -149,6 +149,8 @@ no reordering.
 > executable component and are generally not copyrightable in the UK/USA, while
 > explicitly stating that this is not legal advice. svision therefore credits
 > every font by its original source rather than claiming any licence over it.
+> All font sources are registered in
+> [SOURCES.md](https://github.com/mitrenga/svision/blob/main/SOURCES.md).
 
 ### The bundled examples
 
@@ -274,6 +276,11 @@ string). Unlike the ZX fonts it also has real printable shade blocks
 The `charsRanges`/`fontsData` tables are generated from the BDF and must not be
 hand-edited.
 
-> Two open items: the upstream URL and licence terms of Uni-VGA are not yet
-> recorded here, and the BDF-to-JavaScript converter is not in `tools/`, so
-> there is currently nothing to run to regenerate the tables.
+**Source & licence:** Uni-VGA was created by Dmitry Yu. Bolkhovityanov (2001);
+the data used here comes from the original `u_vga16.bdf` as bundled in the
+[univga-ttf](https://github.com/illnyang/univga-ttf) repository (Illyan Garte's
+2022 TTF port, which includes the original `uni_vga` source package). The font
+may be distributed and modified freely under the X11 licence.
+
+> One open item: the BDF-to-JavaScript converter is not in `tools/`, so there
+> is currently nothing to run to regenerate the tables.
