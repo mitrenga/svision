@@ -24,6 +24,7 @@ export class AbstractApp {
     this.parentElement = false;
     this.element = false;
     this.prevSize = {width: 0, height: 0};
+    this.resizeRequested = false;   // set by the window resize event; consumed once per frame in loopApp
     this.importPath = importPath;
     this.now = 0;
     this.inputEventsManager = new InputEventsManager(this);
@@ -58,10 +59,15 @@ export class AbstractApp {
    * @param {number} timestamp - The current frame timestamp.
    */
   loopApp(timestamp) {
-    if (this.prevSize.width != this.element.clientWidth || this.prevSize.height != this.element.clientHeight) {
+    this.now = timestamp;
+    // Coalesce resizing to at most one resizeApp() per frame: a burst of window
+    // 'resize' events (or a size change) collapses into a single resize here, and
+    // the frame after the burst ends runs the final one. This avoids piling up
+    // heavy resizeModel() calls that would keep the app busy after a drag-resize.
+    if (this.resizeRequested || this.prevSize.width != this.element.clientWidth || this.prevSize.height != this.element.clientHeight) {
+      this.resizeRequested = false;
       this.resizeApp();
     }
-    this.now = timestamp;
     if (this.model) {
       this.model.loopModel(timestamp);
     }
@@ -86,7 +92,10 @@ export class AbstractApp {
    * @param {Event} event - The window resize event.
    */
   eventResizeWindow(event) {
-    this.resizeApp();
+    // Only request a resize; loopApp performs it (at most once per frame). Doing
+    // resizeApp() directly here fires many times per frame during a drag and piles
+    // up heavy resizeModel() calls that keep the app busy after the drag ends.
+    this.resizeRequested = true;
   } // eventResizeWindow
 
   /**
