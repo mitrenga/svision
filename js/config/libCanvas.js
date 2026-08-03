@@ -1,46 +1,3 @@
-class Label {
-
-    constructor(parentElement) {
-        this.posX = 0;
-        this.posY = 0;
-        this.directionX = 1;
-        this.directionY = 1;
-
-        this.elementLabel = document.createElement('div');
-        this.elementLabel.innerText = 'HELLO';
-        this.elementLabel.id = 'labelHello';
-        this.elementLabel.classList.add('labelHello');
-        parentElement.appendChild(this.elementLabel);
-        this.labelWidth = Math.ceil(this.elementLabel.clientWidth);
-        this.labelHeight = Math.ceil(this.elementLabel.clientHeight);
-
-        this.elementFPS = document.createElement('div');
-        this.elementFPS.id = 'labelFPS';
-        this.elementFPS.classList.add('labelFPS');
-        parentElement.appendChild(this.elementFPS);
-    } // constuctor
-
-    loopAnimate(canvasWidth, canvasHeight) {
-        this.posX += this.directionX;
-        this.posY += this.directionY;
-        if (this.posX == canvasWidth-this.labelWidth) this.directionX = -1;
-        if (this.posY == canvasHeight-this.labelHeight) this.directionY = -1;
-        if (this.posX == 0) this.directionX = 1;
-        if (this.posY == 0) this.directionY = 1;
-    } // loopAnimate
-
-    draw(canvasWidth, canvasHeight, fps) {
-        this.elementLabel.style.left = this.posX+'px';
-        this.elementLabel.style.top = this.posY+'px';
-        if (fps > 0) {
-            this.elementFPS.style.left = canvasWidth/2-this.elementFPS.clientWidth/2-this.labelWidth+'px';
-            this.elementFPS.style.top = canvasHeight-2*this.elementFPS.clientHeight+'px';
-            this.elementFPS.innerText = fps+' fps';
-        }
-    } // draw
-
-} // Label
-
 class Player {
 
     constructor(side, posX, posY) {
@@ -107,9 +64,6 @@ export class Canvas {
 
     init() {
         switch (this.stack.containerType) {
-            case 'html':
-                this.stack.label = new Label(this.element);
-                break;
             case 'canvas2D':
                 this.stack.ball = new Ball(this.canvasWidth/2, this.canvasHeight/2);
                 this.stack.leftPlayer = new Player('l', 10, this.stack.ball.posY);
@@ -117,10 +71,6 @@ export class Canvas {
                 break;
         }
     } // init
-
-    drawHTML() {
-        this.stack.label.draw(this.canvasWidth, this.canvasHeight, this.fps);
-    } // drawHTML
 
     drawCanvas2D() {
         this.stack.ctx.clearRect(0, 0, this.canvasWidth, this.canvasHeight);
@@ -143,18 +93,11 @@ export class Canvas {
 
     draw() {
         switch (this.stack.containerType) {
-            case 'html':
-                this.drawHTML();
-                break;
             case 'canvas2D':
                 this.drawCanvas2D();
                 break;
         }
     } // draw
-
-    loopHTML() {
-        this.stack.label.loopAnimate(this.canvasWidth, this.canvasHeight);
-    } // loopHTML
 
     loopCanvas2D() {
         this.stack.ball.loopGame(this.canvasWidth, this.canvasHeight);
@@ -166,9 +109,6 @@ export class Canvas {
         window.canvasRunning = true;
         this.countFrames++;
         switch (this.stack.containerType) {
-            case 'html':
-                this.loopHTML();
-                break;
             case 'canvas2D':
                 this.loopCanvas2D();
                 break;

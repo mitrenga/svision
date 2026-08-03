@@ -41,11 +41,10 @@ send-up / send-down / send-to-model event system.
 | **canvas2D / zxSpectrum** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. |
 | **canvas2D / adaptive** | stable | Layout that adapts the model grid to the available element size. |
 | **canvas2D / ibm** | stable | IBM 8×16 font set. |
-| **html** | ⚠️ experimental | Renders entities as positioned DOM elements. Early, testing-only — not for deployment. |
 | **webGL2** | ⚠️ experimental | Renders through a WebGL2 context. Early, testing-only — not for deployment. |
 
-> The **html** and **webGL2** platforms are very early work in progress, kept for
-> experimentation only. They are not usable for normal deployment and will be
+> The **webGL2** platform is very early work in progress, kept for
+> experimentation only. It is not usable for normal deployment and will be
 > moved to a separate branch in the future.
 
 ## Building blocks

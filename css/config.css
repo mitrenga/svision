@@ -55,26 +55,6 @@ h2 {
   background-color: #19883a;
 }
 
-.labelHello {
-  display: inline-block;
-  position: relative;
-  font-size: 30px;
-  text-align: center;
-  padding-left: 8px;
-  padding-right: 8px;
-  color: white;
-  background-color: #541ac8;
-  font-family: 'Courier New', Courier, monospace;
-}
-
-.labelFPS {
-  display: inline-block;
-  position: relative;
-  text-align: center;
-  color: white;
-  font-family: 'Times New Roman', Times, serif;
-}
-
 .time-info {
   float: left;
 }
