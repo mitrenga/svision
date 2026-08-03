@@ -103,6 +103,10 @@ delivered to the model:
 ### UI entities
 - **`ButtonEntity`**, **`MenuEntity`**, **`InputEntity`**, **`KeyboardEntity`**
   for simple in-canvas interfaces.
+- **`ScrollViewEntity`** — a clipping, pixel-scrolling viewport for any entity
+  type. Panning via mouse wheel, mouse/touch drag and keyboard, with thin
+  overlay scrollbars and an optional `followBottom` tail-follow mode; nested
+  buttons and links stay clickable while scrolled.
 
 ### Utilities
 - **`Tool`** — number-base conversions (hex / base-36 / base-90 / Braille),
