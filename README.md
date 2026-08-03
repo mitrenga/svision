@@ -68,6 +68,13 @@ send-up / send-down / send-to-model event system.
   hard/short spaces it needs with `addGlyphs()` and `addSpace()`, choosing the
   marker characters itself (the same character can be a blank space in one font
   and a real glyph in another).
+- **Localization** — `AbstractApp` holds a per-language string dictionary
+  installed with `setTexts({en: {...}, cs: {...}})`. `text(key, params)`
+  resolves a dotted-path key (`'mainMenu.startGame'`) in the current
+  `language`, falls back to `fallbackLanguage` (default `en`), substitutes
+  optional `{placeholder}` tokens from `params`, and renders missing strings
+  as a visible `⟨key⟩` marker. It returns a `RichString`, so the result can be
+  chained (e.g. `.wrap()`).
 
 ### Audio
 - **`AbstractAudioManager`** owns a single shared `AudioContext` and organises
@@ -111,7 +118,8 @@ delivered to the model:
 ### Utilities
 - **`Tool`** — number-base conversions (hex / base-36 / base-90 / Braille),
   cookies and small helpers.
-- **`RichString`** — string helper used by the sprite encoders.
+- **`RichString`** — string helper used by the sprite encoders and returned by
+  the localization method `AbstractApp.text()`.
 
 ### Server side (PHP)
 A tiny PHP front controller (`php/`) serves the app shell, generates the PWA

@@ -1,7 +1,9 @@
 /**/
 const { InputEventsManager } = await import('./inputEventsManager.js?ver='+window.srcVersion);
+const { RichString } = await import('./richString.js?ver='+window.srcVersion);
 /*/
 import InputEventsManager from './inputEventsManager.js';
+import RichString from './richString.js';
 /**/
 // begin code
 
@@ -27,6 +29,9 @@ export class AbstractApp {
     this.resizeRequested = false;   // set by the window resize event; consumed once per frame in loopApp
     this.importPath = importPath;
     this.now = 0;
+    this.language = false;          // selected language (ISO 639-1); false => not chosen yet
+    this.fallbackLanguage = 'en';   // used when a string is missing in `language`
+    this.texts = {};                // full dictionary {lang: {...}}, set by the subclass via setTexts()
     this.inputEventsManager = new InputEventsManager(this);
     this.audioManager = false;
     this.model = false;
@@ -178,6 +183,54 @@ export class AbstractApp {
   saveDataToStorage(key, data) {
     localStorage.setItem(window.appPrefix+'.'+key, JSON.stringify(data));
   } // saveDataToStorage
+
+  /**
+   * Installs the localization dictionary used by text().
+   * @param {Object} texts - Dictionary keyed by language code, each holding the
+   *   (optionally nested) strings for that language, e.g. {en: {...}, cs: {...}}.
+   */
+  setTexts(texts) {
+    this.texts = texts;
+  } // setTexts
+
+  /**
+   * Resolves a localized string for the current language. The key is a dotted
+   * path into the dictionary ('mainMenu.startGame'); missing strings fall back
+   * to `fallbackLanguage`, then to a visible '⟨key⟩' marker so gaps are obvious.
+   * Optional {placeholder} tokens are substituted from `params`.
+   * @param {string} key - Dotted path into the language dictionary.
+   * @param {Object} [params] - Values substituted into {name} placeholders.
+   * @returns {RichString} The localized string (chainable, e.g. .wrap()).
+   */
+  text(key, params) {
+    var str = this._resolveText(this.texts[this.language], key);
+    if (str === undefined && this.language !== this.fallbackLanguage) {
+      str = this._resolveText(this.texts[this.fallbackLanguage], key);
+    }
+    if (str === undefined) {
+      return new RichString('⟨'+key+'⟩');
+    }
+    if (params) {
+      // function replacer so a '$' in the substituted value is not treated as a
+      // special replacement pattern ($&, $1, ...).
+      str = str.replace(/\{(\w+)\}/g, (match, name) => (name in params ? params[name] : match));
+    }
+    return new RichString(str);
+  } // text
+
+  /**
+   * Walks a dotted-path key into a dictionary, returning undefined if any
+   * segment is missing.
+   * @param {Object|undefined} dict - The language dictionary to walk.
+   * @param {string} key - Dotted path, e.g. 'mainMenu.startGame'.
+   * @returns {string|undefined} The found string, or undefined.
+   */
+  _resolveText(dict, key) {
+    if (!dict) {
+      return undefined;
+    }
+    return key.split('.').reduce((node, segment) => (node == null ? undefined : node[segment]), dict);
+  } // _resolveText
 
   /**
    * Reports an error message to the user. The base implementation logs it to
