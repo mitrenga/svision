@@ -7,8 +7,9 @@ import Canvas2DLayout from '../canvas2DLayout.js';
 
 /**
  * A canvas 2D layout that adapts the model resolution to the actual element
- * size, choosing an integer scale ratio so the logical desktop stays close to
- * the configured `desktopWidth` while filling the available pixels.
+ * size, choosing an integer scale ratio from the element width so the logical
+ * desktop width stays close to the configured `desktopWidth`; the logical height
+ * then follows from that same ratio (so portrait screens get a taller desktop).
  */
 export class AdaptiveLayout extends Canvas2DLayout {
 
@@ -27,10 +28,8 @@ export class AdaptiveLayout extends Canvas2DLayout {
    */
   resizeModel(model) {
     this.ratio = 1;
-    var elementSize = this.app.element.clientHeight;
-    if (this.app.element.clientWidth > this.app.element.clientHeight) {
-      elementSize = this.app.element.clientWidth;
-    }
+    // Optimize the scale for width only; height then follows from the same ratio.
+    var elementSize = this.app.element.clientWidth;
     while (elementSize/this.ratio > model.desktopWidth) {
       this.ratio++;
     }
