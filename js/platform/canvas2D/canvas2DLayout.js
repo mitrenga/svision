@@ -48,6 +48,7 @@ export class Canvas2DLayout extends AbstractLayout {
 
     this.app.element.width = this.app.element.clientWidth;
     this.app.element.height = this.app.element.clientHeight;
+    this.disableImageSmoothing();
 
     if (model.borderEntity != null) {
       model.borderEntity.x = 0;
@@ -65,6 +66,17 @@ export class Canvas2DLayout extends AbstractLayout {
     model.desktopEntity.parentWidth = model.desktopWidth+2*model.borderWidth;
     model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
   } // resizeModel
+
+  /**
+   * Disables image smoothing on the main canvas context so drawing caches kept
+   * in logical resolution are scaled up with sharp pixel edges. Smoothing is a
+   * context state which resets whenever the canvas element is resized, so this
+   * must be called again after every change of the element dimensions.
+   */
+  disableImageSmoothing() {
+    this.app.stack.ctx.imageSmoothingEnabled = false;
+    this.app.stack.ctx.webkitImageSmoothingEnabled = false;
+  } // disableImageSmoothing
 
   /**
    * Clears the entire canvas element.
@@ -188,12 +200,14 @@ export class Canvas2DLayout extends AbstractLayout {
   } // newDrawingCropCache
 
   /**
-   * Draws a cached entity image onto the main canvas at the entity's absolute position.
+   * Draws a cached entity image onto the main canvas at the entity's absolute
+   * position, scaling it from the cache's logical resolution by the layout ratio.
    * @param {AbstractEntity} entity - The entity whose cache is drawn.
    * @param {number} index - The cache slot index to draw.
    */
   paintCache(entity, index) {
-    this.app.stack.ctx.drawImage(entity.drawingCache[index].canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio);
+    var cache = entity.drawingCache[index];
+    this.app.stack.ctx.drawImage(cache.canvas, (entity.parentX+entity.x)*this.ratio, (entity.parentY+entity.y)*this.ratio, cache.canvas.width*this.ratio, cache.canvas.height*this.ratio);
   } // paintCache
 
   /**
@@ -207,11 +221,13 @@ export class Canvas2DLayout extends AbstractLayout {
    * @param {number} moveY - Additional Y offset applied to the destination position.
    */
   paintCropCache(entity, index, posX, posY, moveX, moveY) {
-    entity.drawingCropCache.needToRefresh(entity, entity.width, entity.height);
-    entity.drawingCropCache.ctx.clearRect(0, 0, entity.drawingCropCache.canvas.width, entity.drawingCropCache.canvas.height);
-    entity.drawingCropCache.ctx.drawImage(entity.drawingCache[index].canvas, -posX*this.ratio, -posY*this.ratio);
-    entity.app.stack.ctx.drawImage(entity.drawingCropCache.canvas, (entity.parentX+entity.x+moveX)*this.ratio, (entity.parentY+entity.y+moveY)*this.ratio);
-  } // paintCache
+    var cropCache = entity.drawingCropCache;
+    cropCache.preparePaint(entity.width, entity.height);
+    cropCache.ctx.clearRect(0, 0, cropCache.canvas.width, cropCache.canvas.height);
+    // both caches are in logical resolution, so the crop copy is an unscaled blit
+    cropCache.ctx.drawImage(entity.drawingCache[index].canvas, -posX, -posY);
+    entity.app.stack.ctx.drawImage(cropCache.canvas, (entity.parentX+entity.x+moveX)*this.ratio, (entity.parentY+entity.y+moveY)*this.ratio, cropCache.canvas.width*this.ratio, cropCache.canvas.height*this.ratio);
+  } // paintCropCache
 
   /**
    * Converts a client (DOM) X coordinate into a canvas pixel X coordinate.

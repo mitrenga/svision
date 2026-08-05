@@ -7,8 +7,10 @@
 
 /**
  * An off-screen canvas used to cache an entity's rendered output so it can be
- * blitted to the main canvas without re-rendering each frame. Tracks the layout
- * ratio and a dirty flag to decide when the cache must be refreshed.
+ * blitted to the main canvas without re-rendering each frame. The cache always
+ * holds the entity in its native (logical) resolution; scaling by the layout
+ * ratio happens only when the cache is blitted to the screen. A dirty flag and
+ * a dimension check decide when the cache must be refreshed.
  */
 export class DrawingCache {
 
@@ -22,20 +24,17 @@ export class DrawingCache {
 
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
-    this.ratio = 0;
     this.clean = false;
   } // constructor
-  
+
   /**
-   * Sizes the off-screen canvas to the given dimensions scaled by the layout ratio
-   * and clears it.
+   * Sizes the off-screen canvas to the given logical dimensions and clears it.
    * @param {number} width - Cache width in model coordinates.
    * @param {number} height - Cache height in model coordinates.
    */
   init(width, height) {
-    this.ratio = this.app.layout.ratio;
-    this.canvas.width = width*this.ratio;
-    this.canvas.height = height*this.ratio;
+    this.canvas.width = width;
+    this.canvas.height = height;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   } // init
 
@@ -48,15 +47,15 @@ export class DrawingCache {
   } // cleanCache
 
   /**
-   * Determines whether the cache needs to be redrawn, reinitializing it when the
-   * ratio or dimensions changed and clearing the dirty flag.
-   * @param {AbstractEntity} entity - The entity owning this cache (unused for sizing here).
+   * Prepares the cache for painting: reinitializes the canvas when the required
+   * dimensions changed and consumes the dirty flag. Callers paint the content
+   * only when this returns true, otherwise the cached image is still valid.
    * @param {number} width - Required width in model coordinates.
    * @param {number} height - Required height in model coordinates.
-   * @returns {boolean} True if the cache must be redrawn, otherwise false.
+   * @returns {boolean} True if the cache content must be painted, otherwise false.
    */
-  needToRefresh(entity, width, height) {
-    if (this.ratio != this.app.layout.ratio || this.canvas.width != width*this.ratio || this.canvas.height != height*this.ratio) {
+  preparePaint(width, height) {
+    if (this.canvas.width != width || this.canvas.height != height) {
       this.init(width, height);
       return true;
     }
@@ -65,10 +64,11 @@ export class DrawingCache {
       return true;
     }
     return false;
-  } // needRefresh
+  } // preparePaint
 
   /**
-   * Paints a rectangle into this cache's off-screen context.
+   * Paints a rectangle into this cache's off-screen context. The cache is kept
+   * in logical resolution, so coordinates are used as-is without ratio scaling.
    * @param {number} x - X position in model coordinates.
    * @param {number} y - Y position in model coordinates.
    * @param {number} width - Rectangle width.
@@ -76,7 +76,8 @@ export class DrawingCache {
    * @param {string} color - Fill color.
    */
   paint(x, y, width, height, color) {
-    this.app.layout.paintRect(this.ctx, x, y, width, height, color);
+    this.ctx.fillStyle = color;
+    this.ctx.fillRect(x, y, width, height);
   } // paint
 
 } // DrawingCache
