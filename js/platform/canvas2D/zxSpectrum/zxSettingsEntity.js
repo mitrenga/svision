@@ -28,7 +28,7 @@ import ZXColor from './zxColor.js';
  * device (keyboard, mouse, gamepad, touchscreen), view its current key bindings
  * and launch the relevant remap/configuration dialogs.
  */
-export class ZXControlsEntity extends AbstractEntity {
+export class ZXSettingsEntity extends AbstractEntity {
 
   /**
    * Creates the controls panel and initialises device selection state and palette.
@@ -41,7 +41,7 @@ export class ZXControlsEntity extends AbstractEntity {
    */
   constructor(parentEntity, x, y, width, height, options) {
     super(parentEntity, x, y, width, height, false, false);
-    this.id = 'ZXControlsEntity';
+    this.id = 'ZXSettingsEntity';
 
     this.options = options;
     this.selectionDevice = 0;
@@ -174,7 +174,7 @@ export class ZXControlsEntity extends AbstractEntity {
     
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 82, 64, 13, 'CHANGE', {id: 'touchscreenChange'}, ['Enter'], ZXColor.brightWhite, ZXColor.magenta, {align: 'center', margin: 4, group: 'touchscreen.supported', hide: true}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', {id: 'closeZXControls'}, ['Escape', 'GamepadExit'], ZXColor.brightWhite, ZXColor.blue, {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', {id: 'closeZXSettings'}, ['Escape', 'GamepadExit'], ZXColor.brightWhite, ZXColor.blue, {align: 'center', margin: 4}));
   } // init
 
   /**
@@ -390,7 +390,7 @@ export class ZXControlsEntity extends AbstractEntity {
     }
 
     switch (event.id) {
-      case 'closeZXControls':
+      case 'closeZXSettings':
         this.destroy();
         return true;
 
@@ -553,6 +553,6 @@ export class ZXControlsEntity extends AbstractEntity {
     }
   } // loopEntity
 
-} // ZXControlsEntity
+} // ZXSettingsEntity
 
-export default ZXControlsEntity;
+export default ZXSettingsEntity;
