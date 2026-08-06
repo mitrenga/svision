@@ -115,6 +115,20 @@ delivered to the model:
   overlay scrollbars and an optional `followBottom` tail-follow mode; nested
   buttons and links stay clickable while scrolled.
 
+### Display styles
+The canvas2D layout offers three looks. The default **sharp** style renders
+sharp, integer-scaled pixel edges (image smoothing off). The experimental
+**crt** style imitates an old CRT monitor: image smoothing stays on for soft
+edges, and a non-interactive overlay adds scanlines aligned to the logical
+pixel grid (plus a vertical grid at high scale ratios), a vignette, rounded
+corners and a slight contrast/saturation boost. **grid** is `crt` without
+the color boost, for devices whose browsers cannot composite a CSS filter over
+the canvas (some smart TVs render the whole layer black). The style is read
+from the `displayStyle` cookie (`sharp` / `grid` / `crt` / `retro`); a missing
+or invalid cookie falls back to **sharp**. The **retro** value resolves to
+`crt`, or to `grid` on smart-TV browsers; `crt` and `grid` are honored as-is.
+Tuning constants live in the `crtStyle` field of `Canvas2DLayout`.
+
 ### Utilities
 - **`Tool`** — number-base conversions (hex / base-36 / base-90 / Braille),
   cookies and small helpers.

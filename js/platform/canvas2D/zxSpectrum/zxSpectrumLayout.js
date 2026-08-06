@@ -48,7 +48,7 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
 
     this.app.element.width = Math.round((model.desktopWidth+2*model.borderWidth)*this.ratio);
     this.app.element.height = Math.round((model.desktopHeight+2*model.borderHeight)*this.ratio);
-    this.disableImageSmoothing();
+    this.applyDisplayStyle();
 
     model.borderEntity.x = 0;
     model.borderEntity.y = 0;

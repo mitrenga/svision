@@ -54,7 +54,8 @@ export class ZXSettingsEntity extends AbstractEntity {
       {label: 'KEYBOARD', type: 'keyboard'},
       {label: 'MOUSE', type: 'mouse'},
       {label: 'GAMEPAD', type: 'gamepad'},
-      {label: 'TOUCHSCREEN', type: 'touchscreen'}
+      {label: 'TOUCHSCREEN', type: 'touchscreen'},
+      {label: 'DISPLAY', type: 'display'}
     ];
 
     this.deviceHoverColor = '#b1ab79ff';
@@ -74,7 +75,7 @@ export class ZXSettingsEntity extends AbstractEntity {
     super.init();
     
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'CONTROLS', ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'SETTINGS', ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
     this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, ZXColor.yellow));
 
     this.devicesSelectionEntity = new AbstractEntity(this, 8, 16+this.selectionDevice*16, 68, 9, false, ZXColor.brightBlue);
@@ -173,6 +174,11 @@ export class ZXSettingsEntity extends AbstractEntity {
     });
     
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 110, 82, 64, 13, 'CHANGE', {id: 'touchscreenChange'}, ['Enter'], ZXColor.brightWhite, ZXColor.magenta, {align: 'center', margin: 4, group: 'touchscreen.supported', hide: true}));
+
+    // display
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 90, 16, 74, 9, 'STYLE', ZXColor.black, false, {margin: 2, group: 'display', hide: true}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 164, 16, 32, 9, this.app.layout.displayStyle.toUpperCase(), ZXColor.brightBlue, false, {margin: 2, align: 'center', group: 'display', member: 'display.style', hide: true}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, 126, this.height-16, 39, 13, 'CHANGE', {id: 'displayStyleChange'}, ['Enter', 'GamepadOK'], ZXColor.brightWhite, ZXColor.magenta, {align: 'center', margin: 4, group: 'display', hide: true}));
 
     this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-35, this.height-16, 32, 13, 'CLOSE', {id: 'closeZXSettings'}, ['Escape', 'GamepadExit'], ZXColor.brightWhite, ZXColor.blue, {align: 'center', margin: 4}));
   } // init
@@ -379,8 +385,8 @@ export class ZXSettingsEntity extends AbstractEntity {
 
   /**
    * Handles input and UI events for the panel: device navigation, opening remap and
-   * gamepad dialogs, enabling/disabling the mouse, ignoring gamepads and cycling
-   * touchscreen layouts.
+   * gamepad dialogs, enabling/disabling the mouse, ignoring gamepads, cycling
+   * touchscreen layouts and toggling the display style (sharp/retro).
    * @param {Object} event - The event object, including its id and key fields.
    * @returns {boolean} True if the event was handled.
    */
@@ -509,6 +515,16 @@ export class ZXSettingsEntity extends AbstractEntity {
         this.app.controls.touchscreen.type = keys[ndx];
         Tool.writeCookie('touchscreen', JSON.stringify({type: keys[ndx]}));
         this.changeGroup(this.selectionDevice);
+        return true;
+
+      case 'displayStyleChange':
+        var newStyle = (this.app.layout.displayStyle == 'retro') ? 'sharp' : 'retro';
+        Tool.writeCookie('displayStyle', newStyle);
+        // the layout constructor reads the cookie only at startup, so apply
+        // the new style directly and force a resize to switch it immediately
+        this.app.layout.displayStyle = newStyle;
+        this.app.resizeRequested = true;
+        this.sendEvent(0, 0, {id: 'updateEntity', member: 'display.style', text: newStyle.toUpperCase()});
         return true;
     }
 
