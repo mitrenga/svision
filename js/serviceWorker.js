@@ -21,7 +21,10 @@ const ASSETS = [/* PHP_ASSETS_PLACEHOLDER */];
  * Install handler: opens the versioned cache and stores each asset listed in
  * ASSETS individually (forcing a fresh network fetch). Caching is resilient —
  * a single failing asset is logged and skipped instead of aborting the whole
- * pre-cache — then the new worker activates immediately via skipWaiting.
+ * pre-cache. Intentionally no skipWaiting: the updated worker stays waiting so
+ * the running session keeps being served by the old worker's cache; the new
+ * version takes over via the in-app upgrade (upgradeApp) or on the next launch
+ * after all tabs are closed.
  * @param {ExtendableEvent} event - The service worker install event.
  */
 self.addEventListener('install', (event) => {
@@ -31,14 +34,14 @@ self.addEventListener('install', (event) => {
         ASSETS.map((url) => cache.add(new Request(url, { cache: 'reload' }))
           .catch((error) => console.error('[sw] precache failed:', url, error)))
       ))
-      .then(() => self.skipWaiting())
   );
 });
 
 /**
  * Activate handler: deletes any previously stored caches that belong to this
- * scope but do not match the current CACHE_NAME, then takes control of all
- * open clients via clients.claim.
+ * scope but do not match the current CACHE_NAME. Intentionally no
+ * clients.claim: pages loaded under the previous worker keep it until they
+ * navigate/reload, so a session never switches caches mid-flight.
  * @param {ExtendableEvent} event - The service worker activate event.
  */
 self.addEventListener('activate', (event) => {
@@ -48,7 +51,7 @@ self.addEventListener('activate', (event) => {
         .filter((name) => name.startsWith(CACHE_PREFIX))
         .filter((name) => name !== CACHE_NAME)
         .map((name) => caches.delete(name))
-    )).then(() => self.clients.claim())
+    ))
   );
 });
 
