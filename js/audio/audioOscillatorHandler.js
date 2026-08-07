@@ -130,6 +130,17 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     try {
       this.worker = new Worker(this.app.importPath+'/svision/js/audio/worker/oscilatorWorker.js?ver='+window.srcVersion);
       this.worker.onmessage = () => this.onSchedulerTick();
+      // A worker that exists but fails to load/run (404, MIME, restricted TV
+      // runtime) reports asynchronously - the constructor's try/catch never
+      // sees it. Without this the scheduler waits forever for ticks and every
+      // score dies after the first look-ahead window.
+      this.worker.onerror = () => {
+        this.worker.terminate();
+        this.worker = null;
+        if (this.schedulerActive && this.schedulerId === false) {
+          this.schedulerId = setTimeout(() => this.runScheduler(), 25);
+        }
+      };
     } catch (error) {
       this.worker = null;
     }
