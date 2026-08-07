@@ -51,7 +51,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           '←': 'ArrowLeft',
           '↓': 'ArrowDown',
           '↑': 'ArrowUp',
-          '➔': 'ArrowRight'
+          '→': 'ArrowRight'
         },
         shiftKeys: {
           '⇧': {activeBkColor: ZXColor.white},
@@ -68,7 +68,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           '←': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
           '↓': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
           '↑': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
-          '➔': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
+          '→': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
           '⌫': {label: 'DELETE', width: 25, fonts: this.app.fonts.fonts3x3, topMargin: 7},
           '⏎': {label: 'ENTER', width: 23, fonts: this.app.fonts.fonts3x3, topMargin: 7},
           '⇧': {label: 'CAPS\nSHIFT', width: 23, fonts: this.app.fonts.fonts3x3},
@@ -85,7 +85,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           ['⇧', 'z','x','c','v','b','n','m', '⌥', ' ']
         ],
         '⇧': [
-          ['∅','∅','∅','∅','←','↓','↑','➔','∅','⌫'],
+          ['∅','∅','∅','∅','←','↓','↑','→','∅','⌫'],
           ['Q','W','E','R','T','Y','U','I','O','P'],
           ['A','S','D','F','G','H','J','K','L', '⏎'],
           ['⇧', 'Z','X','C','V','B','N','M', '⌥', ' ']
