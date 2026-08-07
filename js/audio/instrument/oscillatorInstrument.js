@@ -142,6 +142,10 @@ export class OscillatorInstrument extends AbstractInstrument {
       const noiseLevel = Math.max(0.0001, this.gainLevel * (('gain' in attackNoise) ? attackNoise.gain : 0.3) * ((vol == null) ? 1 : vol));
       const noiseDecay = ('decay' in attackNoise) ? attackNoise.decay : 0.02;
       const noiseGain = this.ctx.createGain();
+      // start from 0, not the node's default gain of 1: float rounding can make
+      // the buffer source emit its first sample a frame before the setValueAtTime
+      // event lands, and that sample would pass at full level (a loud click)
+      noiseGain.gain.value = 0.0;
       noiseGain.gain.setValueAtTime(noiseLevel, time);
       noiseGain.gain.exponentialRampToValueAtTime(0.0001, time + noiseDecay);
       noiseGain.connect(this.input);

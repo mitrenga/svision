@@ -135,6 +135,15 @@ export class AbstractAudioHandler {
   } // muteBus
 
   /**
+   * Sets the user/bus volume factor. No-op in the base class; overridden by
+   * handlers with a dedicated output gain stage.
+   * @param {number} factor - Linear gain multiplier (1.0 = authored loudness).
+   * @returns {void}
+   */
+  setBusVolume(factor) {
+  } // setBusVolume
+
+  /**
    * Indicates whether the bus is ready to play sounds.
    * @returns {boolean} True when the bus is ready; always true in the base class.
    */

@@ -17,8 +17,11 @@ import VoiceInstrument from './instrument/voiceInstrument.js';
  * used by the worklet/script-processor handlers. Its `audioData` is a declarative
  * "score": a tempo, a bank of instrument descriptors and one or more tracks of
  * notes. A look-ahead scheduler walks the score against the AudioContext clock
- * and asks each track's instrument to play its notes; a single master gain node
- * carries the bus volume and mute state.
+ * and asks each track's instrument to play its notes. Two gain stages feed the
+ * destination: the master gain carries the score's authored volume (dry path),
+ * and behind it an output gain carries the user/bus volume factor and the mute
+ * state; effect wet paths join at the output gain, so user volume and mute
+ * always scale dry and wet together.
  *
  * Score shape:
  *   {
@@ -47,6 +50,8 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     super(app);
     this.id = 'AudioOscillatorHandler';
     this.masterGain = null;
+    this.outputGain = null;
+    this.busFactor = 1.0;
     this.echoNodes = null;
     this.reverbNodes = null;
     this.flangerNodes = null;
@@ -101,10 +106,13 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     if (this.error === false && this.ctx != null) {
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.value = 0.0;
-      this.masterGain.connect(this.ctx.destination);
+      this.outputGain = this.ctx.createGain();
+      this.masterGain.connect(this.outputGain);
+      this.outputGain.connect(this.ctx.destination);
       if ('muted' in options && options.muted) {
         this.muted = true;
       }
+      this.outputGain.gain.value = this.muted ? 0.0 : this.busFactor;
       this.loadWorker();
     }
     this.busy = false;
@@ -164,7 +172,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.volume = ('volume' in audioData) ? audioData.volume : 0.2;
     const now = this.ctx.currentTime;
     this.masterGain.gain.cancelScheduledValues(now);
-    this.masterGain.gain.setValueAtTime(this.muted ? 0.0 : this.volume, now);
+    this.masterGain.gain.setValueAtTime(this.volume, now);
 
     this.buildOutput(audioData);
 
@@ -260,7 +268,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
 
   /**
    * (Re)wires the bus output for the given score. The master gain always feeds
-   * the destination directly (dry). When the score has a `reverb` block a
+   * the output gain directly (dry). When the score has a `reverb` block a
    * convolution reverb is added in parallel, and when it has an `echo` block a
    * feedback delay is added in parallel; each effect's input is wired later by
    * connectReverbSends()/connectEchoSends(). Any previous effect networks are
@@ -273,7 +281,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.teardownReverb();
     this.teardownFlanger();
     this.masterGain.disconnect();
-    this.masterGain.connect(this.ctx.destination);
+    this.masterGain.connect(this.outputGain);
 
     if ('flanger' in score && score.flanger) {
       // a short LFO-modulated delay mixed back in (comb filtering with a slowly
@@ -295,7 +303,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
       const wet = this.ctx.createGain();
       wet.gain.value = Math.max(0.0, ('mix' in flanger) ? flanger.mix : 0.7);
       delay.connect(wet);
-      wet.connect(this.ctx.destination);
+      wet.connect(this.outputGain);
 
       // Input wired later by connectFlangerSends(): whole bus or flangerSend voices.
       this.flangerNodes = {delay: delay, lfoOsc: lfoOsc, lfoGain: lfoGain, feedback: feedback, wet: wet};
@@ -309,7 +317,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
       wet.gain.value = Math.max(0.0, ('mix' in reverb) ? reverb.mix : 0.4);
 
       convolver.connect(wet);
-      wet.connect(this.ctx.destination);
+      wet.connect(this.outputGain);
 
       // Input wired later by connectReverbSends(): whole bus or reverbSend voices.
       this.reverbNodes = {convolver: convolver, wet: wet};
@@ -328,7 +336,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
       delay.connect(feedback);
       feedback.connect(delay);
       delay.connect(wet);
-      wet.connect(this.ctx.destination);
+      wet.connect(this.outputGain);
 
       // The echo's input is wired later by connectEchoSends(): either the whole
       // bus (master) or only the instruments that opt in via echoSend.
@@ -731,16 +739,32 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
   } // continueBus
 
   /**
-   * Mutes or unmutes the bus by zeroing or restoring the master gain.
+   * Mutes or unmutes the bus by zeroing or restoring the output gain, so both
+   * the dry path and any effect wet paths are silenced together.
    * @param {boolean} muted - True to mute, false to unmute.
    * @returns {void}
    */
   muteBus(muted) {
     this.muted = muted;
-    if (this.masterGain != null) {
-      this.masterGain.gain.value = muted ? 0.0 : this.volume;
+    if (this.outputGain != null) {
+      this.outputGain.gain.value = muted ? 0.0 : this.busFactor;
     }
   } // muteBus
+
+  /**
+   * Sets the user/bus volume factor carried by the output gain. Unlike the
+   * score's authored `volume` (master gain, dry path only), this scales the
+   * whole bus output - dry and effect wet paths alike - so it is the right
+   * place for a user volume slider. Persists across playSound calls.
+   * @param {number} factor - Linear gain multiplier (1.0 = authored loudness).
+   * @returns {void}
+   */
+  setBusVolume(factor) {
+    this.busFactor = Math.max(0.0, factor);
+    if (this.outputGain != null) {
+      this.outputGain.gain.value = this.muted ? 0.0 : this.busFactor;
+    }
+  } // setBusVolume
 
   /**
    * Closes the bus: stops the scheduler, drops instruments, disconnects the
@@ -763,6 +787,10 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     if (this.masterGain != null) {
       this.masterGain.disconnect();
       this.masterGain = null;
+    }
+    if (this.outputGain != null) {
+      this.outputGain.disconnect();
+      this.outputGain = null;
     }
     this.score = false;
     return super.closeBus();

@@ -124,6 +124,10 @@ export class AbstractInstrument {
     const gain = this.ctx.createGain();
     gain.connect(this.input);
 
+    // start from 0, not the node's default gain of 1: float rounding can make
+    // a voice emit its first sample a frame before the setValueAtTime event
+    // lands, and that sample would pass at full level (a loud click)
+    gain.gain.value = 0.0;
     gain.gain.setValueAtTime(0.0001, time);
     gain.gain.linearRampToValueAtTime(peak, time + attack);
 
