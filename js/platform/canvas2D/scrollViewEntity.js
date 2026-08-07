@@ -252,6 +252,27 @@ export class ScrollViewEntity extends AbstractEntity {
     return Math.max(this.lineStep, this.height-this.lineStep);
   } // pageStep
 
+  /**
+   * True for a pointer event (mouse press/release, touch, hover) whose point
+   * lies outside the viewport. Painting is clipped natively, so content
+   * scrolled out of view is invisible — but it would still hit-test at its
+   * layout position and steal clicks/hovers from entities drawn over that
+   * area (e.g. a fixed button below the viewport), so such events must not
+   * reach the content.
+   * @param {Object} event - The input event to test.
+   * @returns {boolean} True if the event is a pointer event outside the viewport.
+   */
+  pointerOutside(event) {
+    if (event.id == 'mouseHover') {
+      return !this.pointOnEntity(event);
+    }
+    if ((event.id == 'keyPress' || event.id == 'keyRelease') && ('x' in event)
+        && (event.key == 'Touch' || event.key.substring(0, 5) == 'Mouse')) {
+      return !this.pointOnEntity(event);
+    }
+    return false;
+  } // pointerOutside
+
   handleEvent(event) {
     switch (event.id) {
       case 'mouseWheel':
@@ -306,6 +327,11 @@ export class ScrollViewEntity extends AbstractEntity {
         break;
     }
 
+    // Keep pointer events aimed outside the viewport away from the clipped
+    // content (see pointerOutside); everything else propagates normally.
+    if (this.pointerOutside(event)) {
+      return false;
+    }
     return super.handleEvent(event);
   } // handleEvent
 
