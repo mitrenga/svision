@@ -368,7 +368,9 @@ function es2018Targets($list) {
  * slips (terser does not transpile, so these would ship as-is and fail to parse
  * on an older engine, taking the whole file/bundle down). Returns a list of
  * ['file','line','feature']. Object spread and async/await are ES2018/2017 and
- * intentionally allowed.
+ * intentionally allowed. String literal contents and // comments are blanked
+ * per line before matching, so data blobs (e.g. compressed sprite strings)
+ * cannot trigger false positives.
  */
 function es2018Scan($files) {
   $patterns = [
@@ -387,8 +389,9 @@ function es2018Scan($files) {
     $n = 0;
     foreach (explode("\n", file_get_contents($abs)) as $line) {
       $n++;
+      $code = es2018StripLiterals($line);
       foreach ($patterns as $feature => $re) {
-        if (preg_match($re, $line)) {
+        if (preg_match($re, $code)) {
           $found[] = ['file' => $rel, 'line' => $n, 'feature' => $feature];
         }
       }
@@ -396,6 +399,19 @@ function es2018Scan($files) {
   }
   return $found;
 } // es2018Scan
+
+/**
+ * Blank the contents of string/template literals and drop a trailing //
+ * comment from a single line, leaving only code for the ES2018 pattern scan.
+ * Line-based, so multi-line template literals and block comment bodies are
+ * still scanned as code — an acceptable trade-off for a heuristic (they can
+ * only add false positives, never hide real code).
+ * @param {string} $line - The source line.
+ */
+function es2018StripLiterals($line) {
+  $code = preg_replace('/\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"|`(?:\\\\.|[^`\\\\])*`/', "''", $line);
+  return preg_replace('~//.*$~', '', $code);
+} // es2018StripLiterals
 
 /**
  * Print the ES2018 heuristic scan result. Caller decides whether findings are

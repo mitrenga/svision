@@ -159,12 +159,12 @@ export class SlidingTextEntity extends AbstractEntity {
   drawEntity() {
     super.drawEntity();
 
-    if (this.drawingCache[0].needToRefresh(this, this.animationWidth, this.height)) {
+    if (this.drawingCache[0].preparePaint(this.animationWidth, this.height)) {
       this.cursorX = this.options.leftMargin;
       for (var ch = 0; ch < this.text.length; ch++) {
         var charData = this.fonts.getCharData(this.text[ch], '1', 1);
         for (var x = 0; x < charData.data.length; x++) {
-          this.app.layout.paintRect(this.drawingCache[0].ctx, this.cursorX+charData.data[x][0], this.options.topMargin+charData.data[x][1], charData.data[x][2], charData.data[x][3], this.penColor);
+          this.drawingCache[0].paint(this.cursorX+charData.data[x][0], this.options.topMargin+charData.data[x][1], charData.data[x][2], charData.data[x][3], this.penColor);
         }
         this.cursorX += charData.width+this.fonts.charsSpacing;
       }

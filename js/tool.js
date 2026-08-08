@@ -249,7 +249,7 @@ export class Tool {
       case 'ArrowLeft':
         return '←';
       case 'ArrowRight':
-        return '➔';
+        return '→';
       case 'ArrowUp':
         return '↑';
       case 'ArrowDown':

@@ -229,7 +229,7 @@ export class TextEntity  extends AbstractEntity {
    */
   paintGlyph(charData, baseX, penColor) {
     for (var x = 0; x < charData.data.length; x++) {
-      this.app.layout.paintRect(this.drawingCache[0].ctx, baseX+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+      this.drawingCache[0].paint(baseX+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
     }
   } // paintGlyph
 
@@ -270,7 +270,7 @@ export class TextEntity  extends AbstractEntity {
   drawEntity() {
     super.drawEntity();
 
-    if (this.drawingCache[0].needToRefresh(this, this.width, this.height)) {
+    if (this.drawingCache[0].preparePaint(this.width, this.height)) {
       this.cursorY = this.options.topMargin;
 
       var formattedText = this.text;

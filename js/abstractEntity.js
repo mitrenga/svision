@@ -413,24 +413,6 @@ export class AbstractEntity {
   }
 
   /**
-   * Sets the pen/foreground color and invalidates the draw cache.
-   * @param {string|false} color - The new pen color.
-   */
-  setPenColor(color) {
-    this.penColor = color;
-    this.cleanCache();
-  } // setPenColor
-
-  /**
-   * Sets the background color and invalidates the draw cache.
-   * @param {string|false} color - The new background color.
-   */
-  setBkColor(color) {
-    this.bkColor = color;
-    this.cleanCache();
-  } // setBkColor
-
-  /**
    * Invalidates the entity's draw cache. The base implementation does nothing.
    */
   cleanCache() {

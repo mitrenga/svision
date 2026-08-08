@@ -36,6 +36,7 @@ export class AdaptiveLayout extends Canvas2DLayout {
     
     this.app.element.width = this.app.element.clientWidth;
     this.app.element.height = this.app.element.clientHeight;
+    this.applyDisplayStyle();
 
     model.desktopEntity.x = 0;
     model.desktopEntity.y = 0;

@@ -33,7 +33,8 @@ export class ScrollViewEntity extends AbstractEntity {
    * @param {number} height - Viewport height in pixels.
    * @param {string|false} bkColor - Background color, or false for transparent.
    * @param {Object} options - scrollX, scrollY, scrollbar, scrollbarSize,
-   *   scrollbarColor, scrollbarTrackColor, dragThreshold, followBottom.
+   *   scrollbarColor, scrollbarTrackColor, scrollbarGap, dragThreshold,
+   *   followBottom.
    */
   constructor(parentEntity, x, y, width, height, bkColor, options) {
     super(parentEntity, x, y, width, height, false, bkColor);
@@ -51,6 +52,7 @@ export class ScrollViewEntity extends AbstractEntity {
     this.scrollbarColor = ('scrollbarColor' in options) ? options.scrollbarColor : '#ffffff';
     this.scrollbarTrackColor = ('scrollbarTrackColor' in options) ? options.scrollbarTrackColor : false;
     this.scrollbarMinThumb = ('scrollbarMinThumb' in options) ? options.scrollbarMinThumb : 8;
+    this.scrollbarGap = ('scrollbarGap' in options) ? options.scrollbarGap : 1;
 
     this.offsetX = 0;
     this.offsetY = 0;
@@ -116,6 +118,35 @@ export class ScrollViewEntity extends AbstractEntity {
   maxOffsetY() {
     return Math.max(0, this.contentHeight-this.height);
   } // maxOffsetY
+
+  /**
+   * Width available to the content without being overlapped by the vertical
+   * scrollbar: the viewport width minus scrollbarSize and scrollbarGap whenever
+   * a vertical scrollbar may be drawn. Based on the scrollY setting, not the
+   * current overflow, so a text laid out to this width does not re-wrap when
+   * the scrollbar appears. Owners should use it as the wrap/layout width of
+   * text placed inside the view.
+   * @returns {number} Content layout width in pixels.
+   */
+  contentAreaWidth() {
+    if (this.scrollbar && this.scrollY) {
+      return Math.max(0, this.width-this.scrollbarSize-this.scrollbarGap);
+    }
+    return this.width;
+  } // contentAreaWidth
+
+  /**
+   * Height available to the content without being overlapped by the horizontal
+   * scrollbar (viewport height minus scrollbarSize and scrollbarGap when an X
+   * scrollbar may be drawn). Counterpart of contentAreaWidth().
+   * @returns {number} Content layout height in pixels.
+   */
+  contentAreaHeight() {
+    if (this.scrollbar && this.scrollX) {
+      return Math.max(0, this.height-this.scrollbarSize-this.scrollbarGap);
+    }
+    return this.height;
+  } // contentAreaHeight
 
   /**
    * @returns {boolean} Whether the content overflows horizontally and X scrolling is enabled.
@@ -221,6 +252,27 @@ export class ScrollViewEntity extends AbstractEntity {
     return Math.max(this.lineStep, this.height-this.lineStep);
   } // pageStep
 
+  /**
+   * True for a pointer event (mouse press/release, touch, hover) whose point
+   * lies outside the viewport. Painting is clipped natively, so content
+   * scrolled out of view is invisible — but it would still hit-test at its
+   * layout position and steal clicks/hovers from entities drawn over that
+   * area (e.g. a fixed button below the viewport), so such events must not
+   * reach the content.
+   * @param {Object} event - The input event to test.
+   * @returns {boolean} True if the event is a pointer event outside the viewport.
+   */
+  pointerOutside(event) {
+    if (event.id == 'mouseHover') {
+      return !this.pointOnEntity(event);
+    }
+    if ((event.id == 'keyPress' || event.id == 'keyRelease') && ('x' in event)
+        && (event.key == 'Touch' || event.key.substring(0, 5) == 'Mouse')) {
+      return !this.pointOnEntity(event);
+    }
+    return false;
+  } // pointerOutside
+
   handleEvent(event) {
     switch (event.id) {
       case 'mouseWheel':
@@ -275,6 +327,11 @@ export class ScrollViewEntity extends AbstractEntity {
         break;
     }
 
+    // Keep pointer events aimed outside the viewport away from the clipped
+    // content (see pointerOutside); everything else propagates normally.
+    if (this.pointerOutside(event)) {
+      return false;
+    }
     return super.handleEvent(event);
   } // handleEvent
 

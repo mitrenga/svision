@@ -156,9 +156,6 @@ export class SpriteEntity  extends AbstractEntity {
     this.framePalettes = [];
     this.spriteWidth = 0;
     this.spriteHeight = 0;
-    this.drawCache = [];
-    this.drawCacheRatio = [];
-    this.drawCacheCtx = [];
 
     if (this.frames == 0) {
       this.spriteData[0] = this.buildFrameData(this.frameGrid(data.sprite), this.resolvePalette(data.sprite));
@@ -284,9 +281,9 @@ export class SpriteEntity  extends AbstractEntity {
         d = 0;
       }
       var index = this.frame+d*this.frames;
-      if (this.drawingCache[index].needToRefresh(this, this.width, this.height)) {
+      if (this.drawingCache[index].preparePaint(this.width, this.height)) {
         if (this.bkColor != false) {
-          this.app.layout.paintRect(this.drawingCache[index].ctx, 0, 0, this.width, this.height, this.bkColor);
+          this.drawingCache[index].paint(0, 0, this.width, this.height, this.bkColor);
         }
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
@@ -309,7 +306,7 @@ export class SpriteEntity  extends AbstractEntity {
           if (color !== false) {
             for (var x = 0; x < this.repeatX; x++) {
               for (var y = 0; y < this.repeatY; y++) {
-                this.app.layout.paintRect(this.drawingCache[index].ctx, pixel.x+x*this.spriteWidth, pixel.y+y*this.spriteHeight, 1, 1, color);
+                this.drawingCache[index].paint(pixel.x+x*this.spriteWidth, pixel.y+y*this.spriteHeight, 1, 1, color);
               }
             }
           }

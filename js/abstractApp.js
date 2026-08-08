@@ -176,6 +176,23 @@ export class AbstractApp {
   } // fetchData
 
   /**
+   * Forces an application upgrade: unregisters every service worker and deletes
+   * all caches, then reloads the page so every asset is fetched fresh as the
+   * new version.
+   */
+  upgradeApp() {
+    var cleanups = [];
+    if ('serviceWorker' in navigator) {
+      cleanups.push(navigator.serviceWorker.getRegistrations().then((regs) => Promise.all(regs.map((reg) => reg.unregister()))));
+    }
+    if ('caches' in window) {
+      cleanups.push(caches.keys().then((names) => Promise.all(names.map((name) => caches.delete(name)))));
+    }
+    // reload on both outcomes, so a failed cleanup never leaves the app stuck
+    Promise.all(cleanups).then(() => window.location.reload(), () => window.location.reload());
+  } // upgradeApp
+
+  /**
    * Saves data to localStorage under the application-prefixed key.
    * @param {string} key - The storage key (prefixed with the app prefix).
    * @param {*} data - The value to serialize and store.
