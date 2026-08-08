@@ -27,6 +27,7 @@ import VoiceInstrument from './instrument/voiceInstrument.js';
  *   {
  *     tempo: 120,                 // beats per minute
  *     beatsPerBar: 4,             // time signature: beats per pattern bar (default 4/4 = 16 ticks; a waltz uses 3 = 12 ticks)
+ *     upbeat: 8,                  // anacrusis: playback starts this many ticks into bar 0, skipping the leading rest (notes before it would play late; default 0)
  *     volume: 0.3,                // bus master gain
  *     defaultDuration: 4,         // note length in ticks when a note omits `dur`
  *     instruments: { name: {descriptor}, ... },   // see AbstractInstrument
@@ -208,7 +209,9 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
 
     this.paused = false;
     this.nextBar = 0;
-    this.nextBarTime = this.ctx.currentTime + 0.1;
+    // an upbeat backdates bar 0 so its first sounding note (the anacrusis)
+    // lands on the pre-roll instant instead of after the bar's leading rest
+    this.nextBarTime = this.ctx.currentTime + 0.1 - (audioData.upbeat || 0) * this.secondsPerTick;
     this.pendingNotes = [];
     this.diagStartTime = this.ctx.currentTime;
     this.diagStartPerf = performance.now();

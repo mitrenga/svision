@@ -127,7 +127,7 @@ export function scoreLoad(score) {
       bars = track.pattern.length;
     }
   });
-  const seconds = Math.max(0.001, bars * secondsPerBar);
+  const seconds = Math.max(0.001, bars * secondsPerBar - (score.upbeat || 0) * secondsPerTick);
 
   // collect note lifetimes as +units/-units boundary events
   const boundaries = [];
