@@ -341,6 +341,55 @@ export class ZXSettingsEntity extends AbstractEntity {
   } // selectionGamepadName
 
   /**
+   * Scans the connected gamepads for user activity — a pressed button or an
+   * axis pushed past half of its range (well above stick drift, below the
+   * input manager's config-mode threshold). The selected gamepad keeps
+   * priority, so it does not flip away while being used.
+   * @returns {string|false} The id of an active gamepad, or false when all
+   *   are idle right now.
+   */
+  activeGamepadId() {
+    var connected = navigator.getGamepads();
+    var result = false;
+    for (var d = 0; d < connected.length; d++) {
+      var device = connected[d];
+      if (device == null) {
+        continue;
+      }
+      var active = false;
+      for (var b = 0; b < device.buttons.length && !active; b++) {
+        active = device.buttons[b].pressed;
+      }
+      for (var a = 0; a < device.axes.length && !active; a++) {
+        active = Math.abs(device.axes[a]) > 0.5;
+      }
+      if (active) {
+        if (device.id == this.selectionGamepad) {
+          return device.id;
+        }
+        if (result === false) {
+          result = device.id;
+        }
+      }
+    }
+    return result;
+  } // activeGamepadId
+
+  /**
+   * Makes another gamepad the selected one and refreshes everything that
+   * shows it: the sliding name label (restarted, in case the new name is long)
+   * and the displayed bindings, incl. the group visibility for its
+   * configured/notConfigured state.
+   * @param {string} gamepadId - The id of the newly selected gamepad.
+   */
+  switchSelectionGamepad(gamepadId) {
+    this.selectionGamepad = gamepadId;
+    this.controlsEntites.gpLabel.setText(this.selectionGamepadName());
+    this.controlsEntites.gpLabel.resetAnimation();
+    this.gamepadActionsUpdate();
+  } // switchSelectionGamepad
+
+  /**
    * Reconciles the selected gamepad against currently connected devices, defaulting
    * to the first connected gamepad and clearing the selection when none are present.
    */
@@ -391,6 +440,21 @@ export class ZXSettingsEntity extends AbstractEntity {
    * @returns {boolean} True if the event was handled.
    */
   handleEvent(event) {
+    // While the gamepad tab is shown (and no dialog is open above), the
+    // selection follows the user's hands: a Gamepad* press coming from a
+    // different gamepad than the selected one switches the selection to it
+    // and is swallowed, so it cannot trigger anything else — the panel gets
+    // the event before its buttons do. Presses on a not-yet-configured
+    // gamepad emit no events at all; those are caught by polling in
+    // loopEntity instead.
+    if (this.modalEntity == null && event.id == 'keyPress' && String(event.key).substring(0, 7) == 'Gamepad' && this.devices[this.selectionDevice].type == 'gamepad') {
+      var activeId = this.activeGamepadId();
+      if (activeId !== false && activeId !== this.selectionGamepad) {
+        this.switchSelectionGamepad(activeId);
+        return true;
+      }
+    }
+
     if (super.handleEvent(event)) {
       return true;
     }
@@ -481,10 +545,7 @@ export class ZXSettingsEntity extends AbstractEntity {
         return true;
 
       case 'changeSelectionGamepad':
-        this.selectionGamepad = event.selectionGamepad;
-        this.controlsEntites.gpLabel.setText(this.selectionGamepadName());
-        this.gamepadActionsUpdate();
-        this.changeGroup(this.selectionDevice);
+        this.switchSelectionGamepad(event.selectionGamepad);
         return true;
 
       case 'gamepadRemapKeys':
@@ -537,6 +598,16 @@ export class ZXSettingsEntity extends AbstractEntity {
    * @param {number} timestamp - Current animation timestamp.
    */
   loopEntity(timestamp) {
+    // Activity-based gamepad switching for presses that emit no events (a
+    // not-yet-configured or unbound control) — see handleEvent for the
+    // event-emitting ones, which are switched and swallowed there.
+    if (this.modalEntity == null && this.devices[this.selectionDevice].type == 'gamepad') {
+      var activeId = this.activeGamepadId();
+      if (activeId !== false && activeId !== this.selectionGamepad) {
+        this.switchSelectionGamepad(activeId);
+      }
+    }
+
     var updateGamepadSelection = false;
     if (this.selectionGamepad !== false) {
       updateGamepadSelection = true;
