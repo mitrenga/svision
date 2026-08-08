@@ -25,7 +25,8 @@ import VoiceInstrument from './instrument/voiceInstrument.js';
  *
  * Score shape:
  *   {
- *     tempo: 120,                 // beats per minute (4/4, 16 ticks per bar)
+ *     tempo: 120,                 // beats per minute
+ *     beatsPerBar: 4,             // time signature: beats per pattern bar (default 4/4 = 16 ticks; a waltz uses 3 = 12 ticks)
  *     volume: 0.3,                // bus master gain
  *     defaultDuration: 4,         // note length in ticks when a note omits `dur`
  *     instruments: { name: {descriptor}, ... },   // see AbstractInstrument
@@ -189,7 +190,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
 
     const tempo = audioData.tempo || 120;
     this.secondsPerBeat = 60 / tempo;
-    this.secondsPerBar = this.secondsPerBeat * 4;
+    this.secondsPerBar = this.secondsPerBeat * (audioData.beatsPerBar || 4);
     this.secondsPerTick = this.secondsPerBeat / 4;
     this.lookahead = this.secondsPerBeat;
 

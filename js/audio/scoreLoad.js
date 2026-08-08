@@ -117,7 +117,7 @@ function noteLifetime(descriptor, note, durationSec) {
 export function scoreLoad(score) {
   const tempo = score.tempo || 120;
   const secondsPerBeat = 60 / tempo;
-  const secondsPerBar = secondsPerBeat * 4;
+  const secondsPerBar = secondsPerBeat * (score.beatsPerBar || 4);
   const secondsPerTick = secondsPerBeat / 4;
   const defaultDuration = ('defaultDuration' in score) ? score.defaultDuration : 4;
 
