@@ -86,7 +86,10 @@ export class OscillatorInstrument extends AbstractInstrument {
    *
    * `filterEnv` shape (all optional bar the times): {type:'lowpass', from, to,
    * decay, Q} - the cutoff sweeps exponentially from `from` to `to` over `decay`
-   * seconds. `pitchEnv` shape: {from, to, decay} in absolute Hz (drum thumps,
+   * seconds; `fromRatio`/`toRatio` make the sweep key-tracked (multiples of
+   * the note's frequency), combinable with `from`/`to` as an absolute floor -
+   * see createVoiceFilter.
+   * `pitchEnv` shape: {from, to, decay} in absolute Hz (drum thumps,
    * SFX sweeps), or {fromRatio, toRatio, decay} as ratios of the note's own
    * frequency (melodic bends, e.g. fromRatio 2 = slide in from an octave above).
    * `keyTrack` shape: {ref: 'C4', decay: 0.7} - the envelope decay is multiplied
@@ -131,7 +134,7 @@ export class OscillatorInstrument extends AbstractInstrument {
     }
 
     let voiceInput = envelope.gain;
-    const voiceFilter = this.createVoiceFilter(time);
+    const voiceFilter = this.createVoiceFilter(time, frequency);
     if (voiceFilter !== null) {
       voiceFilter.connect(envelope.gain);
       voiceInput = voiceFilter;

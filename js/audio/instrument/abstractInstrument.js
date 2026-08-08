@@ -162,10 +162,21 @@ export class AbstractInstrument {
    * when the descriptor has no `filterEnv`. Used to fade a voice's brightness as
    * it decays (a piano note darkening, an explosion tail closing down). Shared by
    * Instrument and NoiseInstrument.
+   *
+   * `from`/`to` are absolute Hz; `fromRatio`/`toRatio` are multiples of the
+   * played note's frequency (key tracking - a treble note keeps
+   * proportionally as much of its spectrum as a bass note; pitchless callers
+   * like NoiseInstrument pass no frequency, so ratios are ignored there).
+   * When both forms are given, the larger wins: the absolute value acts as a
+   * register-independent floor and the ratio lifts the sweep only for notes
+   * whose spectrum would otherwise fall below `ratio x fundamental`. Both
+   * ends are clamped just under Nyquist, so low sample-rate playback degrades
+   * gracefully instead of throwing on an out-of-range cutoff.
    * @param {number} time - Start time of the note on the AudioContext clock.
+   * @param {number} [frequency] - The note's frequency in Hz (enables fromRatio/toRatio).
    * @returns {BiquadFilterNode|null} The configured filter, or null.
    */
-  createVoiceFilter(time) {
+  createVoiceFilter(time, frequency) {
     if (!('filterEnv' in this.descriptor)) {
       return null;
     }
@@ -175,8 +186,27 @@ export class AbstractInstrument {
     if ('Q' in filterEnv) {
       filter.Q.value = filterEnv.Q;
     }
-    const from = ('from' in filterEnv) ? filterEnv.from : 6000;
-    const to = Math.max(1, ('to' in filterEnv) ? filterEnv.to : 500);
+
+    /**
+     * Resolves one sweep end: the larger of the absolute Hz value and the
+     * key-tracked ratio (when a frequency is known), or the fallback when
+     * the descriptor gives neither.
+     * @param {string} name - 'from' or 'to'.
+     * @param {number} fallback - Default Hz when the descriptor omits both forms.
+     * @returns {number} The cutoff in Hz.
+     */
+    const resolveEnd = (name, fallback) => {
+      const absolute = (name in filterEnv) ? filterEnv[name] : false;
+      const relative = (frequency != null && (name + 'Ratio') in filterEnv) ? frequency * filterEnv[name + 'Ratio'] : false;
+      if (absolute === false && relative === false) {
+        return fallback;
+      }
+      return Math.max(absolute === false ? 0 : absolute, relative === false ? 0 : relative);
+    }; // resolveEnd
+
+    const ceiling = this.ctx.sampleRate * 0.45;
+    const from = Math.min(ceiling, resolveEnd('from', 6000));
+    const to = Math.min(ceiling, Math.max(1, resolveEnd('to', 500)));
     const decay = ('decay' in filterEnv) ? filterEnv.decay : 1.0;
     filter.frequency.setValueAtTime(from, time);
     filter.frequency.exponentialRampToValueAtTime(to, time + decay);
