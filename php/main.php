@@ -53,6 +53,16 @@
     require_once 'manifestPage.php';
     $page = new ManifestPage();
   }
+  elseif ($query === 'sitemap.xml') {
+    // Search engine sitemap request.
+    require_once 'sitemapPage.php';
+    $page = new SitemapPage();
+  }
+  elseif ($query === 'robots.txt') {
+    // Crawler rules request (also advertises the sitemap).
+    require_once 'robotsPage.php';
+    $page = new RobotsPage();
+  }
   elseif (file_exists('./app/svision/php/'.$query.'Page.php')) {
     // A built-in svision page named "<query>Page.php" (e.g. config, serviceWorker).
     require_once $query.'Page.php';
