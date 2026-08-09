@@ -153,6 +153,10 @@ export class AbstractApp {
       body: JSON.stringify(data),
       dataType: 'json',
       headers: {fetchDataId: fetchDataId},
+      // today's default, but spelled out for pre-2018 engines (TVs): the old
+      // fetch spec defaulted to 'omit', which silently drops the session
+      // cookie from both the request and the response
+      credentials: 'same-origin',
     }
     fetch(url, options)
       .then((response) => {
