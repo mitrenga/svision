@@ -24,7 +24,9 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="cs">';
     $this->data[] = '  <head>';
-    $this->data[] = '    <title>'.$GLOBALS['appName'].'</title>';
+    $this->data[] = '    <title>'.$GLOBALS['appName'].' — Configuration</title>';
+    $this->data[] = '    <meta name="description" lang="en" content="Diagnostics and configuration page of '.$GLOBALS['appName'].': browser capabilities, import method, audio and display settings.">';
+    $this->data[] = '    <meta name="robots" content="noindex">';
     $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/config.css?ver='.$srcVersion.'">';
     $this->data[] = '  </head>';
 
