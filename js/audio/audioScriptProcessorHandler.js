@@ -38,6 +38,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
     this.readPtr = 0;
     this.oneReadPulse = 0;
     this.repeat = false;
+    this.playsLeft = 1;
     this.nextSound = false;
     this.paused = false;
     this.muted = false;
@@ -132,7 +133,8 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
                 this.app.model.sendEvent(1, {id: this.events[this.readPtr].id, data: this.events[this.readPtr]});
               }
             }
-            if (this.repeat) {
+            this.playsLeft--;
+            if (this.playsLeft > 0) {
               if (this.nextSound !== false) {
                 this.fragments = this.nextSound.fragments;
                 this.pulses = this.nextSound.pulses;
@@ -226,7 +228,7 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
    * applying optional repeat and next-sound settings; rendering then proceeds
    * in the onaudioprocess callback.
    * @param {Object} audioData - Sound data with fragments, pulses, volume, and optional events/infinityRndPulses.
-   * @param {Object|boolean} options - Playback options; may include `repeat`, `nextSound`, and `channelVolumes` (per-channel volume multipliers, e.g. [1, 0] for left-only). False when none.
+   * @param {Object|boolean} options - Playback options; may include `repeat` (true = loop forever, number = total play count), `nextSound`, and `channelVolumes` (per-channel volume multipliers, e.g. [1, 0] for left-only). False when none.
    * @returns {void}
    */
   playSound(audioData, options) {
@@ -260,6 +262,9 @@ export class AudioScriptProcessorHandler extends AbstractAudioHandler {
         this.channelVolumes = options.channelVolumes;
       }
     }
+    // Unify the repeat forms into a play countdown: a number is a finite
+    // total play count, true loops forever, false plays once.
+    this.playsLeft = (typeof this.repeat === 'number') ? this.repeat : (this.repeat ? Infinity : 1);
   } // playSound
 
 } // AudioScriptProcessorHandler

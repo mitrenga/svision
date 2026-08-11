@@ -35,6 +35,7 @@ class AudioProcessor extends AudioWorkletProcessor {
     this.readPtr = 0;
     this.oneReadPulse = 0;
     this.repeat = false;
+    this.playsLeft = 1;
     this.nextSound = false;
     this.paused = false;
     this.muted = false;
@@ -73,6 +74,9 @@ class AudioProcessor extends AudioWorkletProcessor {
               this.channelVolumes = event.data.options.channelVolumes;
             }
           }
+          // Unify the repeat forms into a play countdown: a number is a finite
+          // total play count, true loops forever, false plays once.
+          this.playsLeft = (typeof this.repeat === 'number') ? this.repeat : (this.repeat ? Infinity : 1);
           break;
         case 'pause':
           this.paused = true;
@@ -164,7 +168,8 @@ class AudioProcessor extends AudioWorkletProcessor {
               this.port.postMessage(this.events[this.readPtr]);
             }
           }
-          if (this.repeat) {
+          this.playsLeft--;
+          if (this.playsLeft > 0) {
             if (this.nextSound !== false) {
               this.fragments = this.nextSound.fragments;
               this.pulses = this.nextSound.pulses;

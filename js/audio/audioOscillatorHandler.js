@@ -32,7 +32,7 @@ import VoiceInstrument from './instrument/voiceInstrument.js';
  *     defaultDuration: 4,         // note length in ticks when a note omits `dur`
  *     instruments: { name: {descriptor}, ... },   // see AbstractInstrument
  *     tracks: [ { instrument:'name', pattern:[ [ {tick, pitch, dur?, vol?}, ... ], ... ] } ],
- *     repeat: false,              // loop the whole score
+ *     repeat: false,              // true loops forever, a number plays the score that many times through
  *     echo: {time, feedback, mix},   // optional feedback delay (echo)
  *     reverb: {seconds, decay, mix}, // optional convolution reverb
  *     flanger: {base, depth, rate, feedback, mix}  // optional LFO-swept comb (metallic sheen)
@@ -77,6 +77,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.secondsPerTick = 0;
     this.lookahead = 0;
     this.repeat = false;
+    this.playsLeft = 1;
 
     // Scheduler diagnostics (for monitoring feed timing on weak devices):
     // gap between scheduler ticks (ms) and how far ahead notes are scheduled (s).
@@ -161,7 +162,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
    * playback, reads tempo/volume/repeat, builds the score's instruments, and
    * starts the look-ahead scheduler.
    * @param {Object|boolean} audioData - The score to play, or false to stop.
-   * @param {Object|boolean} options - Playback options; may include `repeat`. False when none.
+   * @param {Object|boolean} options - Playback options; may include `repeat` (true = loop forever, number = total play count). False when none.
    * @returns {void}
    */
   playSound(audioData, options) {
@@ -181,6 +182,9 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     } else if ('repeat' in audioData) {
       this.repeat = audioData.repeat;
     }
+    // Unify the repeat forms into a play countdown: a number is a finite
+    // total play count, true loops forever, false plays once.
+    this.playsLeft = (typeof this.repeat === 'number') ? this.repeat : (this.repeat ? Infinity : 1);
 
     this.volume = ('volume' in audioData) ? audioData.volume : 0.2;
     const now = this.ctx.currentTime;
@@ -624,7 +628,8 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     }
     while (this.nextBarTime < this.ctx.currentTime + this.lookahead) {
       if (this.nextBar >= this.barCount) {
-        if (this.repeat) {
+        this.playsLeft--;
+        if (this.playsLeft > 0) {
           this.nextBar = 0;
           // Re-apply the score's automation, rebased onto this new loop's start
           // time, so filter sweeps etc. play again on every repeat.
