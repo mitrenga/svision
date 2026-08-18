@@ -85,7 +85,8 @@ export class AudioSilentHandler extends AbstractAudioHandler {
   /**
    * Produces no sound but walks the sound's pulse fragments to compute event
    * timings and dispatches each associated event (converting samples to
-   * milliseconds at 44.1 kHz), including a final event after the last pulse.
+   * milliseconds at the manager's sample rate, the same rate the sound data
+   * was generated with), including a final event after the last pulse.
    * Repeat matches the audible handlers: true loops forever, a number plays
    * that many times through, `nextSound` replaces the sound after the first
    * pass. Each pass is scheduled by a timer when the previous one ends, so a
@@ -128,15 +129,17 @@ export class AudioSilentHandler extends AbstractAudioHandler {
     if (events === false && (nextSound === false || !('events' in nextSound))) {
       return;
     }
+    // Samples per millisecond; sound data is generated at the manager's rate.
+    var rate = this.app.audioManager.getSampleRate()/1000;
     var timer = 0;
     for (var p = 0; p < audioData.pulses.length; p++) {
       if (events !== false && p in events) {
-        this.app.model.sendEvent(Math.round(timer/44.1), {id: events[p].id, data: events[p]});
+        this.app.model.sendEvent(Math.round(timer/rate), {id: events[p].id, data: events[p]});
       }
       timer += audioData.fragments[audioData.pulses[p]];
     }
     if (events !== false && audioData.pulses.length in events) {
-      this.app.model.sendEvent(Math.round(timer/44.1), {id: events[audioData.pulses.length].id, data: events[audioData.pulses.length]});
+      this.app.model.sendEvent(Math.round(timer/rate), {id: events[audioData.pulses.length].id, data: events[audioData.pulses.length]});
     }
     playsLeft--;
     if (playsLeft > 0) {
@@ -144,7 +147,7 @@ export class AudioSilentHandler extends AbstractAudioHandler {
       this.repeatTimer = setTimeout(() => {
         this.repeatTimer = false;
         this.schedulePass(next, playsLeft, false);
-      }, Math.round(timer/44.1));
+      }, Math.round(timer/rate));
     }
   } // schedulePass
 
