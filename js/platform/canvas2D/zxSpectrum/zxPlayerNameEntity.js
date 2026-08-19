@@ -32,11 +32,14 @@ export class ZXPlayerNameEntity extends AbstractEntity {
    * @param {number} width - Dialog width.
    * @param {number} height - Dialog height.
    * @param {boolean} autoStartGame - Whether confirming the name should start the game immediately.
+   * @param {string} [bkColor] - Background color of the dialog panel.
+   * @param {string} [buttonsBkColor] - Background color of the on-screen keyboard buttons.
    */
-  constructor(parentEntity, x, y, width, height, autoStartGame) {
+  constructor(parentEntity, x, y, width, height, autoStartGame, bkColor = ZXColor.yellow, buttonsBkColor = ZXColor.brightWhite) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXPlayerNameEntity';
 
+    this.panelBkColor = bkColor;
     this.maxNameChars = 15;
     this.inputEntity = null;
     this.charsCounter = null;
@@ -62,7 +65,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
             width: 16, height: 16, keySpacing: 1, align: 'center', topMargin: 4,
             fonts: this.app.fonts.zxFonts8x8Keys,
             penColor: ZXColor.brightBlack,
-            bkColor: ZXColor.brightWhite
+            bkColor: buttonsBkColor
           },
 
           '←': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
@@ -109,7 +112,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
 
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'PLAYER NAME', ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
-    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, ZXColor.yellow));
+    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, this.panelBkColor));
 
     this.addEntity(new TextEntity(this, this.app.fonts.zxFonts8x8, 4, 18, this.width-8, 8, 'Enter your player name:', ZXColor.black, false, {}));
     this.inputEntity = new InputEntity(this.app, this.app.fonts.zxFonts8x8, 4, 28, this.width-38, 8, 'playerName', this.app.playerName, ZXColor.brightWhite, ZXColor.brightBlue, this.maxNameChars, {leftMargin: 1});
