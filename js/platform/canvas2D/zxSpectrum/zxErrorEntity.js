@@ -23,7 +23,7 @@ export class ZXErrorEntity extends AbstractEntity {
    * @param {number} y - Base Y position used to vertically centre the panel.
    * @param {Object} fonts - Font set used to render the message and buttons.
    * @param {string} message - The error message text.
-   * @param {string} action - Recovery action mode ('restart' or 'reopen').
+   * @param {string} action - Recovery action mode ('restart', 'retry' or 'reopen').
    * @param {string} penColor - Ink colour for text and button backgrounds.
    * @param {string} bkColor - Paper colour for the panel and button text.
    */
@@ -50,6 +50,12 @@ export class ZXErrorEntity extends AbstractEntity {
         this.addEntity(new ButtonEntity(this, this.fonts, 16, 96, 80, 12, 'RESTART', {id: 'restartAfterError'}, [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
         this.addEntity(new ButtonEntity(this, this.fonts, 162, 96, 80, 12, 'IGNORE', {id: 'ignoreAfterError'}, [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
         break;
+      case 'retry':
+        this.addEntity(new TextEntity(this, this.fonts, 16, 12, 28*8, 4*8, 'We are very sorry, but an error has occurred that we cannot resolve at this time. You can try it again.', this.penColor, false, {align: 'center', textWrap: true}));
+        this.addEntity(new ButtonEntity(this, this.fonts, 12, 96, 72, 12, 'RESTART', {id: 'restartAfterError'}, [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
+        this.addEntity(new ButtonEntity(this, this.fonts, 92, 96, 72, 12, 'RETRY', {id: 'retryAfterError'}, [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
+        this.addEntity(new ButtonEntity(this, this.fonts, 172, 96, 72, 12, 'IGNORE', {id: 'ignoreAfterError'}, [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
+        break;
       case 'reopen':
         this.addEntity(new TextEntity(this, this.fonts, 16, 12, 28*8, 5*8, 'We are very sorry, but an error has occurred that we cannot resolve at this time. You can try close and open '+window.appName+' game again.', this.penColor, false, {align: 'center', textWrap: true}));
         this.addEntity(new ButtonEntity(this, this.fonts, 88, 96, 80, 12, 'CONTINUE', {id: 'ignoreAfterError'}, [], this.bkColor, this.penColor, {align: 'center', margin: 2}));
@@ -60,8 +66,9 @@ export class ZXErrorEntity extends AbstractEntity {
   } // init
 
   /**
-   * Handles the panel's button events: reloading the page on restart or destroying
-   * the panel on ignore/continue.
+   * Handles the panel's button events: reloading the page on restart, destroying
+   * the panel on ignore/continue, or closing the panel and asking the owning
+   * model to reload the application data on retry.
    * @param {Object} event - The event object, including its id field.
    * @returns {boolean} True if the event was handled.
    */
@@ -76,6 +83,11 @@ export class ZXErrorEntity extends AbstractEntity {
         return true;
       case 'ignoreAfterError':
         this.destroy();
+        return true;
+      case 'retryAfterError':
+        // close the panel and let the owning model run the actual retry
+        this.destroy();
+        this.sendEvent(0, 0, {id: 'retryLoadAppData'});
         return true;
     }
     

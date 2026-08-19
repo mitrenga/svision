@@ -166,7 +166,7 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   /**
    * Plays a sound by sending a 'play' command with the audio data and options to the processor.
    * @param {Object} audioData - Sound data with fragments, pulses, volume, and optional events/infinityRndPulses.
-   * @param {Object|boolean} options - Playback options; may include `repeat`, `nextSound`, and `channelVolumes` (per-channel volume multipliers, e.g. [1, 0] for left-only). False when none.
+   * @param {Object|boolean} options - Playback options; may include `repeat` (true = loop forever, number = total play count), `nextSound`, and `channelVolumes` (per-channel volume multipliers, e.g. [1, 0] for left-only). False when none.
    * @returns {void}
    */
   playSound(audioData, options) {

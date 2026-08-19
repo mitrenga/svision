@@ -38,11 +38,13 @@ export class ZXSettingsEntity extends AbstractEntity {
    * @param {number} width - Panel width.
    * @param {number} height - Panel height.
    * @param {Object} options - Per-device key/option definitions used to build the UI.
+   * @param {string} [bkColor] - Background color of the dialog panel.
    */
-  constructor(parentEntity, x, y, width, height, options) {
+  constructor(parentEntity, x, y, width, height, options, bkColor = ZXColor.yellow) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXSettingsEntity';
 
+    this.panelBkColor = bkColor;
     this.options = options;
     this.selectionDevice = 0;
     this.devicesSelectionEntity = null;
@@ -76,7 +78,7 @@ export class ZXSettingsEntity extends AbstractEntity {
     
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'SETTINGS', ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
-    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, ZXColor.yellow));
+    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, this.panelBkColor));
 
     this.devicesSelectionEntity = new AbstractEntity(this, 8, 16+this.selectionDevice*16, 68, 9, false, ZXColor.brightBlue);
     this.addEntity(this.devicesSelectionEntity);

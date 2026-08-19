@@ -36,11 +36,13 @@ export class ZXVolumeEntity extends AbstractEntity {
    * @param {string} bus - The audio bus identifier this dialog controls.
    * @param {string} cookie - The cookie name used to persist the volume.
    * @param {*} sampleSound - The sample sound played when previewing the volume.
+   * @param {string} [bkColor] - Background color of the dialog panel.
    */
-  constructor(parentEntity, x, y, width, height, bus, cookie, sampleSound) {
+  constructor(parentEntity, x, y, width, height, bus, cookie, sampleSound, bkColor = ZXColor.yellow) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXVolumeEntity';
 
+    this.panelBkColor = bkColor;
     this.bus = bus;
     this.cookie = cookie;
     this.sampleSound = sampleSound;
@@ -57,7 +59,7 @@ export class ZXVolumeEntity extends AbstractEntity {
 
     this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, this.bus, ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
-    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, ZXColor.yellow));
+    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, this.panelBkColor));
 
     this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 22, this.width, 9, 'CHANGE VOLUME FOR GAME '+this.bus, ZXColor.black, false, {align: 'center'}));
 
