@@ -75,6 +75,13 @@ export class ZXResetModel extends AbstractModel {
       case 'setMenuModel':
         this.app.setModel('MenuModel');
         return true;
+      case 'retryLoadAppData':
+        // sent by the error panel's RETRY button: reload the application data
+        // and retry the menu handover after the fetch timeout has passed, so
+        // the request has either delivered data or fallen back to storage
+        this.app.loadAppData();
+        this.sendEvent(2500, {id: 'setMenuModel'});
+        return true;
     }
 
     return false;
