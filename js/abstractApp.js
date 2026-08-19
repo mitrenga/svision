@@ -111,9 +111,10 @@ export class AbstractApp {
    * @param {Object|false} storage - Storage policy with `key` and `when` properties, or false to skip storage.
    * @param {*} data - The payload to send in the request body.
    * @param {Object} receiver - Object that receives results via setData/errorData and carries an id/fetchDataId.
+   * @param {number} [timeout] - Optional timeout in ms; when the server does not respond in time the request is aborted and errorData is called. Without it a request to an unreachable server may hang for tens of seconds before failing.
    * @returns {string|undefined} The generated fetchDataId, or undefined when served from storage or skipped while offline.
    */
-  fetchData(url, storage, data, receiver) {
+  fetchData(url, storage, data, receiver, timeout) {
     var connectionStatus = 'offline';
     if (navigator.onLine) {
       connectionStatus = 'online';
@@ -158,8 +159,19 @@ export class AbstractApp {
       // cookie from both the request and the response
       credentials: 'same-origin',
     }
+    var abortTimer = false;
+    if (timeout && typeof AbortController !== 'undefined') {
+      var abortController = new AbortController();
+      options.signal = abortController.signal;
+      abortTimer = setTimeout(() => abortController.abort(), timeout);
+    }
     fetch(url, options)
       .then((response) => {
+        // headers arrived, so the server is alive: let the body download
+        // without the timeout
+        if (abortTimer !== false) {
+          clearTimeout(abortTimer);
+        }
         if (response.ok) {
           return response.json();
         }
