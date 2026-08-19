@@ -34,8 +34,10 @@ export class ZXPlayerNameEntity extends AbstractEntity {
    * @param {boolean} autoStartGame - Whether confirming the name should start the game immediately.
    * @param {string} [bkColor] - Background color of the dialog panel.
    * @param {string} [buttonsBkColor] - Background color of the on-screen keyboard buttons.
+   * @param {string|false} [buttonsHoverColor] - Background color of a keyboard button under the mouse cursor, or false for none.
+   * @param {string|false} [buttonsClickColor] - Background color of a pressed keyboard button, or false for none.
    */
-  constructor(parentEntity, x, y, width, height, autoStartGame, bkColor = ZXColor.yellow, buttonsBkColor = ZXColor.brightWhite) {
+  constructor(parentEntity, x, y, width, height, autoStartGame, bkColor = ZXColor.yellow, buttonsBkColor = ZXColor.brightWhite, buttonsHoverColor = false, buttonsClickColor = false) {
     super(parentEntity, x, y, width, height, false, false);
     this.id = 'ZXPlayerNameEntity';
 
@@ -65,7 +67,9 @@ export class ZXPlayerNameEntity extends AbstractEntity {
             width: 16, height: 16, keySpacing: 1, align: 'center', topMargin: 4,
             fonts: this.app.fonts.zxFonts8x8Keys,
             penColor: ZXColor.brightBlack,
-            bkColor: buttonsBkColor
+            bkColor: buttonsBkColor,
+            hoverColor: buttonsHoverColor,
+            clickColor: buttonsClickColor
           },
 
           '←': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
