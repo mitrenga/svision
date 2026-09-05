@@ -93,6 +93,11 @@ send-up / send-down / send-to-model event system.
   per-channel volume multipliers (`channelVolumes`, e.g. `[1, 0]` for left-only)
   to place it in the stereo field — used in JSW to pan arrow shots left/right.
 - **`audioProcessor`** is the AudioWorklet processor that generates the samples.
+- **`ZXMachineSounds`** (canvas2D / zxSpectrum) holds the sounds of the
+  **machine** rather than of any game: the pulse format of the tape
+  (`tapePilotTone`, `tapeRndData`, `tapeData`) and the ROM's key click and
+  rising scale (`keyClick`, `basicBeeps`). Every ZX remake shares them, so
+  none of them writes its own.
 
 ### Input
 **`InputEventsManager`** unifies every input source into a single event stream
