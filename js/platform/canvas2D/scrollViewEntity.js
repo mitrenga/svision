@@ -1,8 +1,4 @@
-/**/
 const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../abstractEntity.js';
-/**/
 // begin code
 
 /**
@@ -385,5 +381,3 @@ export class ScrollViewEntity extends AbstractEntity {
   } // drawScrollbars
 
 } // ScrollViewEntity
-
-export default ScrollViewEntity;

@@ -1,10 +1,5 @@
-/**/
 const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+window.srcVersion);
 const { Tool } = await import('../tool.js?ver='+window.srcVersion);
-/*/
-import AbstractAudioHandler from './abstractAudioHandler.js';
-import Tool from '../tool.js';
-/**/
 // begin code
 
 /**
@@ -339,5 +334,3 @@ export class AbstractAudioManager {
   } // audioData
 
 } // AbstractAudioManager
-
-export default AbstractAudioManager;

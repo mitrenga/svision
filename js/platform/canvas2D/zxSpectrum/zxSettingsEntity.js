@@ -1,4 +1,3 @@
-/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { SlidingTextEntity } = await import('../slidingTextEntity.js?ver='+window.srcVersion);
@@ -9,18 +8,6 @@ const { ZXRemapKeysEntity } = await import('./zxRemapKeysEntity.js?ver='+window.
 const { ZXSelectingGamepadEntity } = await import('./zxSelectingGamepadEntity.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../../abstractEntity.js';
-import TextEntity from '../textEntity.js';
-import SlidingTextEntity from '../slidingTextEntity.js';
-import SpriteEntity from '../spriteEntity.js';
-import SpriteTool from '../../../spriteTool.js';
-import ButtonEntity from '../buttonEntity.js';
-import ZXRemapKeysEntity from './zxRemapKeysEntity.js';
-import ZXSelectingGamepadEntity from './zxSelectingGamepadEntity.js';
-import Tool from '../../../tool.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -643,5 +630,3 @@ export class ZXSettingsEntity extends AbstractEntity {
   } // loopEntity
 
 } // ZXSettingsEntity
-
-export default ZXSettingsEntity;

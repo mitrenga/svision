@@ -1,8 +1,4 @@
-/**/
 const { MusicNotes } = await import('../musicNotes.js?ver='+window.srcVersion);
-/*/
-import MusicNotes from '../musicNotes.js';
-/**/
 // begin code
 
 /**
@@ -277,5 +273,3 @@ export class AbstractInstrument {
   } // disconnect
 
 } // AbstractInstrument
-
-export default AbstractInstrument;

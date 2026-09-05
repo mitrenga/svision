@@ -1,12 +1,6 @@
-/**/
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
 const { ZXSpectrumLayout } = await import('./zxSpectrumLayout.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import Canvas2DPlatform from '../canvas2DPlatform.js';
-import ZXSpectrumLayout from './zxSpectrumLayout.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -79,5 +73,3 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
   } // border
 
 } // ZXSpectrumPlatform
-
-export default ZXSpectrumPlatform;

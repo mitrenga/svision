@@ -1,16 +1,8 @@
-/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../../abstractEntity.js';
-import ButtonEntity from '../buttonEntity.js';
-import TextEntity from '../textEntity.js';
-import Tool from '../../../tool.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -202,5 +194,3 @@ export class ZXRemapKeysEntity extends AbstractEntity {
   } // isValidFnKeys
 
 } // ZXRemapKeysEntity
-
-export default ZXRemapKeysEntity;

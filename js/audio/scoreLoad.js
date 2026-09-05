@@ -1,8 +1,4 @@
-/**/
 const { MusicNotes } = await import('./musicNotes.js?ver='+window.srcVersion);
-/*/
-import MusicNotes from './musicNotes.js';
-/**/
 // begin code
 
 /**
@@ -202,5 +198,3 @@ export function scoreLoad(score) {
     seconds: Math.round(seconds * 10) / 10
   };
 } // scoreLoad
-
-export default scoreLoad;

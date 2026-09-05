@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -98,5 +93,3 @@ export class DrawingCache {
   } // paint
 
 } // DrawingCache
-
-export default DrawingCache;

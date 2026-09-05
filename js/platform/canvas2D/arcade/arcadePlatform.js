@@ -1,10 +1,5 @@
-/**/
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
 const { ArcadeLayout } = await import('./arcadeLayout.js?ver='+window.srcVersion);
-/*/
-import Canvas2DPlatform from '../canvas2DPlatform.js';
-import ArcadeLayout from './arcadeLayout.js';
-/**/
 // begin code
 
 /**
@@ -63,5 +58,3 @@ export class ArcadePlatform extends Canvas2DPlatform {
   } // border
 
 } // ArcadePlatform
-
-export default ArcadePlatform;

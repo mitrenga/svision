@@ -3,20 +3,17 @@
 require_once 'abstractPage.php';
 
 /**
- * Diagnostics / configuration page. Renders an HTML page that reports the
- * browser environment and lets the user pick a module import method. It shows:
- * the user agent, the detected ECMAScript version, support for the class
- * syntax and for each import method (with buttons to enable one), a live canvas
- * probe, the service worker status (with buttons to unregister it and clear its
- * cache, and to disable/enable it via the disableServiceWorker cookie), server
- * and device time, and the current cookies (with clear buttons).
+ * Diagnostics / configuration page. Renders an HTML page reporting the browser
+ * environment: the user agent, the detected ECMAScript version, support for the
+ * class syntax and for dynamic import, which runtime this request is served
+ * with, the service worker status (with buttons to unregister it and clear its
+ * cache, and to disable/enable it via the disableServiceWorker cookie) and the
+ * current cookies (with clear buttons).
  */
 class ConfigPage extends AbstractPage {
 
   /**
-   * Builds the full diagnostics page. Several sections branch on the
-   * libImportMethod cookie to mark the active import method and to load the
-   * matching capability-check scripts.
+   * Builds the full diagnostics page.
    */
   public function createPage() {
     $srcVersion = $this->srcVersion();
@@ -111,11 +108,6 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '      <script>';
     $this->data[] = '        document.write("<li><span class=\"item-label\">await import support:</span>")';
     $this->data[] = '        document.write("<span id=\"await-import\">...</span>")';
-    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"enable\">enable</span>")';
-    } else {
-      $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"disable\">disable</span>")';
-    }
     $this->data[] = '        document.write("</li>");';
     $this->data[] = '        function checkAwaitImport() {';
     $this->data[] = '          var elAwaitImport = document.getElementById("await-import");';
@@ -127,55 +119,23 @@ class ConfigPage extends AbstractPage {
     $this->data[] = '        setTimeout(checkAwaitImport, 250);';
     $this->data[] = '      </script>';
     $this->data[] = '      <script type="module" src="app/svision/js/config/checkAwaitImport.js?ver='.$srcVersion.'"></script>';
-    $this->data[] = '';
-    $this->data[] = '      <script>';
-    $this->data[] = '        document.write("<li><span class=\"item-label\">import from support:</span>")';
-    $this->data[] = '        document.write("<span id=\"import-from\">...</span>")';
-    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'import-from') {
-      $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"enable\">enable</span>")';
-    } else {
-      $this->data[] = '          document.write("&nbsp;&nbsp;&nbsp;<span class=\"disable\">disable</span>")';
-    }
-    $this->data[] = '        document.write("</li>");';
-    $this->data[] = '        function checkImportFrom() {';
-    $this->data[] = '          var elImportFrom = document.getElementById("import-from");';
-    $this->data[] = '          if (elImportFrom.innerText != "OK") {';
-    $this->data[] = '            elImportFrom.innerText = "FALSE";';
-    $this->data[] = '            elImportFrom.classList.add("error");';
-    $this->data[] = '          }';
-    $this->data[] = '        }';
-    $this->data[] = '        setTimeout(checkImportFrom, 2000);';
-    $this->data[] = '      </script>';
-    $this->data[] = '      <script type="module" src="app/svision/js/config/checkImportFrom.js?ver='.$srcVersion.'"></script>';
     $this->data[] = '    </ul>';
   	$this->data[] = '';
-    if (!isset($_COOKIE['libImportMethod']) || $_COOKIE['libImportMethod'] != 'await-import') {
-      $this->data[] = '    <script>document.write("<button onclick=\"document.cookie=\'libImportMethod=await-import;max-age=31536000;path=/\';location.reload();\">Enable \'await import\'</button>");</script>';
+
+    // Section: Runtime — which JavaScript this request is actually served with:
+    // a built bundle out of js/, or the sources under app/ loaded one by one
+    // through dynamic import. There is nothing to choose here; the app shell
+    // decides it (AbstractPage::bundleFile()) and this only reports the answer.
+    $bundle = $this->bundleFile();
+    $this->data[] = '    <h2>Runtime</h2>';
+    $this->data[] = '    <ul>';
+    if ($bundle !== false) {
+      $this->data[] = '      <li><span class="item-label">served from:</span> bundle <b>'.$bundle.'</b></li>';
+    } else {
+      $this->data[] = '      <li><span class="item-label">served from:</span> sources in <b>app/</b> (dynamic import)</li>';
     }
-    if (!isset($_COOKIE['libImportMethod']) || $_COOKIE['libImportMethod'] != 'import-from') {
-      $this->data[] = '    <script>document.write("<button onclick=\"document.cookie=\'libImportMethod=import-from;max-age=31536000;path=/\';location.reload();\">Enable \'import from\'</button>");</script>';
-    }
+    $this->data[] = '    </ul>';
   	$this->data[] = '';
-    // Section: Platform — run a live canvas probe using the check script for the
-    // active import method, and report an error if the canvas never starts.
-    $this->data[] = '    <h2>Platform: <span id="platform"></span></h2>';
-    $this->data[] = '    <div class="parentCanvas" id="parentCanvas"></div>';
-    $this->data[] = '    <script> var canvasRunning = false; </script>';
-    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'await-import') {
-      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-ai.js?ver='.$srcVersion.'"></script>';
-    }
-    if (isset($_COOKIE['libImportMethod']) && $_COOKIE['libImportMethod'] == 'import-from') {
-      $this->data[] = '    <script type="module" src="app/svision/js/config/checkCanvas-if.js?ver='.$srcVersion.'"></script>';
-    }
-    $this->data[] = '    <script>';
-    $this->data[] = '      function checkCanvas() {';
-    $this->data[] = '        if (window.canvasRunning == false) {';
-    $this->data[] = '          document.getElementById("parentCanvas").innerText = "ERROR: canvas not running";';
-    $this->data[] = '        }';
-    $this->data[] = '      }';
-    $this->data[] = '      setTimeout(checkCanvas, 2000);';
-    $this->data[] = '    </script>';
-    $this->data[] = '';
     // Section: Service Worker — report whether a service worker is registered and
     // whether it controls this page (diagnostics for stuck or leftover workers).
     $this->data[] = '    <h2>Service Worker</h2>';
@@ -238,58 +198,6 @@ class ConfigPage extends AbstractPage {
       $this->data[] = '    <script>document.write("<button onclick=\"disableServiceWorker()\">Disable service worker</button>");</script>';
     }
     $this->data[] = '';
-    // Section: Current time — show server time (rendered here) alongside device
-    // time (refreshed client-side, with the server part re-fetched periodically).
-    $this->data[] = '    <h2>Current time</h2>';
-    $this->data[] = '    <span class="time-info">';
-    $this->data[] = '    <ul>';
-    $this->data[] = '      <li><b>server</b></li>';
-    $this->data[] = '        <ul id="server-time">';
-    $this->data[] = '          <li>date: '.date("l, M d, Y").'</li>';
-    $this->data[] = '          <li>time: '.date("H:i:s").'</li>';
-    $this->data[] = '          <li>time zone: '.date_default_timezone_get().'</li>';
-    $this->data[] = '        </ul>';
-    $this->data[] = '    </ul>';
-    $this->data[] = '    </span>';
-    $this->data[] = '';
-    $this->data[] = '    <script>';
-    $this->data[] = '      document.write("<span class=\"time-info\">");';
-    $this->data[] = '        document.write("<ul>");';
-    $this->data[] = '          document.write("<li><b>device</b></li>");';
-    $this->data[] = '            document.write("<ul id=\"device-time\">");';
-    $this->data[] = '            document.write("</ul>");';
-    $this->data[] = '          document.write("</li>");';
-    $this->data[] = '        document.write("</ul>");';
-    $this->data[] = '      document.write("</span>");';
-    $this->data[] = '';
-    $this->data[] = '      function refreshTime() {';
-    $this->data[] = '        fetch("app/svision/php/serverTime.php")';
-    $this->data[] = '          .then((response) => {';
-    $this->data[] = '            if (response.ok) {';
-    $this->data[] = '              return response.text();';
-    $this->data[] = '            }';
-    $this->data[] = '            throw new Error (response.status);';
-    $this->data[] = '          })';
-    $this->data[] = '          .then((text) => {';
-    $this->data[] = '            document.getElementById("server-time").innerHTML = text;';
-    $this->data[] = '          })';
-    $this->data[] = '          .catch((error) => {';
-    $this->data[] = '            document.getElementById("server-time").innerHTML = "ERROR: "+error.message;';
-    $this->data[] = '          })';
-    $this->data[] = '';
-    $this->data[] = '        var newTimeStr = "<li>date: "+new Date().toLocaleDateString("en-US", {weekday: "long", month: "short", day: "numeric", year: "numeric"})+"</li>";';
-    $this->data[] = '        newTimeStr += "<li>time: "+new Date().toLocaleTimeString("en-US", {hour12: false, hour: "numeric", minute: "numeric", second: "numeric"})+"</li>";';
-    $this->data[] = '        newTimeStr += "<li>time zone: "+Intl.DateTimeFormat().resolvedOptions().timeZone+"</li>";';
-    $this->data[] = '        var elementDeviceTime = document.getElementById("device-time");';
-    $this->data[] = '        elementDeviceTime.innerHTML = newTimeStr';
-    $this->data[] = '        setTimeout(refreshTime, 200);';
-    $this->data[] = '      } // refreshTime';
-    $this->data[] = '';
-    $this->data[] = '      refreshTime();';
-    $this->data[] = '    </script>';
-
-    $this->data[] = '    <div class="clear"></div>';
-
     // Section: Cookies — list the current cookies client-side, each with a
     // button to delete it, plus a "clear all" button.
     $this->data[] = '    <h2>Cookies</h2>';

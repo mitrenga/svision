@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -126,5 +121,3 @@ export class AbstractFonts {
   } // addSpace
 
 } // AbstractFonts
-
-export default AbstractFonts;

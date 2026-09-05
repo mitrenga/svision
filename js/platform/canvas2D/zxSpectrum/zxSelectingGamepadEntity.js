@@ -1,12 +1,6 @@
-/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../../abstractEntity.js';
-import TextEntity from '../textEntity.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -253,5 +247,3 @@ export class ZXSelectingGamepadEntity extends AbstractEntity {
   } // loopEntity
 
 } // ZXSelectingGamepadEntity
-
-export default ZXSelectingGamepadEntity;

@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -492,5 +487,3 @@ export class InputEventsManager {
   } // sendEventsActiveKeys
 
 } // InputEventsManager
-
-export default InputEventsManager;

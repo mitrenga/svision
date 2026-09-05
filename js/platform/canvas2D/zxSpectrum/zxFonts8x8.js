@@ -1,10 +1,5 @@
-/**/
 const { AbstractFonts } = await import('../../../abstractFonts.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
-/*/
-import AbstractFonts from '../../../abstractFonts.js';
-import Tool from '../../../tool.js';
-/**/
 // begin code
 
 /**
@@ -158,5 +153,3 @@ export class ZXFonts8x8 extends AbstractFonts {
   } // addGlyphs
 
 } // ZXFonts8x8
-
-export default ZXFonts8x8;

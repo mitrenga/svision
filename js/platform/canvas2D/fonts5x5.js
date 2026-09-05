@@ -1,8 +1,4 @@
-/**/
 const { AbstractFonts } = await import('../../abstractFonts.js?ver='+window.srcVersion);
-/*/
-import AbstractFonts from '../../abstractFonts.js';
-/**/
 // begin code
 
 /**
@@ -161,5 +157,3 @@ export class Fonts5x5 extends AbstractFonts {
   } // addGlyphs
 
 } // Fonts5x5
-
-export default Fonts5x5;

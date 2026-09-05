@@ -1,8 +1,4 @@
-/**/
 const { TextEntity } = await import('./textEntity.js?ver='+window.srcVersion);
-/*/
-import TextEntity from './textEntity.js';
-/**/
 // begin code
 
 /**
@@ -84,5 +80,3 @@ export class ButtonEntity extends TextEntity {
   } // handleEvent
 
 } // ButtonEntity
-
-export default ButtonEntity;

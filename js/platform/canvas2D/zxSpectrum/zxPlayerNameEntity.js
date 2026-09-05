@@ -1,4 +1,3 @@
-/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { InputEntity } = await import('../inputEntity.js?ver='+window.srcVersion);
@@ -6,15 +5,6 @@ const { KeyboardEntity } = await import('../keyboardEntity.js?ver='+window.srcVe
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../../abstractEntity.js';
-import TextEntity from '../textEntity.js';
-import InputEntity from '../inputEntity.js';
-import KeyboardEntity from '../keyboardEntity.js';
-import ButtonEntity from '../buttonEntity.js';
-import Tool from '../../../tool.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -171,5 +161,3 @@ export class ZXPlayerNameEntity extends AbstractEntity {
   } // handleEvent
 
 } // ZXPlayerNameEntity
-
-export default ZXPlayerNameEntity;

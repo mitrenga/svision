@@ -40,23 +40,39 @@ class AbstractPage {
   } // readVersion
 
   /**
+   * Returns the built bundle this request should serve, or false when none is
+   * available and the application has to run from its sources. The debug bundle
+   * (the same concatenation left unminified, built with `svtool build
+   * debug-bundle`) wins when present: it is only ever built deliberately, so a
+   * stale minified bundle must not silently take its place.
+   *
+   * This is the single place that decides bundle versus sources; the app shell,
+   * the import path and the config page all ask it rather than working it out
+   * for themselves. Nothing else may reconstruct the bundle path by hand.
+   *
+   * @return string|false Path to the bundle to load, or false for source mode.
+   */
+  protected function bundleFile() {
+    $version = $this->readVersion();
+    foreach (['js/bundle.'.$version.'.js', 'js/bundle.'.$version.'.min.js'] as $bundle) {
+      if (file_exists($bundle)) {
+        return $bundle;
+      }
+    }
+    return false;
+  } // bundleFile
+
+  /**
    * Returns the base directory the application loads its JavaScript modules from
-   * for this request: 'js' when the built production bundle exists or the
-   * import-from method is selected, otherwise 'app' (the await-import dev method
-   * or the maintenance fallback). Both the app shell and the service worker rely
-   * on this so the pre-cached assets always match what the app actually loads.
+   * for this request: 'js' when a built bundle is served, otherwise 'app' (the
+   * source mode or the maintenance fallback). Both the app shell and the service
+   * worker rely on this so the pre-cached assets always match what the app
+   * actually loads.
    *
    * @return string Either 'js' or 'app'.
    */
   protected function importPath() {
-    $bundle = 'js/bundle.'.$this->readVersion().'.min.js';
-    if (file_exists($bundle)) {
-      return 'js';
-    }
-    if (!empty($GLOBALS['devMode']) && ($_COOKIE['libImportMethod'] ?? '') === 'import-from') {
-      return 'js';
-    }
-    return 'app';
+    return ($this->bundleFile() === false) ? 'app' : 'js';
   } // importPath
 
   /**

@@ -1,8 +1,4 @@
-/**/
 const { AbstractInstrument } = await import('./abstractInstrument.js?ver='+window.srcVersion);
-/*/
-import AbstractInstrument from './abstractInstrument.js';
-/**/
 // begin code
 
 /**
@@ -266,5 +262,3 @@ export class OscillatorInstrument extends AbstractInstrument {
   } // play
 
 } // OscillatorInstrument
-
-export default OscillatorInstrument;

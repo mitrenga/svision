@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -77,5 +72,3 @@ ZXColor.colorsNames = [
   'black', 'blue', 'red', 'magenta', 'green', 'cyan', 'yellow', 'white',
   'brightBlack', 'brightBlue', 'brightRed', 'brightMagenta', 'brightGreen', 'brightCyan', 'brightYellow', 'brightWhite'
 ];
-
-export default ZXColor;

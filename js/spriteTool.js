@@ -1,10 +1,5 @@
-/**/
 const { Tool } = await import('./tool.js?ver='+window.srcVersion);
 const { RichString } = await import('./richString.js?ver='+window.srcVersion);
-/*/
-import Tool from './tool.js';
-import RichString from './richString.js';
-/**/
 // begin code
 
 /**
@@ -1149,5 +1144,3 @@ export class SpriteTool {
   } // buildBlankMargins
 
 } // SpriteTool
-
-export default SpriteTool;

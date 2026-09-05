@@ -1,12 +1,6 @@
-/**/
 const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
 const { DrawingCache } = await import('./drawingCache.js?ver='+window.srcVersion);
 const { Tool } = await import('../../tool.js?ver='+window.srcVersion);
-/*/
-import AbstractLayout from '../../abstractLayout.js';
-import DrawingCache from './drawingCache.js';
-import Tool from '../../tool.js';
-/**/
 // begin code
 
 /**
@@ -440,5 +434,3 @@ export class Canvas2DLayout extends AbstractLayout {
   } // convertClientCoordinateY
 
 } // Canvas2DLayout
-
-export default Canvas2DLayout;

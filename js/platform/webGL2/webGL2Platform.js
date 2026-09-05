@@ -1,10 +1,5 @@
-/**/
 const { AbstractPlatform } = await import('../../abstractPlatform.js?ver='+window.srcVersion);
 const { WebGL2Layout } = await import('./webGL2Layout.js?ver='+window.srcVersion);
-/*/
-import AbstractPlatform from '../../abstractPlatform.js';
-import WebGL2Layout from './webGL2Layout.js';
-/**/
 // begin code
 
 /**
@@ -83,5 +78,3 @@ export class WebGL2Platform extends AbstractPlatform {
   } // desktop
 
 } // WebGL2Platform
-
-export default WebGL2Platform;

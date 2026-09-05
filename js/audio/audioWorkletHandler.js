@@ -1,8 +1,4 @@
-/**/
 const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+window.srcVersion);
-/*/
-import AbstractAudioHandler from './abstractAudioHandler.js';
-/**/
 // begin code
 
 /**
@@ -174,5 +170,3 @@ export class AudioWorkletHandler extends AbstractAudioHandler {
   } // playSound
   
 } // AudioWorkletHandler
-
-export default AudioWorkletHandler;

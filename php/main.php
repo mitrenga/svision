@@ -75,18 +75,9 @@
     $className = ucfirst($query).'Page';
     $page = new $className();
   }
-  elseif (!isset ($_COOKIE['libImportMethod']) || substr($_COOKIE['libImportMethod'], 0, 5) === 'false') {
-    // Import method not yet decided (no cookie, or still auto-detecting) ->
-    // run the automatic capability probe.
-    require_once 'autoConfigPage.php';
-    $page = new autoConfigPage();
-  }
-  elseif ($_COOKIE['libImportMethod'] !== 'await-import' && $_COOKIE['libImportMethod'] !== 'import-from') {
-    // Cookie holds an unusable value -> send the user to the config page.
-    require_once 'forwardToConfigPage.php';
-    $page = new ForwardToConfigPage();
-  } else {
-    // A valid import method is set -> serve the actual application shell.
+  else {
+    // Anything else -> the application shell. It decides for itself whether to
+    // serve the built bundle or the sources (AbstractPage::bundleFile()).
     require_once 'appPage.php';
     $page = new AppPage();
   }

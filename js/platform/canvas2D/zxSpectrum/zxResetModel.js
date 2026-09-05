@@ -1,14 +1,7 @@
-/**/
 const { AbstractModel } = await import('../../../abstractModel.js?ver='+window.srcVersion);
 const { ZXResetEntity } = await import('./zxResetEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import AbstractModel from '../../../abstractModel.js';
-import ZXResetEntity from './zxResetEntity.js';
-import TextEntity from '../textEntity.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -99,5 +92,3 @@ export class ZXResetModel extends AbstractModel {
   } // loopModel
 
 } // ZXResetModel
-
-export default ZXResetModel;

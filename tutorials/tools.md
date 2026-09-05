@@ -5,7 +5,7 @@ artwork, MIDI, font dumps — into files an svision application can consume.
 
 | Tool | Turns | Into | Needs |
 |---|---|---|---|
-| `svtool` | sources | bundle / import-from deploy in `js/` | PHP, terser, es-check |
+| `svtool` | sources | bundle (and debug bundle) in `js/` | PHP, terser, es-check |
 | `make-app-icons` | `app-icon.svg` | PNG icon set | `rsvg-convert` |
 | `make-favicon` | `app-icon.svg` | `favicon.ico` | ImageMagick |
 | `mid2score` | `.mid` | score module for the oscillator handler | PHP |

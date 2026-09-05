@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -161,5 +156,3 @@ export class AbstractAudioHandler {
   } // playSound
   
 } // AbstractAudioHandler
-
-export default AbstractAudioHandler;

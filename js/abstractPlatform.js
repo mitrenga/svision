@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -71,5 +66,3 @@ export class AbstractPlatform {
   } // border
 
 } // AbstractPlatform
-
-export default AbstractPlatform;

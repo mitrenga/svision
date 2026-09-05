@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -53,5 +48,3 @@ export class AbstractLayout {
   } // convertClientCoordinateY
 
 } // AbstractLayout
-
-export default AbstractLayout;

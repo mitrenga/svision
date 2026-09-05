@@ -42,8 +42,8 @@ class ServiceWorkerPage extends AbstractPage {
    * app root, manifest and favicon, plus every JavaScript (from the active
    * import path directory), css and image file found by scanning the relevant
    * directories. The JavaScript directory follows importPath() so the pre-cache
-   * matches whichever module set the app actually loads (js/ for the bundle and
-   * the import-from method, app/ for the await-import method).
+   * matches whichever module set the app actually loads (js/ when a bundle is
+   * served, app/ when it runs from the sources).
    *
    * @return array The list of asset paths (relative, prefixed with './').
    */

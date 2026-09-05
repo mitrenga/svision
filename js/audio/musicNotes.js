@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -30,5 +25,3 @@ for (let octave = 0; octave <= 8; octave++) {
     }
   }
 }
-
-export default MusicNotes;

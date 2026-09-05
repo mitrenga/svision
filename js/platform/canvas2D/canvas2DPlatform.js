@@ -1,10 +1,5 @@
-/**/
 const { AbstractPlatform } = await import('../../abstractPlatform.js?ver='+window.srcVersion);
 const { Canvas2DLayout } = await import('./canvas2DLayout.js?ver='+window.srcVersion);
-/*/
-import AbstractPlatform from '../../abstractPlatform.js';
-import Canvas2DLayout from './canvas2DLayout.js';
-/**/
 // begin code
 
 /**
@@ -68,5 +63,3 @@ export class Canvas2DPlatform extends AbstractPlatform {
   } // desktop
 
 } // Canvas2DPlatform
-
-export default Canvas2DPlatform;

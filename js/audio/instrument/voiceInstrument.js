@@ -1,8 +1,4 @@
-/**/
 const { AbstractInstrument } = await import('./abstractInstrument.js?ver='+window.srcVersion);
-/*/
-import AbstractInstrument from './abstractInstrument.js';
-/**/
 // begin code
 
 /**
@@ -61,5 +57,3 @@ export class VoiceInstrument extends AbstractInstrument {
   } // play
 
 } // VoiceInstrument
-
-export default VoiceInstrument;

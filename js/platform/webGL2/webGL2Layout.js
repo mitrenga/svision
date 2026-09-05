@@ -1,8 +1,4 @@
-/**/
 const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
-/*/
-import AbstractLayout from '../../abstractLayout.js';
-/**/
 // begin code
 
 /**
@@ -454,5 +450,3 @@ export class WebGL2Layout extends AbstractLayout {
   } // multiplyMatrix
 
 } // WebGL2Layout
-
-export default WebGL2Layout;

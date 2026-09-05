@@ -156,20 +156,19 @@ module import method the browser supports.
 - **Broad browser compatibility.** The runtime targets **ECMAScript 2018
   (ES9)** as its baseline, so it runs on a wide range of older browsers and
   devices, not just the latest ones.
-- **Two module import methods.** svision can load its ES modules either via the
-  modern dynamic `await import(...)` or via the older static `import ... from`
-  syntax, so it works whether or not the browser supports the newer mechanism.
-- **Dev mode for full debugging.** A development mode serves the unbundled
-  sources for full step-through debugging, and works with **both** import
-  methods above (production serves a single minified bundle instead). It can
-  optionally enable the service worker so offline behaviour can be tested
-  without a production build — see [below](#dev-mode-and-the-service-worker).
+- **Sources in development, one bundle in production.** Every source declares
+  its dependencies in a short header of `await import(...)` lines, so in
+  development the modules load one by one and can be stepped through in the
+  debugger, file by file and line by line. Production serves a single minified
+  bundle built from the same sources — and because the bundle carries no
+  `import` at all, it also runs on engines with no support for dynamic import
+  (older smart TVs), which is what `svtool build debug-bundle` is for when such
+  a device has to be debugged without a console.
 - **The `/config` page.** All of the above — the detected ECMAScript version,
-  class-syntax and import-method support, a live platform/canvas probe, the
+  class-syntax and dynamic-import support, which runtime is being served, the
   service worker status (with buttons to unregister it, clear its cache, or
-  disable/enable it), the active import method and the current cookies — can be
-  inspected and switched from the built-in diagnostics page at
-  `https://<project-name>/config`.
+  disable/enable it) and the current cookies — can be inspected from the
+  built-in diagnostics page at `https://<project-name>/config`.
 
 ### Dev mode and the service worker
 
@@ -203,9 +202,9 @@ Two settings in your project's `config/config.php` drive development behaviour:
 **How the service worker works.** The server generates the worker from the
 `serviceWorker.js` template, injecting the application version (used as the cache
 name) and an auto-collected asset list. The pre-cache list follows the active
-import path, so it caches the `js/` files for the bundle / *import-from* methods
-and the `app/` sources for the *await-import* method — the cache always matches
-what the app actually loads. On **install** it pre-caches every listed asset; on
+import path, so it caches the `js/` files when a bundle is served and the `app/`
+sources when the app runs from its sources — the cache always matches what the
+app actually loads. On **install** it pre-caches every listed asset; on
 **activate** it deletes stale version caches; on **fetch** it serves same-origin
 GET requests cache-first, adding any successful network response to the cache
 (runtime caching), while passing dynamic data endpoints (`*.data` / `*.db` /
@@ -223,8 +222,8 @@ removes the cookie.
 **Testing offline on the dev server.**
 
 1. Set `$devMode = ['serviceWorker' => true];` in `config/config.php`.
-2. Pick an import method from the `/config` page (the *import-from* method
-   mirrors the production layout most closely).
+2. Build a bundle (`svtool build bundle`) if you want the deploy layout
+   production actually uses; without one the sources under `app/` are served.
 3. Reload once so the worker installs and takes control (it becomes the
    controller from the *second* load on).
 4. Switch your browser DevTools to **Offline** and reload again.
@@ -243,9 +242,9 @@ verification operations on an svision app. It is run from the application root
 | Command | What it does |
 |---|---|
 | `svtool version` | Print the current application version (from `app/version.js`). |
-| `svtool info [count]` | Show the state of the `js/` directory (bundle and import-from files) and, if configured, the most recent database records (default 10). |
-| `svtool build [target]` | Build a deploy variant from `config/compile.json`. `target` is **`bundle`** (a minified `js/bundle.<version>.min.js`) or **`import-from`** (source mirrors copied into `js/` with the header marker rewritten). In dev mode the target is required; in production it defaults to `bundle`. |
-| `svtool verify` | Check `js/`: the bundle exists and matches the current sources, the import-from files are present and valid, there are no unexpected files, and the served JavaScript stays within **ES2018** (via `es-check` if installed, otherwise a heuristic scan). |
+| `svtool info [count]` | Show the state of the `js/` directory (the bundle and the standalone files) and, if configured, the most recent database records (default 10). |
+| `svtool build [target]` | Build a deploy variant from `config/compile.json`. `target` is **`bundle`** (a minified `js/bundle.<version>.min.js`, the default) or **`debug-bundle`** (the same concatenation left unminified, as `js/bundle.<version>.js`, for debugging on a device whose console cannot be opened). |
+| `svtool verify` | Check `js/`: the bundle exists and matches the current sources, the standalone files are present and valid, there are no unexpected files, and the served JavaScript stays within **ES2018** (via `es-check` if installed, otherwise a heuristic scan). It also reports how `config/compile.json` compares with the import graph read from the sources' headers — findings only, never a gate. |
 | `svtool clean` | Remove every generated file from the `js/` directory. |
 | `svtool help` | Show usage. |
 

@@ -48,19 +48,21 @@ Commands:
   help      Show this help.
   version   Show the current application version (from app/version.js).
   info [count]
-            Show the state of the js/ directory (bundle and import-from files)
-            and, if config/infoDB.sql exists, the records returned by that
-            query (its ':limit' placeholder is set to <count>, default 10).
+            Show the state of the js/ directory (the bundle and the standalone
+            files) and, if config/infoDB.sql exists, the records returned by
+            that query (its ':limit' placeholder is set to <count>, default 10).
   build [target]
             Build a deploy variant from the config/compile.json file list.
-            target is 'bundle' (minified js/bundle.<version>.min.js) or
-            'import-from' (source mirrors copied into js/ with the header
-            marker rewritten from /**/ to /*/). In development mode the target
-            is required; in production it defaults to 'bundle'.
+            target is 'bundle' (minified js/bundle.<version>.min.js, the
+            default) or 'debug-bundle' (the same concatenation left
+            unminified, as js/bundle.<version>.js, for debugging on a device
+            whose console cannot be opened).
   verify    Check the js/ directory: the bundle exists and matches the current
-            sources, the import-from files are present and valid, no unexpected
+            sources, the standalone files are present and valid, no unexpected
             files are present, and the served JavaScript stays within ES2018
-            (via es-check, if installed; otherwise a heuristic scan).
+            (via es-check, if installed; otherwise a heuristic scan). It also
+            reports how config/compile.json compares with the import graph
+            read from the sources' headers (findings only, never a gate).
   clean     Remove every generated file from the js/ directory.
 
 HELP;
@@ -96,14 +98,9 @@ function cmdInfo($limitArg = null) {
       echo "  $file: " . (is_file($file) ? 'present' : 'missing') . "\n";
     }
 
-    // 2) import-from variant files (source mirrors with the '/*/' header marker).
-    //    Note: the standalone files above are also '/*/' mirrors, so they count here too.
-    $importFrom = countImportFromFiles(JS_DIR);
-    if ($importFrom > 0) {
-      echo "Import-from files: present ($importFrom file(s))\n";
-    } else {
-      echo "Import-from files: none\n";
-    }
+    // 2) The debug bundle: built on demand, never part of a production deploy.
+    $debug = debugBundlePath($version);
+    echo "Debug bundle: " . (is_file($debug) ? "present ($debug)" : 'none') . "\n";
   }
 
   // 3) The most recent database records, as defined by config/infoDB.sql.
@@ -212,21 +209,16 @@ function mbPad($value, $width, $numeric) {
 } // mbPad
 
 function cmdBuild($target) {
-  // In development mode the target must be given explicitly; in production a
-  // missing target defaults to the minified bundle.
+  // There is a single production variant, so a missing target means the bundle.
   if ($target === null) {
-    if (readDevMode()) {
-      fwrite(STDERR, "build: development mode requires a target: 'bundle' or 'import-from'.\n");
-      exit(1);
-    }
     $target = 'bundle';
   }
 
   switch ($target) {
-    case 'bundle':      buildBundle(); break;
-    case 'import-from': buildImportFrom(); break;
+    case 'bundle':       buildBundle(false); break;
+    case 'debug-bundle': buildBundle(true);  break;
     default:
-      fwrite(STDERR, "build: unknown target '$target' (use 'bundle' or 'import-from').\n");
+      fwrite(STDERR, "build: unknown target '$target' (use 'bundle' or 'debug-bundle').\n");
       exit(1);
   }
 
@@ -236,26 +228,30 @@ function cmdBuild($target) {
 } // cmdBuild
 
 /**
- * Build the minified production bundle js/bundle.<version>.min.js by
- * concatenating the compile.json sources (dependency-first) and piping the
- * result through terser.
+ * Build the production bundle by concatenating the compile.json sources
+ * (dependency-first). By default the result is piped through terser into
+ * js/bundle.<version>.min.js; with $debug the same concatenation is written
+ * unminified to js/bundle.<version>.js, so that a runtime error on a device
+ * whose console cannot be opened still points at one readable line — the
+ * '// === <source> ===' separators say which source it came from.
  */
-function buildBundle() {
+function buildBundle($debug = false) {
   $version = readVersion();
-  $bundle  = bundlePath($version);
+  $bundle  = $debug ? debugBundlePath($version) : bundlePath($version);
   $list    = readCompileList();
 
-  $minified = runTerser(bundleSource($list['bundle']));
+  $source = bundleSource($list['bundle']);
+  $code   = $debug ? $source : runTerser($source);
 
   $stats = newBuildStats();
   ensureDirs([dirname($bundle)], $stats);
-  putFile($bundle, $minified, $stats);
+  putFile($bundle, $code, $stats);
 
   // The standalone files (worker, audio worklet, ...) are loaded by their own
-  // URL, so they live next to the bundle as separate files (header rewritten).
-  copyMirrors($list['standalone'], $stats);
+  // URL, so they live next to the bundle as separate files.
+  copyStandalone($list['standalone'], $stats);
 
-  echo "Bundle $bundle (" . count($list['bundle']) . " sources, "
+  echo ($debug ? 'Debug bundle' : 'Bundle') . " $bundle (" . count($list['bundle']) . " sources, "
      . count($list['standalone']) . " standalone):\n";
   printBuildStats($stats);
 } // buildBundle
@@ -278,26 +274,12 @@ function bundleSource($files) {
 } // bundleSource
 
 /**
- * Mirror every source (bundle + standalone) into js/ as the import-from
- * deploy variant. The actual copying is done by copyMirrors().
+ * Copy the standalone sources into js/, preserving the directory structure.
+ * They are loaded by their own URL at runtime rather than inlined into the
+ * bundle, and they are served verbatim: the file in js/ is byte for byte the
+ * file in app/.
  */
-function buildImportFrom() {
-  $list  = readCompileList();
-  $files = array_merge($list['bundle'], $list['standalone']);
-  $stats = newBuildStats();
-
-  copyMirrors($files, $stats);
-
-  echo "Import-from (" . count($files) . " sources):\n";
-  printBuildStats($stats);
-} // buildImportFrom
-
-/**
- * Mirror the given sources into js/ as the import-from deploy variant: the
- * directory structure is preserved and the header marker is rewritten from
- * /**' . '/ to /*' . '/. Mirrors AppPage::makeJSFiles4ImportFrom().
- */
-function copyMirrors($files, &$stats) {
+function copyStandalone($files, &$stats) {
   // Pre-create the whole target directory tree, counting created vs existing.
   $dirs = [];
   foreach ($files as $rel) {
@@ -311,14 +293,16 @@ function copyMirrors($files, &$stats) {
       fwrite(STDERR, "  WARN missing source: $rel\n");
       continue;
     }
-    putFile(JS_DIR . '/' . $rel, importFromHeader(file_get_contents($src)), $stats);
+    putFile(JS_DIR . '/' . $rel, file_get_contents($src), $stats);
   }
-} // copyMirrors
+} // copyStandalone
 
 /**
  * Transform a source file for inclusion in the concatenated bundle: keep only
- * the code after the '// begin code' marker, drop the 'export default X;'
- * re-export lines and strip the leading 'export ' keyword from declarations.
+ * the code after the '// begin code' marker and strip the leading 'export '
+ * keyword from declarations. Everything above the marker is the file's import
+ * header, which the bundle does not need — the sources are concatenated in
+ * dependency order instead.
  */
 function bundleCode($data, $rel) {
   $marker = '// begin code';
@@ -329,25 +313,10 @@ function bundleCode($data, $rel) {
   } else {
     $code = substr($data, $pos + strlen($marker));
   }
-  // Drop `export default <name>;` lines (re-exports of an already-declared name).
-  $code = preg_replace('/^[ \t]*export[ \t]+default[ \t]+[^\n;]+;[ \t]*$/m', '', $code);
   // Strip the `export ` keyword from declarations (class / const / function / ...).
   $code = preg_replace('/^([ \t]*)export[ \t]+/m', '$1', $code);
   return "// === $rel ===\n" . $code;
 } // bundleCode
-
-/**
- * Rewrite the header marker of a source file to the import-from variant,
- * i.e. replace the first line with /*' . '/. Mirrors the rewrite done in
- * AppPage::makeJSFiles4ImportFrom() in php/appPage.php.
- */
-function importFromHeader($data) {
-  $nl = strpos($data, "\n");
-  if ($nl === false) {
-    return $data;
-  }
-  return "/*/\n" . substr($data, $nl + 1);
-} // importFromHeader
 
 /**
  * Source files whose syntax must stay within ES2018 (the oldest target engine,
@@ -463,8 +432,9 @@ function escheckCommand() {
 } // escheckCommand
 
 /**
- * The built JavaScript actually served to the device: every .js in js/ (bundle,
- * standalone, import-from mirrors) plus the raw-served maintenance page.
+ * The built JavaScript actually served to the device: every .js in js/ (the
+ * bundle, the debug bundle when present, and the standalone files) plus the
+ * raw-served maintenance page.
  */
 function es2018Artifacts() {
   $files = [];
@@ -646,6 +616,7 @@ function readCompileList() {
 function cmdVerify() {
   $version = readVersion();
   $bundle  = bundlePath($version);
+  $debug   = debugBundlePath($version);
   $list    = readCompileList();
   $problems = 0;
 
@@ -671,22 +642,40 @@ function cmdVerify() {
   }
 
   foreach ($list['standalone'] as $rel) {
-    $status = mirrorStatus($rel);
+    $status = standaloneStatus($rel);
     echo "  " . JS_DIR . "/$rel: $status\n";
     if ($status !== 'OK' && $requireDeploy) $problems++;
   }
 
-  // 2) Import-from mirrors: only relevant if the bundle sources are mirrored
-  //    into js/ (the import-from deploy).
-  if (!array_intersect($list['bundle'], $actual)) {
-    echo "Import-from: no files\n";
+  // 2) The debug bundle. It is built on demand and never belongs to a
+  //    production deploy, so its presence is a problem there — but where it is
+  //    present it still has to match the current sources.
+  if (!is_file($debug)) {
+    echo "Debug bundle: none\n";
+  } elseif (file_get_contents($debug) !== bundleSource($list['bundle'])) {
+    echo "Debug bundle: $debug INCORRECT — does not match current sources (rebuild)\n";
+    $problems++;
+  } elseif (!$devMode) {
+    echo "Debug bundle: $debug present — unminified, does not belong in production\n";
+    $problems++;
   } else {
-    $problems += reportMirrors('Import-from', $list['bundle']);
+    echo "Debug bundle: $debug OK\n";
   }
 
-  // 3) Anything in js/ that is neither the current bundle nor a known source.
-  $expected = [ltrim(substr($bundle, strlen(JS_DIR)), '/') => true];
-  foreach (array_merge($list['bundle'], $list['standalone']) as $rel) {
+  // 3) config/compile.json against the import graph read from the sources'
+  //    headers. Findings only, never a gate: the list legitimately carries
+  //    roots that nothing imports (version.js), and a deliberate order can
+  //    differ from the derived one without being wrong.
+  reportImportGraph($list);
+
+  // 4) Anything in js/ that is neither a bundle nor a standalone file. The
+  //    bundle sources themselves must NOT be there — leftovers of an older
+  //    deploy variant show up here and are cleared with `svtool clean`.
+  $expected = [
+    ltrim(substr($bundle, strlen(JS_DIR)), '/') => true,
+    ltrim(substr($debug, strlen(JS_DIR)), '/')  => true,
+  ];
+  foreach ($list['standalone'] as $rel) {
     $expected[$rel] = true;
   }
   $extra = array_filter($actual, fn($rel) => !isset($expected[$rel]));
@@ -698,7 +687,7 @@ function cmdVerify() {
     $problems++;
   }
 
-  // 4) ES2018 gate for the oldest target engines (e.g. old smart TVs).
+  // 5) ES2018 gate for the oldest target engines (e.g. old smart TVs).
   //    Authoritative parse check via es-check on the built artifacts; falls
   //    back to the heuristic source scan when es-check is not installed.
   $escheck   = escheckCommand();
@@ -733,41 +722,130 @@ function cmdVerify() {
 } // cmdVerify
 
 /**
- * Check that each source is mirrored into js/ and matches its expected
- * import-from content. Prints a summary plus the offending paths, and returns
- * 1 if anything is missing or invalid (0 otherwise) so the caller can tally.
+ * Compare config/compile.json with the module graph the sources declare in
+ * their headers, and report the three ways they can disagree:
+ *
+ *   - listed but unreachable: nothing imports the file, and the entry point
+ *     does not reach it. Either a dead entry still being shipped, or a
+ *     legitimate root (version.js declares a constant nobody imports).
+ *   - imported but not listed: a dependency missing from the bundle — the
+ *     bundle is incomplete and will fail at runtime.
+ *   - out of order: a file placed before something it imports. Harmless while
+ *     the import is only used at call time, fatal the moment it is needed when
+ *     the class is defined (`extends`) — and invisible in development, where
+ *     `await import` resolves the order by itself.
+ *
+ * Reported, never enforced: judging a root from a dead entry needs a human.
  */
-function reportMirrors($label, $files) {
-  $ok = 0; $missing = []; $invalid = [];
-  foreach ($files as $rel) {
-    switch (mirrorStatus($rel)) {
-      case 'OK':      $ok++; break;
-      case 'missing': $missing[] = $rel; break;
-      default:        $invalid[] = $rel; break;
+function reportImportGraph($list) {
+  $bundle = $list['bundle'];
+  if (!$bundle) {
+    echo "Import graph: no bundle sources listed\n";
+    return;
+  }
+  $index = array_flip($bundle);
+  $entry = in_array('main.js', $bundle, true) ? 'main.js' : end($bundle);
+
+  // Everything the entry point reaches, following the headers.
+  $reachable = [];
+  $order = [];
+  graphVisit($entry, $order, $reachable);
+
+  $unreachable = array_values(array_filter($bundle, fn($rel) => !isset($reachable[$rel])));
+  $unlisted    = array_values(array_filter($order, fn($rel) => !isset($index[$rel])));
+
+  $disordered = [];
+  foreach ($bundle as $rel) {
+    foreach (headerImports(APP_DIR . '/' . $rel) as $dep) {
+      $dep = normalizeRel(dirname($rel) . '/' . $dep);
+      if (isset($index[$dep]) && $index[$dep] > $index[$rel]) {
+        $disordered[] = "$rel (#{$index[$rel]}) imports $dep (#{$index[$dep]})";
+      }
     }
   }
-  echo "$label: $ok OK, " . count($missing) . " missing, " . count($invalid) . " invalid (of " . count($files) . ")\n";
-  foreach ($missing as $rel) echo "  missing: $rel\n";
-  foreach ($invalid as $rel) echo "  invalid: $rel\n";
-  return ($missing || $invalid) ? 1 : 0;
-} // reportMirrors
+
+  $total = count($unreachable) + count($unlisted) + count($disordered);
+  if ($total === 0) {
+    echo "Import graph: agrees with " . COMPILE_FILE . " (entry $entry, " . count($bundle) . " sources)\n";
+    return;
+  }
+  echo "Import graph (entry $entry): $total finding(s)\n";
+  foreach ($unreachable as $rel) echo "  listed but unreachable: $rel\n";
+  foreach ($unlisted as $rel)    echo "  imported but not listed: $rel\n";
+  foreach ($disordered as $line) echo "  out of order: $line\n";
+} // reportImportGraph
 
 /**
- * Status of one source mirrored into js/: 'OK' (present and matching the
- * import-from content), 'missing' (not in js/) or 'invalid' (present but
- * different from the expected content).
+ * Walk the module graph depth first from one source, appending each file after
+ * its dependencies (post-order, i.e. dependency-first). $seen doubles as the
+ * set of files reachable from the starting point.
  */
-function mirrorStatus($rel) {
+function graphVisit($rel, &$order, &$seen) {
+  $rel = normalizeRel($rel);
+  if (isset($seen[$rel])) {
+    return;
+  }
+  $seen[$rel] = true;
+  $src = APP_DIR . '/' . $rel;
+  if (!is_file($src)) {
+    return;                        // a missing source is reported by the caller
+  }
+  foreach (headerImports($src) as $dep) {
+    graphVisit(dirname($rel) . '/' . $dep, $order, $seen);
+  }
+  $order[] = $rel;
+} // graphVisit
+
+/**
+ * The relative paths a source imports, read from its header — the block above
+ * the '// begin code' marker, where every dependency is one
+ * `await import('./x.js?ver=...')` line. Bare specifiers are ignored and the
+ * '?ver=' query is stripped.
+ */
+function headerImports($path) {
+  if (!is_file($path)) {
+    return [];
+  }
+  $data = file_get_contents($path);
+  $pos  = strpos($data, '// begin code');
+  $head = ($pos === false) ? $data : substr($data, 0, $pos);
+  preg_match_all("/await import\(\s*'([^'?]+)/", $head, $m);
+  return array_values(array_filter($m[1], fn($spec) => $spec !== '' && $spec[0] === '.'));
+} // headerImports
+
+/**
+ * Collapse '.' and '..' segments in a relative path.
+ */
+function normalizeRel($rel) {
+  $out = [];
+  foreach (explode('/', $rel) as $part) {
+    if ($part === '' || $part === '.') {
+      continue;
+    }
+    if ($part === '..') {
+      array_pop($out);
+      continue;
+    }
+    $out[] = $part;
+  }
+  return implode('/', $out);
+} // normalizeRel
+
+/**
+ * Status of one standalone source copied into js/: 'OK' (present and identical
+ * to the source), 'missing' (not in js/) or 'invalid' (present but different).
+ */
+function standaloneStatus($rel) {
   $dst = JS_DIR . '/' . $rel;
   $src = APP_DIR . '/' . $rel;
   if (!is_file($dst)) {
     return 'missing';
   }
-  if (is_file($src) && file_get_contents($dst) === importFromHeader(file_get_contents($src))) {
+  if (is_file($src) && file_get_contents($dst) === file_get_contents($src)) {
     return 'OK';
   }
   return 'invalid';
-} // mirrorStatus
+} // standaloneStatus
 
 /**
  * Recursively list files inside a directory, returning paths relative to it.
@@ -825,40 +903,6 @@ function removeDirContents($dir, &$stats) {
 } // removeDirContents
 
 /**
- * Recursively count the import-from variant files inside a directory.
- * Those are .js mirrors whose first line is the '/*' . '/' marker written by
- * AppPage::makeJSFiles4ImportFrom(); source files start with '/**' . '/' instead.
- */
-function countImportFromFiles($dir) {
-  $count = 0;
-  foreach (scandir($dir) as $entry) {
-    if ($entry === '.' || $entry === '..') {
-      continue;
-    }
-    $path = "$dir/$entry";
-    if (is_dir($path) && !is_link($path)) {
-      $count += countImportFromFiles($path);
-    } elseif (substr($entry, -3) === '.js' && firstLine($path) === '/*/') {
-      $count++;
-    }
-  }
-  return $count;
-} // countImportFromFiles
-
-/**
- * Read and trim the first line of a file.
- */
-function firstLine($path) {
-  $handle = fopen($path, 'r');
-  if ($handle === false) {
-    return '';
-  }
-  $line = fgets($handle);
-  fclose($handle);
-  return $line === false ? '' : rtrim($line, "\r\n");
-} // firstLine
-
-/**
  * Read the application version from app/version.js.
  * Mirrors AbstractPage::readVersion() in php/abstractPage.php.
  */
@@ -880,6 +924,14 @@ function readVersion() {
 function bundlePath($version) {
   return "js/bundle.$version.min.js";
 } // bundlePath
+
+/**
+ * Build the debug bundle path for the given version: the same concatenation as
+ * the production bundle, only left unminified.
+ */
+function debugBundlePath($version) {
+  return "js/bundle.$version.js";
+} // debugBundlePath
 
 /**
  * The files that make up a bundle deploy, as js/ paths: the bundle itself

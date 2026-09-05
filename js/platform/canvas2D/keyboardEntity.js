@@ -1,10 +1,5 @@
-/**/
 const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
 const { ButtonEntity } = await import('./buttonEntity.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../abstractEntity.js';
-import ButtonEntity from './buttonEntity.js';
-/**/
 // begin code
 
 /**
@@ -145,5 +140,3 @@ export class KeyboardEntity extends AbstractEntity {
   } // handleEvent
 
 } // KeyboardEntity
-
-export default KeyboardEntity;

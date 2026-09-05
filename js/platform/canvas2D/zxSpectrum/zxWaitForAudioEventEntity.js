@@ -1,10 +1,5 @@
-/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../../abstractEntity.js';
-import TextEntity from '../textEntity.js';
-/**/
 // begin code
 
 /**
@@ -96,5 +91,3 @@ export class ZXWaitForAudioEventEntity extends AbstractEntity {
   } // handleEvent
 
 } // ZXWaitForAudioEventEntity
-
-export default ZXWaitForAudioEventEntity;

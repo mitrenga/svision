@@ -5,8 +5,8 @@ require_once 'abstractPage.php';
 /**
  * Serves the application shell: the HTML document that loads the app's CSS and
  * bootstraps the JavaScript entry point. It picks the script to load based on
- * what is available — a built production bundle, the dev entry point for the
- * active import method, or a maintenance page as the fallback.
+ * what is available — a built bundle, the sources under app/ in development,
+ * or a maintenance page as the fallback.
  */
 class AppPage extends AbstractPage {
 
@@ -51,16 +51,11 @@ class AppPage extends AbstractPage {
 
     $this->data[] = '    <script>window.importPath = "'.$this->importPath().'";</script>';
 
-    $bundle = 'js/bundle.'.$this->readVersion().'.min.js';
-    if (file_exists($bundle)) {
+    $bundle = $this->bundleFile();
+    if ($bundle !== false) {
       $this->data[] = '    <script type="module" src="'.$bundle.'?ver='.$srcVersion.'"></script>';
     } elseif (!empty($GLOBALS['devMode'])) {
-      if ($_COOKIE['libImportMethod'] == 'await-import') {
-        $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
-      }
-      if ($_COOKIE['libImportMethod'] == 'import-from') {
-        $this->data[] = '    <script type="module" src="js/main.js?ver='.$srcVersion.'"></script>';
-      }
+      $this->data[] = '    <script type="module" src="app/main.js?ver='.$srcVersion.'"></script>';
     } else {
       $this->data[] = '    <script type="module" src="app/svision/js/maintenance.js?ver='.$srcVersion.'"></script>';
     }

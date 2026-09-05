@@ -1,10 +1,5 @@
-/**/
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
-/*/
-import AbstractEntity from '../../../abstractEntity.js';
-import ZXColor from './zxColor.js';
-/**/
 // begin code
 
 /**
@@ -65,5 +60,3 @@ export class ZXResetEntity extends AbstractEntity {
   } // loopEntity
 
 } // ZXResetEntity
-
-export default ZXResetEntity;

@@ -1,10 +1,5 @@
-/**/
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
 const { AdaptiveLayout } = await import('./adaptiveLayout.js?ver='+window.srcVersion);
-/*/
-import Canvas2DPlatform from '../canvas2DPlatform.js';
-import AdaptiveLayout from './adaptiveLayout.js';
-/**/
 // begin code
 
 /**
@@ -78,5 +73,3 @@ export class AdaptivePlatform extends Canvas2DPlatform {
   } // border
 
 } // AdaptivePlatform
-
-export default AdaptivePlatform;

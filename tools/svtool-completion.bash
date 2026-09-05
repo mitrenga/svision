@@ -15,7 +15,7 @@ _svtool_complete() {
   fi
   # Second argument: per-command targets.
   if [ "$COMP_CWORD" -eq 2 ] && [ "${COMP_WORDS[1]}" = "build" ]; then
-    COMPREPLY=( $(compgen -W "bundle import-from" -- "${COMP_WORDS[2]}") )
+    COMPREPLY=( $(compgen -W "bundle debug-bundle" -- "${COMP_WORDS[2]}") )
   fi
 }
 

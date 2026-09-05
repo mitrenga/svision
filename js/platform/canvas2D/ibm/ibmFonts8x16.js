@@ -1,10 +1,5 @@
-/**/
 const { AbstractFonts } = await import('../../../abstractFonts.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
-/*/
-import AbstractFonts from '../../../abstractFonts.js';
-import Tool from '../../../tool.js';
-/**/
 // begin code
 
 /**
@@ -539,5 +534,3 @@ export class IBMFonts8x16 extends AbstractFonts {
   } // validChar
 
 } // IBMFonts8x16
-
-export default IBMFonts8x16;

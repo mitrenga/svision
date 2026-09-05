@@ -1,10 +1,5 @@
-/**/
 const { InputEventsManager } = await import('./inputEventsManager.js?ver='+window.srcVersion);
 const { RichString } = await import('./richString.js?ver='+window.srcVersion);
-/*/
-import InputEventsManager from './inputEventsManager.js';
-import RichString from './richString.js';
-/**/
 // begin code
 
 /**
@@ -276,5 +271,3 @@ export class AbstractApp {
   } // showErrorMessage
 
 } // AbstractApp
-
-export default AbstractApp;

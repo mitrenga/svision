@@ -1,10 +1,5 @@
-/**/
 const { Canvas2DLayout } = await import('../canvas2DLayout.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
-/*/
-import Canvas2DLayout from '../canvas2DLayout.js';
-import Tool from '../../../tool.js';
-/**/
 // begin code
 
 /**
@@ -103,5 +98,3 @@ export class ArcadeLayout extends Canvas2DLayout {
   } // paintOverlay
 
 } // ArcadeLayout
-
-export default ArcadeLayout;

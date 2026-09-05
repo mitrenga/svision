@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -24,5 +19,3 @@ export class RichString extends String{
     return new RichString(chunks.join('\n'));
   } // wrap
 } // RichString
-
-export default RichString;

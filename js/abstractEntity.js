@@ -1,8 +1,3 @@
-/**/
-
-/*/
-
-/**/
 // begin code
 
 /**
@@ -452,5 +447,3 @@ export class AbstractEntity {
   } // absolutePosY
   
 } // AbstractEntity
-
-export default AbstractEntity;

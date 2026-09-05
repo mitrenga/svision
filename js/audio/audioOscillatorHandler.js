@@ -1,14 +1,7 @@
-/**/
 const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+window.srcVersion);
 const { OscillatorInstrument } = await import('./instrument/oscillatorInstrument.js?ver='+window.srcVersion);
 const { NoiseInstrument } = await import('./instrument/noiseInstrument.js?ver='+window.srcVersion);
 const { VoiceInstrument } = await import('./instrument/voiceInstrument.js?ver='+window.srcVersion);
-/*/
-import AbstractAudioHandler from './abstractAudioHandler.js';
-import OscillatorInstrument from './instrument/oscillatorInstrument.js';
-import NoiseInstrument from './instrument/noiseInstrument.js';
-import VoiceInstrument from './instrument/voiceInstrument.js';
-/**/
 // begin code
 
 /**
@@ -817,5 +810,3 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
   } // closeBus
 
 } // AudioOscillatorHandler
-
-export default AudioOscillatorHandler;

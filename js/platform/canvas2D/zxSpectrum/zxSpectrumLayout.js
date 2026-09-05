@@ -1,8 +1,4 @@
-/**/
 const { Canvas2DLayout } = await import('../canvas2DLayout.js?ver='+window.srcVersion);
-/*/
-import Canvas2DLayout from '../canvas2DLayout.js';
-/**/
 // begin code
 
 /**
@@ -66,5 +62,3 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
   } // resizeModel
 
 } // ZXSpectrumLayout
-
-export default ZXSpectrumLayout;
