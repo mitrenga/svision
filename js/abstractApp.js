@@ -1,5 +1,4 @@
 const { InputEventsManager } = await import('./inputEventsManager.js?ver='+window.srcVersion);
-const { RichString } = await import('./richString.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -228,7 +227,7 @@ export class AbstractApp {
    * Optional {placeholder} tokens are substituted from `params`.
    * @param {string} key - Dotted path into the language dictionary.
    * @param {Object} [params] - Values substituted into {name} placeholders.
-   * @returns {RichString} The localized string (chainable, e.g. .wrap()).
+   * @returns {string} The localized string.
    */
   text(key, params) {
     var str = this._resolveText(this.texts[this.language], key);
@@ -236,14 +235,14 @@ export class AbstractApp {
       str = this._resolveText(this.texts[this.fallbackLanguage], key);
     }
     if (str === undefined) {
-      return new RichString('⟨'+key+'⟩');
+      return '⟨'+key+'⟩';
     }
     if (params) {
       // function replacer so a '$' in the substituted value is not treated as a
       // special replacement pattern ($&, $1, ...).
       str = str.replace(/\{(\w+)\}/g, (match, name) => (name in params ? params[name] : match));
     }
-    return new RichString(str);
+    return str;
   } // text
 
   /**

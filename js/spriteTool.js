@@ -1,5 +1,4 @@
 const { Tool } = await import('./tool.js?ver='+window.srcVersion);
-const { RichString } = await import('./richString.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -28,7 +27,7 @@ export class SpriteTool {
    * @param {Object} spriteData - The sprite data to encode.
    * @param {string} method - The compression method ('hR2', 'lP1', 'lT2',
    *   'b90', or 'braille').
-   * @returns {RichString|string} The encoded sprite string, or an error message
+   * @returns {string} The encoded sprite string, or an error message
    *   for an unknown method.
    */
   static encode(spriteData, method) {
@@ -79,7 +78,7 @@ export class SpriteTool {
    * alternating between blank and solid pixels.
    * @param {Object} spriteData - Sprite data with width, height, and sprite
    *   row arrays.
-   * @returns {RichString} The hR2-encoded sprite string.
+   * @returns {string} The hR2-encoded sprite string.
    */
   static encode_hR2(spriteData) {
     var result = 'hR2'+Tool.intToHex(spriteData.width, 4)+Tool.intToHex(spriteData.height, 4);
@@ -105,7 +104,7 @@ export class SpriteTool {
       counter -= 255;
     }
     result += Tool.intToHex(counter, 2);
-    return new RichString(result);
+    return result;
   } // encode_hR2
 
   /**
@@ -161,7 +160,7 @@ export class SpriteTool {
    * pulse exceeds 1296 or there are more than 36 distinct pulses.
    * @param {Object} spriteData - Sprite data with width, height, and sprite
    *   row arrays.
-   * @returns {RichString} The lP1-encoded sprite string, or an error message.
+   * @returns {string} The lP1-encoded sprite string, or an error message.
    */
   static encode_lP1(spriteData) {
     var result = 'lP1'+Tool.intToLatin(spriteData.width, 3)+Tool.intToLatin(spriteData.height, 3);
@@ -176,7 +175,7 @@ export class SpriteTool {
         if (spriteData.sprite[0][y][x] != spriteChar) {
           if (!(counter in index)) {
             if (counter > 1296) {
-              return new RichString('COMPRESS ERROR: to long pulse! (pulse: '+counter+', max: 1296)');
+              return 'COMPRESS ERROR: to long pulse! (pulse: '+counter+', max: 1296)';
             }
             pulses.push(counter);
             index[counter] = pulses.length-1;
@@ -190,13 +189,13 @@ export class SpriteTool {
     }
     if (!(counter in index)) {
       if (counter > 1296) {
-        return new RichString('COMPRESS ERROR: to long pulse! (pulse: '+counter+', max: 1296)');
+        return 'COMPRESS ERROR: to long pulse! (pulse: '+counter+', max: 1296)';
       }
       pulses.push(counter);
       index[counter] = pulses.length-1;
     }
     if (pulses.length > 36) {
-      return new RichString('COMPRESS ERROR: to much pulses! (pulses: '+pulses.length+', max: 36)');
+      return 'COMPRESS ERROR: to much pulses! (pulses: '+pulses.length+', max: 36)';
     }
 
     // second phase - output pulses table
@@ -220,7 +219,7 @@ export class SpriteTool {
       }
     }
     result += Tool.intToLatin(index[counter], 1);
-    return new RichString(result);
+    return result;
   } // encode_lP1
 
   /**
@@ -284,7 +283,7 @@ export class SpriteTool {
    * the previous one marked 'S'. Returns an error string for an empty sprite.
    * @param {Object} spriteData - Sprite data with width, height, and sprite
    *   row arrays.
-   * @returns {RichString} The lT2-encoded sprite string, or an error message.
+   * @returns {string} The lT2-encoded sprite string, or an error message.
    */
   static encode_lT2(spriteData) {
     var result = 'lT2';
@@ -297,7 +296,7 @@ export class SpriteTool {
       }
     }
     if (firstRow === -1) {
-      return new RichString('COMPRESS ERROR: sprite is empty!');
+      return 'COMPRESS ERROR: sprite is empty!';
     }
     result += Tool.intToLatin(spriteData.width,  3);
     result += Tool.intToLatin(spriteData.height, 3);
@@ -342,7 +341,7 @@ export class SpriteTool {
         prevEncoded = encoded;
       }
     }
-    return new RichString(result);
+    return result;
   } // encode_lT2
 
   /**
@@ -511,7 +510,7 @@ export class SpriteTool {
    * @param {Object} spriteData - Sprite data with width, height, frames,
    *   directions, colors (shared palette or false), and per-frame sprite
    *   entries.
-   * @returns {RichString} The b90-encoded sprite string.
+   * @returns {string} The b90-encoded sprite string.
    */
   static encode_b90(spriteData) {
     var width = spriteData.width;
@@ -559,7 +558,7 @@ export class SpriteTool {
     result += Tool.intToBase90(directions, 1);
     result += body;
 
-    return new RichString(result);
+    return result;
   } // encode_b90
 
   /**
@@ -800,7 +799,7 @@ export class SpriteTool {
    * @param {Object} spriteData - Sprite data with width, height, frames,
    *   directions, colors (shared palette or false), and per-frame sprite
    *   entries.
-   * @returns {RichString} The braille-encoded sprite string.
+   * @returns {string} The braille-encoded sprite string.
    */
   static encode_Braille(spriteData) {
     var width = spriteData.width;
@@ -847,7 +846,7 @@ export class SpriteTool {
     result += Tool.intToBraille(frames, 1);
     result += Tool.intToBraille(directions, 1);
     result += body;
-    return new RichString(result);
+    return result;
   } // encode_Braille
 
   /**

@@ -74,8 +74,7 @@ send-up / send-down / send-to-model event system.
   resolves a dotted-path key (`'mainMenu.startGame'`) in the current
   `language`, falls back to `fallbackLanguage` (default `en`), substitutes
   optional `{placeholder}` tokens from `params`, and renders missing strings
-  as a visible `⟨key⟩` marker. It returns a `RichString`, so the result can be
-  chained (e.g. `.wrap()`).
+  as a visible `⟨key⟩` marker.
 
 ### Audio
 - **`AbstractAudioManager`** owns a single shared `AudioContext` and organises
@@ -133,8 +132,6 @@ Tuning constants live in the `crtStyle` field of `Canvas2DLayout`.
 ### Utilities
 - **`Tool`** — number-base conversions (hex / base-36 / base-90 / Braille),
   cookies and small helpers.
-- **`RichString`** — string helper used by the sprite encoders and returned by
-  the localization method `AbstractApp.text()`.
 
 ### Server side (PHP)
 A tiny PHP front controller (`php/`) serves the app shell, generates the PWA
