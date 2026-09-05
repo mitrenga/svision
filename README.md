@@ -241,11 +241,41 @@ verification operations on an svision app. It is run from the application root
 | `svtool version` | Print the current application version (from `app/version.js`). |
 | `svtool info [count]` | Show the state of the `js/` directory (the bundle and the standalone files) and, if configured, the most recent database records (default 10). |
 | `svtool build [target]` | Build a deploy variant from `config/compile.json`. `target` is **`bundle`** (a minified `js/bundle.<version>.min.js`, the default) or **`debug-bundle`** (the same concatenation left unminified, as `js/bundle.<version>.js`, for debugging on a device whose console cannot be opened). |
-| `svtool verify` | Check `js/`: the bundle exists and matches the current sources, the standalone files are present and valid, there are no unexpected files, and the served JavaScript stays within **ES2018** (via `es-check` if installed, otherwise a heuristic scan). It also reports how `config/compile.json` compares with the import graph read from the sources' headers — findings only, never a gate. |
+| `svtool verify` | Check `js/`: the bundle exists and matches the current sources, the standalone files are present and valid, there are no unexpected files, and the served JavaScript stays within **ES2018** (via `es-check` if installed, otherwise a heuristic scan). It also reports the source lists themselves and fails on a missing source or an import cycle. |
 | `svtool clean` | Remove every generated file from the `js/` directory. |
 | `svtool help` | Show usage. |
 
 A bash completion script is provided in `tools/svtool-completion.bash`.
+
+### What goes into the bundle
+
+Nothing lists it. Every source declares its dependencies in its header, as
+`await import('./x.js?ver='+window.srcVersion)` lines above the
+`// begin code` marker, so `svtool` walks that graph from **`app/main.js`** and
+gets both the file set and a dependency-first order — a class is only ever
+concatenated behind the class it extends. Adding a module to an application
+means importing it; there is no list to keep in step.
+
+That is also why the entry point is fixed: in development the app shell loads
+`app/main.js` and nothing else, and every other module arrives through those
+headers. A file the entry point cannot reach would exist in the bundle and not
+in development, so it simply does not go in.
+
+The one thing the sources cannot say is which files are fetched by their own
+URL — a worker, a script it pulls in with `importScripts`, an audio worklet.
+Nothing imports those, so they are named by hand and copied into `js/`
+verbatim, never inlined:
+
+```json
+{
+    "standalone": [
+        "gameWorker.js",
+        "svision/js/audio/worker/audioProcessor.js"
+    ]
+}
+```
+
+That is the whole of `config/compile.json`.
 
 ### Prerequisites
 

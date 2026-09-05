@@ -15,6 +15,7 @@ const JS_DIR       = 'js';
 const VERSION_FILE = 'app/version.js';
 const CONFIG_FILE  = 'config/config.php';
 const COMPILE_FILE = 'config/compile.json';
+const ENTRY_FILE   = 'main.js';   // the one module the app shell loads; everything else hangs off its header
 const INFODB_FILE  = 'config/infoDB.sql';
 const RECENT_LIMIT = 10;   // default number of recent DB records shown by `info`
 
@@ -60,9 +61,10 @@ Commands:
   verify    Check the js/ directory: the bundle exists and matches the current
             sources, the standalone files are present and valid, no unexpected
             files are present, and the served JavaScript stays within ES2018
-            (via es-check, if installed; otherwise a heuristic scan). It also
-            reports how config/compile.json compares with the import graph
-            read from the sources' headers (findings only, never a gate).
+            (via es-check, if installed; otherwise a heuristic scan), plus the
+            source lists themselves: the bundle list derived by walking the
+            import headers from app/main.js, the standalone list out of
+            config/compile.json, and any missing source or import cycle.
   clean     Remove every generated file from the js/ directory.
 
 HELP;
@@ -240,6 +242,8 @@ function buildBundle($debug = false) {
   $bundle  = $debug ? debugBundlePath($version) : bundlePath($version);
   $list    = readCompileList();
 
+  warnGraphProblems($list);
+
   $source = bundleSource($list['bundle']);
   $code   = $debug ? $source : runTerser($source);
 
@@ -257,7 +261,21 @@ function buildBundle($debug = false) {
 } // buildBundle
 
 /**
- * Concatenate the compile.json sources (dependency-first) into a single ES
+ * Warn about a broken import graph before building on it. `verify` turns the
+ * same findings into a gate; a build only says so and carries on, because a
+ * partial bundle is still worth having while a source is being moved.
+ */
+function warnGraphProblems($list) {
+  foreach ($list['missing'] as $rel) {
+    fwrite(STDERR, "  WARN missing source: $rel\n");
+  }
+  foreach ($list['cycles'] as $cycle) {
+    fwrite(STDERR, "  WARN import cycle: $cycle\n");
+  }
+} // warnGraphProblems
+
+/**
+ * Concatenate the derived source list (dependency-first) into a single ES
  * module ready for terser. Missing sources are warned about and skipped.
  */
 function bundleSource($files) {
@@ -587,12 +605,25 @@ function readConfig() {
 } // readConfig
 
 /**
- * Read config/compile.json. It holds two lists of paths relative to app/:
- *   - bundle:     concatenated (dependency-first) into the minified bundle;
- *   - standalone: files loaded by their own URL at runtime (the entry worker,
- *                 the audio worklet, ...) that must stay separate files and
- *                 must never be inlined into the bundle.
- * A legacy flat array is accepted as a bundle-only list.
+ * Work out the two source lists the build needs.
+ *
+ * Only one of them is written down. config/compile.json holds a single key,
+ * 'standalone': the files loaded by their own URL at runtime (the entry
+ * worker, the audio worklet, the classic scripts a worker pulls in with
+ * importScripts). They are copied into js/ verbatim and must never be inlined
+ * into the bundle, and nothing in the sources says so — hence the list.
+ *
+ * The bundle list is **derived**. Every source declares its dependencies in
+ * its header, as `await import('./x.js?ver=...')` lines above the
+ * '// begin code' marker, so walking that graph from ENTRY_FILE gives both the
+ * file set and a dependency-first order. Nothing the entry point cannot reach
+ * belongs in the bundle: in development the shell loads ENTRY_FILE alone and
+ * every other module arrives through those headers, so an unreachable file
+ * would exist in the bundle and not in development — a difference between the
+ * two runtimes, which is exactly what must not be expressible here.
+ *
+ * Returns 'bundle' and 'standalone' plus what the walk found wrong:
+ * 'missing' (a header points at a file that is not there) and 'cycles'.
  */
 function readCompileList() {
   if (!is_file(COMPILE_FILE)) {
@@ -600,18 +631,68 @@ function readCompileList() {
     exit(1);
   }
   $data = json_decode(file_get_contents(COMPILE_FILE), true);
-  if (is_array($data) && array_is_list($data)) {
-    return ['bundle' => $data, 'standalone' => []];
-  }
-  if (!is_array($data) || !isset($data['bundle']) || !is_array($data['bundle'])) {
-    fwrite(STDERR, COMPILE_FILE . " must be a JSON object with a 'bundle' array.\n");
+  if (!is_array($data)) {
+    fwrite(STDERR, COMPILE_FILE . " must be a JSON object with a 'standalone' array.\n");
     exit(1);
   }
+  if (isset($data['bundle'])) {
+    fwrite(STDERR, "  WARN " . COMPILE_FILE . ": the 'bundle' list is ignored — it is derived from the sources (R-019).\n");
+  }
+  if (!is_file(APP_DIR . '/' . ENTRY_FILE)) {
+    fwrite(STDERR, "Cannot find " . APP_DIR . '/' . ENTRY_FILE . " (the entry point every source hangs off).\n");
+    exit(1);
+  }
+
+  $graph = importGraph(ENTRY_FILE);
   return [
-    'bundle'     => $data['bundle'],
+    'bundle'     => $graph['order'],
     'standalone' => (isset($data['standalone']) && is_array($data['standalone'])) ? $data['standalone'] : [],
+    'missing'    => $graph['missing'],
+    'cycles'     => $graph['cycles'],
   ];
 } // readCompileList
+
+/**
+ * Walk the import graph from one entry source and return the files in
+ * dependency-first order, together with the two things that can be wrong with
+ * it: imports pointing at files that do not exist, and cycles.
+ */
+function importGraph($entry) {
+  $order = []; $state = []; $missing = []; $cycles = [];
+  graphWalk($entry, null, $order, $state, $missing, $cycles, []);
+  return ['order' => $order, 'missing' => $missing, 'cycles' => $cycles];
+} // importGraph
+
+/**
+ * Depth-first walk of the import graph. A file is appended after everything it
+ * imports (post-order), which is the order the bundle needs: a class is only
+ * ever concatenated behind the class it extends. $state marks a file 'open'
+ * while its own dependencies are being walked, so an import that reaches back
+ * into the open stack is a cycle rather than an infinite descent.
+ */
+function graphWalk($rel, $importer, &$order, &$state, &$missing, &$cycles, $stack) {
+  $rel = normalizeRel($rel);
+  if (isset($state[$rel])) {
+    if ($state[$rel] === 'open') {
+      $at = array_search($rel, $stack, true);
+      $cycles[] = implode(' -> ', array_slice($stack, $at === false ? 0 : $at)) . ' -> ' . $rel;
+    }
+    return;
+  }
+  $src = APP_DIR . '/' . $rel;
+  if (!is_file($src)) {
+    $missing[] = $rel . ($importer === null ? '' : " (imported by $importer)");
+    $state[$rel] = 'done';
+    return;
+  }
+  $state[$rel] = 'open';
+  $stack[] = $rel;
+  foreach (headerImports($src) as $dep) {
+    graphWalk(dirname($rel) . '/' . $dep, $rel, $order, $state, $missing, $cycles, $stack);
+  }
+  $state[$rel] = 'done';
+  $order[] = $rel;
+} // graphWalk
 
 function cmdVerify() {
   $version = readVersion();
@@ -662,11 +743,9 @@ function cmdVerify() {
     echo "Debug bundle: $debug OK\n";
   }
 
-  // 3) config/compile.json against the import graph read from the sources'
-  //    headers. Findings only, never a gate: the list legitimately carries
-  //    roots that nothing imports (version.js), and a deliberate order can
-  //    differ from the derived one without being wrong.
-  reportImportGraph($list);
+  // 3) The sources themselves: the derived bundle list, the standalone list,
+  //    and anything wrong with either.
+  $problems += reportSources($list);
 
   // 4) Anything in js/ that is neither a bundle nor a standalone file. The
   //    bundle sources themselves must NOT be there — leftovers of an older
@@ -722,79 +801,33 @@ function cmdVerify() {
 } // cmdVerify
 
 /**
- * Compare config/compile.json with the module graph the sources declare in
- * their headers, and report the three ways they can disagree:
- *
- *   - listed but unreachable: nothing imports the file, and the entry point
- *     does not reach it. Either a dead entry still being shipped, or a
- *     legitimate root (version.js declares a constant nobody imports).
- *   - imported but not listed: a dependency missing from the bundle — the
- *     bundle is incomplete and will fail at runtime.
- *   - out of order: a file placed before something it imports. Harmless while
- *     the import is only used at call time, fatal the moment it is needed when
- *     the class is defined (`extends`) — and invisible in development, where
- *     `await import` resolves the order by itself.
- *
- * Reported, never enforced: judging a root from a dead entry needs a human.
+ * Report the source lists and everything wrong with them: an import pointing
+ * at a file that is not there, a cycle, or a standalone entry with no source.
+ * All three are real errors — the bundle would be incomplete, would not load,
+ * or would be missing a file the app fetches at runtime — so this counts
+ * problems rather than only printing them.
  */
-function reportImportGraph($list) {
-  $bundle = $list['bundle'];
-  if (!$bundle) {
-    echo "Import graph: no bundle sources listed\n";
-    return;
+function reportSources($list) {
+  $problems = 0;
+  echo "Sources: " . count($list['bundle']) . " bundled (derived from the headers, entry "
+     . ENTRY_FILE . "), " . count($list['standalone']) . " standalone\n";
+
+  foreach ($list['missing'] as $rel) {
+    echo "  missing source: $rel\n";
+    $problems++;
   }
-  $index = array_flip($bundle);
-  $entry = in_array('main.js', $bundle, true) ? 'main.js' : end($bundle);
-
-  // Everything the entry point reaches, following the headers.
-  $reachable = [];
-  $order = [];
-  graphVisit($entry, $order, $reachable);
-
-  $unreachable = array_values(array_filter($bundle, fn($rel) => !isset($reachable[$rel])));
-  $unlisted    = array_values(array_filter($order, fn($rel) => !isset($index[$rel])));
-
-  $disordered = [];
-  foreach ($bundle as $rel) {
-    foreach (headerImports(APP_DIR . '/' . $rel) as $dep) {
-      $dep = normalizeRel(dirname($rel) . '/' . $dep);
-      if (isset($index[$dep]) && $index[$dep] > $index[$rel]) {
-        $disordered[] = "$rel (#{$index[$rel]}) imports $dep (#{$index[$dep]})";
-      }
+  foreach ($list['cycles'] as $cycle) {
+    echo "  import cycle: $cycle\n";
+    $problems++;
+  }
+  foreach ($list['standalone'] as $rel) {
+    if (!is_file(APP_DIR . '/' . $rel)) {
+      echo "  missing standalone source: $rel\n";
+      $problems++;
     }
   }
-
-  $total = count($unreachable) + count($unlisted) + count($disordered);
-  if ($total === 0) {
-    echo "Import graph: agrees with " . COMPILE_FILE . " (entry $entry, " . count($bundle) . " sources)\n";
-    return;
-  }
-  echo "Import graph (entry $entry): $total finding(s)\n";
-  foreach ($unreachable as $rel) echo "  listed but unreachable: $rel\n";
-  foreach ($unlisted as $rel)    echo "  imported but not listed: $rel\n";
-  foreach ($disordered as $line) echo "  out of order: $line\n";
-} // reportImportGraph
-
-/**
- * Walk the module graph depth first from one source, appending each file after
- * its dependencies (post-order, i.e. dependency-first). $seen doubles as the
- * set of files reachable from the starting point.
- */
-function graphVisit($rel, &$order, &$seen) {
-  $rel = normalizeRel($rel);
-  if (isset($seen[$rel])) {
-    return;
-  }
-  $seen[$rel] = true;
-  $src = APP_DIR . '/' . $rel;
-  if (!is_file($src)) {
-    return;                        // a missing source is reported by the caller
-  }
-  foreach (headerImports($src) as $dep) {
-    graphVisit(dirname($rel) . '/' . $dep, $order, $seen);
-  }
-  $order[] = $rel;
-} // graphVisit
+  return $problems;
+} // reportSources
 
 /**
  * The relative paths a source imports, read from its header — the block above
