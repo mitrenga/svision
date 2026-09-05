@@ -1,9 +1,32 @@
 #!/usr/bin/bash
+#
+# make-data-fonts — turns a binary .ch8 font dump into the hex string a font
+# class embeds.
+#
+# A .ch8 file is a raw ZX Spectrum font: 96 glyphs x 8 rows x 1 byte = 768
+# bytes, in the Spectrum's character order starting at space. A font class such
+# as ZXFonts8x8 does not read that file at runtime — it carries the same bytes
+# inline as one uppercase hex string in its fontsData, so no fetch is needed and
+# the font travels inside the bundle.
+#
+# This script does that one conversion: base16-encode the file and strip the
+# line breaks, so the output is a single line ready to paste into fontsData (or
+# to hand to setFontsData). It is written next to the input as <input>.hex.txt.
+#
+# Needs: basenc (coreutils). Run it from anywhere — the argument is a path.
 
-if [ -z "$1" ]
-  then
-    echo "Syntax:"
-    echo "  make-data-fonts fontFile.ch8"
+usage() {
+  echo "make-data-fonts — converts a binary .ch8 font dump into a one-line hex string for a font class."
+  echo
+  echo "Syntax:"
+  echo "  make-data-fonts fontFile.ch8"
+  echo
+  echo "Writes fontFile.ch8.hex.txt next to the input."
+}
+
+if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+  exit 1
 fi
 
 echo -n "$(cat $1 | basenc --base16 | tr -d '\r\n')" > $1.hex.txt

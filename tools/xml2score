@@ -26,7 +26,13 @@ function main($argv) {
   $output = $argv[3] ?? null;
 
   if ($input === null || $name === null) {
-    fwrite(STDERR, "Usage: xml2score <input.musicxml> <ScoreName> [output.js]\n");
+    fwrite(STDERR, "xml2score - converts a MusicXML file (score-partwise) into an svision score\n");
+    fwrite(STDERR, "            module for the AudioOscillatorHandler: one score track per part,\n");
+    fwrite(STDERR, "            with quantized pitches, explicit rests and tied notes merged, each\n");
+    fwrite(STDERR, "            playing a default piano descriptor to be tuned by hand afterwards.\n\n");
+    fwrite(STDERR, "Usage: xml2score <input.musicxml> <ScoreName> [output.js]\n\n");
+    fwrite(STDERR, "  <ScoreName>  PascalCase; becomes the exported factory (Time -> createTimeScore())\n");
+    fwrite(STDERR, "  [output.js]  without it the module goes to stdout; statistics always to stderr\n");
     exit(1);
   }
   if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {

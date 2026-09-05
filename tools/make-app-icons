@@ -1,4 +1,39 @@
 #!/usr/bin/bash
+#
+# make-app-icons — rasterizes the application icon into the PNG set a web app
+# manifest and the platform launchers need.
+#
+# It reads app-icon.svg from the *current working directory* and writes the
+# PNGs next to it, so it is run from the application's icon directory rather
+# than given a path. One vector master, five square sizes:
+#   192, 256, 512  — the manifest icons a browser/PWA installer picks from
+#   1024, 1980     — oversized masters for store listings and further scaling
+#
+# Sizes are hard-coded on purpose: the whole point is that every svision app
+# ships the same icon set, so a device never has to scale one up.
+#
+# Needs: rsvg-convert (librsvg). Companion script: make-favicon.
+
+usage() {
+  echo "make-app-icons — rasterizes app-icon.svg in the current directory into the app icon PNG set."
+  echo
+  echo "Syntax:"
+  echo "  make-app-icons          (takes no arguments)"
+  echo
+  echo "Reads ./app-icon.svg and writes app-icon-{192,256,512,1024,1980}x*.png next to it."
+}
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ ! -f app-icon.svg ]; then
+  echo "make-app-icons: no app-icon.svg in $(pwd)" >&2
+  echo >&2
+  usage >&2
+  exit 1
+fi
 
 rsvg-convert -w 192 -h 192 app-icon.svg -o app-icon-192x192.png
 rsvg-convert -w 256 -h 256 app-icon.svg -o app-icon-256x256.png

@@ -1,4 +1,40 @@
 #!/usr/bin/bash
+#
+# make-favicon — builds the multi-resolution favicon.ico from the application
+# icon.
+#
+# Like make-app-icons it reads app-icon.svg from the *current working
+# directory* and writes next to it, so it is run from the application's icon
+# directory. The single .ico carries five sub-images (128, 64, 48, 32 and 16
+# pixels), so the browser picks the size it needs for the tab, the bookmark bar
+# or the desktop shortcut without scaling anything itself.
+#
+# -background none keeps the icon transparent, -density 256x256 rasterizes the
+# vector large enough that the 128px sub-image is sharp, and -colors 256 keeps
+# the .ico small.
+#
+# Needs: ImageMagick (convert). Companion script: make-app-icons.
+
+usage() {
+  echo "make-favicon — builds a multi-resolution favicon.ico from app-icon.svg in the current directory."
+  echo
+  echo "Syntax:"
+  echo "  make-favicon            (takes no arguments)"
+  echo
+  echo "Reads ./app-icon.svg and writes ./favicon.ico with 128/64/48/32/16 sub-images."
+}
+
+if [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+  exit 0
+fi
+
+if [ ! -f app-icon.svg ]; then
+  echo "make-favicon: no app-icon.svg in $(pwd)" >&2
+  echo >&2
+  usage >&2
+  exit 1
+fi
 
 # -background/-density are read settings: they must come BEFORE the input SVG,
 # otherwise the rasterizer fills the background with white (opaque favicon)

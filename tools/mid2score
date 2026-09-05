@@ -24,6 +24,8 @@
  *                 instead of emitting fractional hertz - use when the source
  *                 recording is known to be at standard A440 and the bends are
  *                 transcription artifacts
+ *   --ignore-bends
+ *                 ignore pitch bend events entirely
  *   --min-vol=X   drop ghost notes quieter than X (0..1 velocity)
  *   --min-dur=X   drop ghost notes shorter than X beats
  */
@@ -54,7 +56,17 @@ function main($argv) {
   $output = $positional[2] ?? null;
 
   if ($input === null || $name === null) {
-    fwrite(STDERR, "Usage: mid2score <input.mid> <ScoreName> [output.js] [--snap] [--min-vol=X] [--min-dur=X]\n");
+    fwrite(STDERR, "mid2score - converts a Standard MIDI File into an svision score module\n");
+    fwrite(STDERR, "            for the AudioOscillatorHandler: one score track per MIDI track\n");
+    fwrite(STDERR, "            that holds notes, on the score's bar/tick grid, each playing a\n");
+    fwrite(STDERR, "            default piano descriptor to be tuned by hand afterwards.\n\n");
+    fwrite(STDERR, "Usage: mid2score <input.mid> <ScoreName> [output.js] [--snap] [--ignore-bends] [--min-vol=X] [--min-dur=X]\n\n");
+    fwrite(STDERR, "  <ScoreName>     PascalCase; becomes the exported factory (Time -> createTimeScore())\n");
+    fwrite(STDERR, "  [output.js]     without it the module goes to stdout; statistics always to stderr\n");
+    fwrite(STDERR, "  --snap          round (midi + pitch bend) to the nearest true semitone\n");
+    fwrite(STDERR, "  --ignore-bends  ignore pitch bend events entirely\n");
+    fwrite(STDERR, "  --min-vol=X     drop ghost notes quieter than X (0..1 velocity)\n");
+    fwrite(STDERR, "  --min-dur=X     drop ghost notes shorter than X beats\n");
     exit(1);
   }
   if (!preg_match('/^[A-Z][A-Za-z0-9]*$/', $name)) {

@@ -1,9 +1,33 @@
 #!/usr/bin/bash
+#
+# convert-bin-txt — turns a hand-editable bitmap font drawing into a binary
+# .ch8 font dump.
+#
+# The input is a plain text file of '0'/'1' characters: 8 per row, 8 rows per
+# glyph, glyphs in ZX Spectrum character order (space first). That is the
+# format fonts/zx-rom.bin.txt is written in, and it is how a glyph gets redrawn
+# by hand — every pixel is a visible character.
+#
+# Every group of four binary digits is converted to one hex digit (bc), and the
+# resulting hex string is turned back into raw bytes (xxd -r -p), so 8 rows of
+# 8 pixels become the 8 bytes one glyph occupies in a .ch8 dump. The result is
+# written next to the input as <input>.ch8; feed it to make-data-fonts to get
+# the hex string a font class embeds.
+#
+# Needs: bc, xxd. Run it from anywhere — the argument is a path.
 
-if [ -z "$1" ]
-  then
-    echo "Syntax:"
-    echo "  convert-bin-txt fontFile.bin.txt"
+usage() {
+  echo "convert-bin-txt — converts a 0/1 text grid of 8x8 glyphs into a binary .ch8 font dump."
+  echo
+  echo "Syntax:"
+  echo "  convert-bin-txt fontFile.bin.txt"
+  echo
+  echo "Writes fontFile.bin.txt.ch8 next to the input."
+}
+
+if [ -z "$1" ] || [ "$1" = "-h" ] || [ "$1" = "--help" ]; then
+  usage
+  exit 1
 fi
 
 ( echo 'obase=16;ibase=2'; sed -Ee 's/[01]{4}/;\0/g' $1 ) | bc | xxd -r -p > $1.ch8

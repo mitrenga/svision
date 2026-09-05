@@ -4,6 +4,15 @@
 /**
  * svtool — command line utility for manual operations on an svision app.
  *
+ * It covers everything that happens between the application sources in app/
+ * and the JavaScript actually served from js/: it reports the application
+ * version and the state of the deploy directory (`version`, `info`), builds a
+ * deploy variant — the minified production bundle or an unminified debug
+ * bundle — out of the dependency graph read from the import headers plus the
+ * standalone file list in config/compile.json (`build`), checks that what is
+ * served matches the sources and stays within the ES level old devices need
+ * (`verify`), and clears the generated files out again (`clean`).
+ *
  * It is meant to be run from the application root directory (the same place
  * the PHP pages run from), so that the relative paths below resolve correctly:
  *   - app/version.js               the application version source
@@ -40,7 +49,11 @@ function main($argv) {
 
 function cmdHelp() {
   echo <<<HELP
-svtool — manual operations utility
+svtool — manual operations utility for an svision application
+
+Builds what the application actually serves from js/ (production bundle or
+debug bundle) out of the app/ sources, reports and verifies the state of that
+directory, and cleans it. Run it from the application root.
 
 Usage:
   svtool <command>

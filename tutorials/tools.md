@@ -39,9 +39,10 @@ tools/make-favicon      # favicon.ico with 128/64/48/32/16 sub-images
 deliberately precede the input SVG — they are read settings, and moving them
 after the input gives an opaque white background instead of transparency.
 
-> Neither script takes arguments or prints usage, and neither checks that
-> `app-icon.svg` exists or that the converter is installed — a missing input
-> surfaces only as the converter's own error message.
+> Neither script takes arguments; both accept `-h`/`--help`, and both refuse to
+> run with a usage note when there is no `app-icon.svg` in the current
+> directory. Neither checks that the converter is installed — a missing
+> `rsvg-convert` or `convert` surfaces only as the shell's own error message.
 
 ## Music: mid2score and xml2score
 
