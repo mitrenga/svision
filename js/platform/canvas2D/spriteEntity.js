@@ -9,6 +9,17 @@ import AbstractEntity from '../../abstractEntity.js';
  * A pixel sprite entity. It decodes character-grid sprite definitions (mono or
  * palette-colored) into pixel lists per frame/direction, caches the rendered frames,
  * and draws the current frame with optional repetition and crop-to-parent clipping.
+ *
+ * A mono sprite can carry a mask: pixels marked with maskChar (':' by default)
+ * are painted in maskColor instead of the pen colour, so the sprite covers the
+ * background with paper where its silhouette is and draws ink only where its
+ * image is. That is how the sprites of the 8 bit isometric games are stored
+ * (image plus mask, ANDed and ORed onto the screen), and it is what lets a
+ * plain painter's algorithm occlude correctly: a sprite drawn later wipes
+ * whatever its mask covers. maskColor is false by default, which leaves masked
+ * pixels transparent and keeps every existing sprite unchanged, and it can be
+ * changed at any time - the mask pixels are part of the decoded frame either
+ * way.
  */
 export class SpriteEntity  extends AbstractEntity {
 
@@ -30,6 +41,8 @@ export class SpriteEntity  extends AbstractEntity {
     this.directions = 0;
     this.frame = frame;
     this.penChar = '#';
+    this.maskChar = ':';
+    this.maskColor = false;
     this.direction = direction;
     this.spriteData = null;
     this.spriteWidth = 0;
@@ -100,6 +113,16 @@ export class SpriteEntity  extends AbstractEntity {
   }
 
   /**
+   * Sets the colour the masked pixels of a mono sprite are painted with, or
+   * false to leave them transparent, and clears the cache.
+   * @param {string|false} color - The mask (paper) color.
+   */
+  setMaskColor(color) {
+    this.maskColor = color;
+    this.cleanCache();
+  } // setMaskColor
+
+  /**
    * Sets the shared (sprite-wide) palette, disables the mono pen color, and clears the cache.
    * @param {Object} palette - The palette mapping characters to colors.
    */
@@ -139,6 +162,9 @@ export class SpriteEntity  extends AbstractEntity {
   setGraphicsData(data) {
     if ('penChar' in data) {
       this.penChar = data.penChar;
+    }
+    if ('maskChar' in data) {
+      this.maskChar = data.maskChar;
     }
     if ('frames' in data) {
       this.frames = data.frames;
@@ -181,8 +207,9 @@ export class SpriteEntity  extends AbstractEntity {
 
   /**
    * Decodes a character grid into a list of pixel descriptors, scanning each cell and
-   * recording set pixels (with their palette color key when colored), while tracking
-   * the sprite's overall width and height.
+   * recording set pixels (with their palette color key when colored, or the mask
+   * char when a mono sprite has a mask colour), while tracking the sprite's
+   * overall width and height.
    * @param {Array} grid - The grid of character rows describing the frame.
    * @param {Object|false} palette - The palette mapping characters to colors, or false for mono.
    * @returns {Array} The list of pixel descriptors for the frame.
@@ -196,6 +223,14 @@ export class SpriteEntity  extends AbstractEntity {
         var isPixel = false;
         if (palette == false && row[col] == this.penChar) {
           spriteFrame.push({x: col, y: r});
+          isPixel = true;
+        }
+        // a masked pixel is a pixel as well: it paints the paper colour, so it
+        // covers whatever is underneath it. It is recorded whether or not a mask
+        // colour is set, so setMaskColor() works at any time; with no mask
+        // colour the pixel is simply not painted.
+        if (palette == false && row[col] == this.maskChar) {
+          spriteFrame.push({x: col, y: r, c: this.maskChar});
           isPixel = true;
         }
         if (palette != false) {
@@ -287,7 +322,11 @@ export class SpriteEntity  extends AbstractEntity {
         }
         this.spriteData[index].forEach((pixel) => {
           var color = this.penColor;
-          if ('c' in pixel) {
+          if ('c' in pixel && color !== false && pixel.c == this.maskChar) {
+            // mono sprite with a mask: paint the paper colour, or nothing at
+            // all when no mask colour is set
+            color = this.maskColor;
+          } else if ('c' in pixel) {
             if (color == false) {
               // per-frame palette (braille) takes precedence, otherwise the live this.sharedPalette
               var palette = this.framePalettes[index] || this.sharedPalette;
