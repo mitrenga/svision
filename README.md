@@ -39,6 +39,7 @@ send-up / send-down / send-to-model event system.
 |---|---|---|
 | **canvas2D** | stable | The main 2D renderer. Draws entities onto an HTML `<canvas>`. |
 | **canvas2D / zxSpectrum** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. |
+| **canvas2D / arcade** | stable | Fixed-size raster arcade monitor (e.g. 224×256 portrait) with integer pixel-perfect scaling, bezel and optional colour overlay; configured per game (`new ArcadePlatform({width, height, overlay, …})`). Used by the arcade remakes. |
 | **canvas2D / adaptive** | stable | Layout that adapts the model grid to the available element size. |
 | **canvas2D / ibm** | stable | IBM 8×16 font set. |
 | **webGL2** | ⚠️ experimental | Renders through a WebGL2 context. Early, testing-only — not for deployment. |
