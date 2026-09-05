@@ -65,38 +65,6 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
     model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
   } // resizeModel
 
-  /**
-   * Fills a rectangle on the canvas, scaling the position and size by the layout ratio.
-   * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
-   * @param {number} x - The x position in logical coordinates.
-   * @param {number} y - The y position in logical coordinates.
-   * @param {number} width - The rectangle width in logical units.
-   * @param {number} height - The rectangle height in logical units.
-   * @param {string} color - The fill colour.
-   */
-  paintRect(ctx, x, y, width, height, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x*this.ratio, y*this.ratio, width*this.ratio, height*this.ratio);
-  } // paintRect
-
-  /**
-   * Converts a horizontal client (CSS pixel) coordinate into a logical layout coordinate.
-   * @param {number} clientX - The horizontal client coordinate.
-   * @returns {number} The corresponding logical x coordinate.
-   */
-  convertClientCoordinateX(clientX) {
-    return Math.round(this.app.element.width/this.ratio/this.app.element.clientWidth*clientX);
-  } // convertClientCoordinateX
-
-  /**
-   * Converts a vertical client (CSS pixel) coordinate into a logical layout coordinate.
-   * @param {number} clientY - The vertical client coordinate.
-   * @returns {number} The corresponding logical y coordinate.
-   */
-  convertClientCoordinateY(clientY) {
-    return Math.round(this.app.element.height/this.ratio/this.app.element.clientHeight*clientY);
-  } // convertClientCoordinateY
-
 } // ZXSpectrumLayout
 
 export default ZXSpectrumLayout;

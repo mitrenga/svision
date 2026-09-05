@@ -416,21 +416,27 @@ export class Canvas2DLayout extends AbstractLayout {
   } // paintCropCache
 
   /**
-   * Converts a client (DOM) X coordinate into a canvas pixel X coordinate.
+   * Converts a client (DOM) X coordinate into a model X coordinate, undoing the
+   * layout ratio the drawing side applies (paintRect, paintCache). Every
+   * subclass used to carry an identical copy of this with the ratio in it while
+   * the base had it without; the ratio belongs here, because the base keeps it
+   * at 1 and dividing by 1 changes nothing for a layout that does not scale.
    * @param {number} clientX - The client X coordinate.
-   * @returns {number} The corresponding canvas X coordinate.
+   * @returns {number} The corresponding model X coordinate.
    */
   convertClientCoordinateX(clientX) {
-    return Math.round(this.app.element.width/this.app.element.clientWidth*clientX);
+    return Math.round(this.app.element.width/this.ratio/this.app.element.clientWidth*clientX);
   } // convertClientCoordinateX
 
   /**
-   * Converts a client (DOM) Y coordinate into a canvas pixel Y coordinate.
+   * Converts a client (DOM) Y coordinate into a model Y coordinate — see
+   * convertClientCoordinateX() for why the ratio is here and not in the
+   * subclasses.
    * @param {number} clientY - The client Y coordinate.
-   * @returns {number} The corresponding canvas Y coordinate.
+   * @returns {number} The corresponding model Y coordinate.
    */
   convertClientCoordinateY(clientY) {
-    return Math.round(this.app.element.height/this.app.element.clientHeight*clientY);
+    return Math.round(this.app.element.height/this.ratio/this.app.element.clientHeight*clientY);
   } // convertClientCoordinateY
 
 } // Canvas2DLayout

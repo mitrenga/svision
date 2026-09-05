@@ -46,26 +46,6 @@ export class AdaptiveLayout extends Canvas2DLayout {
     model.desktopEntity.parentHeight = model.desktopEntity.height;
   } // resizeModel
 
-  /**
-   * Converts a client (CSS pixel) X coordinate into a logical model X
-   * coordinate using the current scale ratio.
-   * @param {number} clientX - The client X coordinate.
-   * @returns {number} The corresponding logical model X coordinate.
-   */
-  convertClientCoordinateX(clientX) {
-    return Math.round(this.app.element.width/this.ratio/this.app.element.clientWidth*clientX);
-  } // convertClientCoordinateX
-
-  /**
-   * Converts a client (CSS pixel) Y coordinate into a logical model Y
-   * coordinate using the current scale ratio.
-   * @param {number} clientY - The client Y coordinate.
-   * @returns {number} The corresponding logical model Y coordinate.
-   */
-  convertClientCoordinateY(clientY) {
-    return Math.round(this.app.element.height/this.ratio/this.app.element.clientHeight*clientY);
-  } // convertClientCoordinateY
-
 } // AdaptiveLayout
 
 export default AdaptiveLayout;
