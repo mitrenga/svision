@@ -126,7 +126,8 @@ export class AbstractAudioManager {
    * Opens a bus: creates and registers the bus's handler when not
    * already present, ensures the shared AudioContext exists when that handler
    * needs one, passes the context to the handler, and resets the bus's
-   * audio-data cache.
+   * audio-data cache. A bus that is already open is only lifted out of a pause
+   * left behind by whoever had it before.
    * @param {string} bus - Identifier of the bus to open.
    * @param {Object} options - Bus configuration options; may include `channelCount` (1 = mono, 2 = stereo).
    * @returns {void}
@@ -141,6 +142,10 @@ export class AbstractAudioManager {
         audioHandler.openBus(bus, options, this.ctx);
         this.buses[bus] = audioHandler;
       }
+    } else {
+      // the bus is already open, kept from the model that ran before this one;
+      // it may have paused it, and an opened bus has to be able to play
+      this.buses[bus].continueBus();
     }
     this.audioDataCache[bus] = {};
   } // openBus
@@ -197,13 +202,16 @@ export class AbstractAudioManager {
   } // refreshAllBuses
 
   /**
-   * Stops playback on a single bus.
+   * Stops playback on a single bus. Stopping also lifts a pause: a stopped bus
+   * has nothing to go on playing, so leaving it paused would only hide the
+   * pause from the next model, whose first sound would then be silent.
    * @param {string} bus - Identifier of the bus to stop.
    * @returns {void}
    */
   stopBus(bus) {
     if (bus in this.buses) {
       this.buses[bus].stopBus();
+      this.buses[bus].continueBus();
     }
   } // stopBus
 
