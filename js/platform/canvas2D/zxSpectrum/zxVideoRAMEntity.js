@@ -1,15 +1,15 @@
-const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
+const { RasterEntity } = await import('../rasterEntity.js?ver='+window.srcVersion);
 const { ZXVideoRAM } = await import('./zxVideoRAM.js?ver='+window.srcVersion);
 // begin code
 
 /**
  * An entity showing a rectangle of ZX Spectrum video memory.
  *
- * It owns a {@link ZXVideoRAM} and an off-screen cache, and does the one thing
- * every game with a Spectrum screen was doing for itself: paint the memory into
- * an `ImageData` **once per game frame**, then blit that, scaled by the layout
- * ratio, on every display frame. The FLASH phase of the machine is watched here
- * too, so a screen with flashing cells repaints itself without the game asking.
+ * It owns a {@link ZXVideoRAM} and, through {@link RasterEntity}, the frame it
+ * paints into: the memory becomes pixels **once per game frame**, and the
+ * result is blitted, scaled by the layout ratio, on every display frame. The
+ * FLASH phase of the machine is watched here too, so a screen with flashing
+ * cells repaints itself without the game asking.
  *
  * ## What a game supplies
  *
@@ -42,7 +42,7 @@ const { ZXVideoRAM } = await import('./zxVideoRAM.js?ver='+window.srcVersion);
  * The pixel work itself is in {@link ZXVideoRAM}, which knows nothing about the
  * DOM, so an offline tool renders with the very same code (R-001).
  */
-export class ZXVideoRAMEntity extends AbstractEntity {
+export class ZXVideoRAMEntity extends RasterEntity {
 
   /**
    * @param {AbstractEntity} parentEntity - The parent entity.
@@ -56,8 +56,7 @@ export class ZXVideoRAMEntity extends AbstractEntity {
    */
   constructor(parentEntity, x, y, area, videoRAM) {
     var box = ZXVideoRAM.area(area);
-    super(parentEntity, x, y, box.cols*ZXVideoRAM.CELL, box.rows*ZXVideoRAM.CELL,
-          false, false);
+    super(parentEntity, x, y, box.cols*ZXVideoRAM.CELL, box.rows*ZXVideoRAM.CELL);
     this.id = 'ZXVideoRAMEntity';
 
     /** the rectangle of the screen this entity shows, in character cells */
@@ -66,29 +65,9 @@ export class ZXVideoRAMEntity extends AbstractEntity {
     this.videoRAM = videoRAM || new ZXVideoRAM();
     /** applied to every attribute before it is painted; see ZXVideoRAM.paint */
     this.attrMask = 0xFF;
-    /** the FLASH phase the cache was painted in */
-    this.flashState = false;
-    this.imageData = null;
+    // a Spectrum screen can have flashing cells, so the phase is watched
+    this.watchFlash = true;
   } // constructor
-
-  init() {
-    super.init();
-    this.app.layout.newDrawingCache(this, 0);
-  } // init
-
-  /**
-   * Marks the picture as out of date, so that the next draw paints it again.
-   * Call it after writing into the memory.
-   */
-  invalidate() {
-    this.cleanCache();
-  } // invalidate
-
-  cleanCache() {
-    if (this.drawingCache[0]) {
-      this.drawingCache[0].cleanCache();
-    }
-  } // cleanCache
 
   /**
    * Sets the attribute mask and repaints if it changed. Games that keep
@@ -155,28 +134,13 @@ export class ZXVideoRAMEntity extends AbstractEntity {
   } // compose
 
   /**
-   * Paints the memory into the cache when it is dirty — that is once per game
-   * frame, not once per display frame — and blits the cache.
+   * Composes the frame and turns the memory into pixels. RasterEntity calls it
+   * only when the cache is dirty.
+   * @param {Uint8ClampedArray} data - The RGBA bytes of the frame.
    */
-  drawEntity() {
-    if (this.hide) {
-      return;
-    }
-    if (this.stack.flashState !== this.flashState) {
-      this.flashState = this.stack.flashState;
-      this.cleanCache();
-    }
-    var cache = this.drawingCache[0];
-    if (cache.preparePaint(this.width, this.height)) {
-      if (this.imageData === null || this.imageData.width != this.width) {
-        this.imageData = cache.ctx.createImageData(this.width, this.height);
-      }
-      this.compose();
-      this.videoRAM.paint(this.imageData.data, this.flashState, this.area, this.attrMask);
-      cache.ctx.putImageData(this.imageData, 0, 0);
-    }
-    this.app.layout.paintCache(this, 0);
-    this.drawSubEntities();
-  } // drawEntity
+  paintRaster(data) {
+    this.compose();
+    this.videoRAM.paint(data, this.flashState, this.area, this.attrMask);
+  } // paintRaster
 
 } // ZXVideoRAMEntity
