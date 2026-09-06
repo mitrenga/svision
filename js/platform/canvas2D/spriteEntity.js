@@ -1,4 +1,4 @@
-const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
+const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -16,8 +16,25 @@ const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.sr
  * pixels transparent and keeps every existing sprite unchanged, and it can be
  * changed at any time - the mask pixels are part of the decoded frame either
  * way.
+ *
+ * ## How a frame becomes pixels
+ *
+ * The sprite is a {@link RasterEntity} with **one cache per frame and
+ * direction** instead of one. A frame is painted the way every other raster in
+ * the library is: the frame's bytes are filled with the background — the
+ * `bkColor`, or transparent black — in a single `fill()`, then every pixel of
+ * the decoded list is written into the `Uint32Array` view, and the result goes
+ * into that frame's cache with one `putImageData`. The colours are CSS strings
+ * and stay so in the palettes; `RasterEntity.colorValue()` turns each into a
+ * packed pixel once and remembers it.
+ *
+ * Until 2026-09-06 this class painted through `DrawingCache.paint()`, one
+ * `fillRect` per pixel with the colour parsed from its CSS string on every
+ * change. That was the library's second way to the pixels next to
+ * `RasterEntity`, and it is gone (DECISIONS.md R-014, R-023): whatever is
+ * learned about writing pixels is now learned once.
  */
-export class SpriteEntity  extends AbstractEntity {
+export class SpriteEntity extends RasterEntity {
 
   /**
    * Creates a sprite entity.
@@ -301,9 +318,87 @@ export class SpriteEntity  extends AbstractEntity {
   } // setDimensions
 
   /**
-   * Renders the current frame/direction into its cache when needed (applying the
-   * resolved color per pixel and any repetition) and draws it to the main canvas,
-   * cropping to the parent bounds when crop rendering is enabled.
+   * The colour one decoded pixel is painted with in a given frame, resolved the
+   * way the sprite has always resolved it: the mask colour for a masked pixel
+   * of a mono sprite, the pen colour for a mono pixel, the palette entry (or
+   * its per-frame variant) for a coloured one — or false for "do not paint".
+   * @param {Object} pixel - A pixel descriptor {x, y, c?}.
+   * @param {Object|false} palette - The palette in force for the frame.
+   * @param {number} index - The frame index, for per-frame palette colours.
+   * @returns {string|false} A CSS colour, or false.
+   */
+  pixelColor(pixel, palette, index) {
+    var color = this.penColor;
+    if ('c' in pixel && color !== false && pixel.c == this.maskChar) {
+      // mono sprite with a mask: paint the paper colour, or nothing at all when
+      // no mask colour is set
+      return this.maskColor;
+    }
+    if ('c' in pixel) {
+      if (color == false) {
+        // per-frame palette (braille) takes precedence, otherwise the live this.sharedPalette
+        if (!palette) {
+          return false;
+        }
+        color = palette[pixel.c];
+        if (color && typeof color === 'object') {   // per-frame color: {0:'#aaa', 1:'#bbb', ...}
+          color = color[index];
+        }
+        return color === undefined ? false : color;
+      }
+      if (pixel.c != this.penChar) {
+        return false;
+      }
+    }
+    return color;
+  } // pixelColor
+
+  /**
+   * Paints one frame into its cache: the background in a single fill, then
+   * every pixel of the frame — repeated `repeatX` × `repeatY` times — written
+   * into the `Uint32Array` view, and one `putImageData`. RasterEntity's frame
+   * buffer is shared by all the caches of this sprite, since they are all the
+   * same size and `putImageData` copies.
+   * @param {number} index - The frame/direction index being painted.
+   * @param {DrawingCache} cache - Its cache.
+   */
+  paintFrame(index, cache) {
+    var frame = this.frameBytes(cache);
+    var px = this.pixels;
+    var width = this.width, height = this.height;
+    px.fill(this.bkColor ? RasterEntity.colorValue(this.bkColor) : 0);
+
+    var palette = this.framePalettes[index] || this.sharedPalette;
+    var pixels = this.spriteData[index];
+    for (var i = 0; i < pixels.length; i++) {
+      var pixel = pixels[i];
+      var color = this.pixelColor(pixel, palette, index);
+      if (color === false) {
+        continue;
+      }
+      var value = RasterEntity.colorValue(color);
+      // a pixel past the entity's edge is dropped, the way the canvas used to
+      // clip it — setFixSize() can make the cell smaller than the grid
+      for (var rx = 0; rx < this.repeatX; rx++) {
+        var col = pixel.x+rx*this.spriteWidth;
+        if (col >= width) {
+          continue;
+        }
+        for (var ry = 0; ry < this.repeatY; ry++) {
+          var row = pixel.y+ry*this.spriteHeight;
+          if (row < height) {
+            px[row*width+col] = value;
+          }
+        }
+      }
+    }
+    cache.ctx.putImageData(frame, 0, 0);
+  } // paintFrame
+
+  /**
+   * Renders the current frame/direction into its cache when needed and draws it
+   * to the main canvas, cropping to the parent bounds when crop rendering is
+   * enabled.
    */
   drawEntity() {
     if (this.spriteData !== null) {
@@ -312,42 +407,11 @@ export class SpriteEntity  extends AbstractEntity {
         d = 0;
       }
       var index = this.frame+d*this.frames;
-      if (this.drawingCache[index].preparePaint(this.width, this.height)) {
-        if (this.bkColor != false) {
-          this.drawingCache[index].paint(0, 0, this.width, this.height, this.bkColor);
-        }
-        this.spriteData[index].forEach((pixel) => {
-          var color = this.penColor;
-          if ('c' in pixel && color !== false && pixel.c == this.maskChar) {
-            // mono sprite with a mask: paint the paper colour, or nothing at
-            // all when no mask colour is set
-            color = this.maskColor;
-          } else if ('c' in pixel) {
-            if (color == false) {
-              // per-frame palette (braille) takes precedence, otherwise the live this.sharedPalette
-              var palette = this.framePalettes[index] || this.sharedPalette;
-              if (palette) {
-                color = palette[pixel.c];
-                if (color && typeof color === 'object') {   // per-frame color: {0:'#aaa', 1:'#bbb', ...}
-                  color = color[index];
-                }
-              }
-            } else {
-              if (pixel.c != this.penChar) {
-                color = false;
-              }
-            }
-          }
-          if (color !== false) {
-            for (var x = 0; x < this.repeatX; x++) {
-              for (var y = 0; y < this.repeatY; y++) {
-                this.drawingCache[index].paint(pixel.x+x*this.spriteWidth, pixel.y+y*this.spriteHeight, 1, 1, color);
-              }
-            }
-          }
-        });  
+      var cache = this.drawingCache[index];
+      if (cache.preparePaint(this.width, this.height)) {
+        this.paintFrame(index, cache);
       }
-      
+
       if (this.drawingCropCache == null) {
         this.app.layout.paintCache(this, index);
       } else {

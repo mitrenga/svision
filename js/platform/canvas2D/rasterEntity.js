@@ -100,6 +100,62 @@ export class RasterEntity extends AbstractEntity {
   } // rgbaValue
 
   /**
+   * Packs **any** CSS colour into a `Uint32Array` element — `'#rgb'`,
+   * `'#rrggbb'`, `'#rrggbbaa'`, `'red'`, `'rgb(…)'`, whatever a game hands
+   * over as `penColor`. Hex is parsed here; everything else is normalised by
+   * a canvas context, the one place that knows every CSS colour. Results are
+   * cached by the string, so a colour costs a parse once and a lookup after.
+   * @param {string} color - Any CSS colour.
+   * @returns {number} The value to write into {@link RasterEntity#pixels}.
+   */
+  static colorValue(color) {
+    var value = RasterEntity.colorValues.get(color);
+    if (value !== undefined) {
+      return value;
+    }
+    var hex = /^#([0-9a-f]{3,8})$/i.exec(color);
+    if (hex && hex[1].length !== 5 && hex[1].length !== 7) {
+      var digits = hex[1];
+      if (digits.length <= 4) {          // #rgb / #rgba -> #rrggbb / #rrggbbaa
+        digits = digits.replace(/./g, '$&$&');
+      }
+      value = RasterEntity.rgbaValue('#'+digits.substr(0, 6),
+        digits.length === 8 ? parseInt(digits.substr(6, 2), 16) : 255);
+    } else {
+      // not hex: the canvas normalises it to '#rrggbb' or 'rgba(r, g, b, a)'
+      var ctx = RasterEntity.scratchContext();
+      ctx.fillStyle = color;
+      var normalized = String(ctx.fillStyle);
+      if (normalized.charAt(0) === '#') {
+        value = RasterEntity.rgbaValue(normalized);
+      } else {
+        var parts = /rgba?\(\s*(\d+)\D+(\d+)\D+(\d+)(?:\D+([\d.]+))?/.exec(normalized);
+        var r = parts ? +parts[1] : 0, g = parts ? +parts[2] : 0, b = parts ? +parts[3] : 0;
+        var a = parts && parts[4] !== undefined ? Math.round(parseFloat(parts[4])*255) : 255;
+        value = (RasterEntity.littleEndian
+          ? (a << 24) | (b << 16) | (g << 8) | r
+          : (r << 24) | (g << 16) | (b << 8) | a) >>> 0;
+      }
+    }
+    RasterEntity.colorValues.set(color, value);
+    return value;
+  } // colorValue
+
+  /**
+   * A 1x1 canvas context kept for normalising colours the regexp cannot; made
+   * on the first colour that needs it, so a page never pays for it otherwise.
+   * @returns {CanvasRenderingContext2D} The scratch context.
+   */
+  static scratchContext() {
+    if (!RasterEntity.scratch) {
+      var canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 1;
+      RasterEntity.scratch = canvas.getContext('2d');
+    }
+    return RasterEntity.scratch;
+  } // scratchContext
+
+  /**
    * @param {AbstractEntity} parentEntity - The parent entity.
    * @param {number} x - X position relative to the parent.
    * @param {number} y - Y position relative to the parent.
@@ -130,7 +186,9 @@ export class RasterEntity extends AbstractEntity {
 
   init() {
     super.init();
-    this.app.layout.newDrawingCache(this, 0);
+    if (!this.drawingCache[0]) {
+      this.app.layout.newDrawingCache(this, 0);
+    }
   } // init
 
   /**
@@ -162,6 +220,23 @@ export class RasterEntity extends AbstractEntity {
   } // pixels
 
   /**
+   * The `ImageData` of one frame, made on the first call and remade when the
+   * entity changes size; {@link RasterEntity#pixels} follows it. An entity with
+   * several caches — one per animation frame, as {@link SpriteEntity} — paints
+   * them all through this one buffer, because `putImageData` copies.
+   * @param {DrawingCache} cache - The cache the frame is going to be put into.
+   * @returns {ImageData} The frame's bytes, width × height × 4.
+   */
+  frameBytes(cache) {
+    if (this.imageData === null || this.imageData.width != this.width
+        || this.imageData.height != this.height) {
+      this.imageData = cache.ctx.createImageData(this.width, this.height);
+      this.pixels32 = null;
+    }
+    return this.imageData;
+  } // frameBytes
+
+  /**
    * Fills the frame. The base version does nothing; a game overrides it and
    * writes width × height RGBA pixels — through the bytes it is given, or
    * through {@link RasterEntity#pixels}.
@@ -187,16 +262,15 @@ export class RasterEntity extends AbstractEntity {
     }
     var cache = this.drawingCache[0];
     if (cache.preparePaint(this.width, this.height)) {
-      if (this.imageData === null || this.imageData.width != this.width
-          || this.imageData.height != this.height) {
-        this.imageData = cache.ctx.createImageData(this.width, this.height);
-        this.pixels32 = null;
-      }
-      this.paintRaster(this.imageData.data);
-      cache.ctx.putImageData(this.imageData, 0, 0);
+      var frame = this.frameBytes(cache);
+      this.paintRaster(frame.data);
+      cache.ctx.putImageData(frame, 0, 0);
     }
     this.app.layout.paintCache(this, 0);
     this.drawSubEntities();
   } // drawEntity
 
 } // RasterEntity
+
+/** CSS colour string -> packed pixel value, filled by RasterEntity.colorValue() */
+RasterEntity.colorValues = new Map();
