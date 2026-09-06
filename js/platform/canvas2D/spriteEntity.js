@@ -69,20 +69,6 @@ export class SpriteEntity extends RasterEntity {
   } // constructor
 
   /**
-   * Enables crop-to-parent rendering by creating a crop drawing cache.
-   */
-  enablePaintWithVisibility() {
-    this.app.layout.newDrawingCropCache(this);
-  } // enablePaintWithVisibility
-
-  /**
-   * Disables crop-to-parent rendering by discarding the crop drawing cache.
-   */
-  disablePaintWithVisibility() {
-    this.drawingCropCache = null;
-  } // disablePaintWithVisibility
-
-  /**
    * Forces a fixed sprite cell size, updating the entity dimensions according to the
    * current repeat factors.
    * @param {number} width - Fixed sprite cell width.
@@ -411,30 +397,7 @@ export class SpriteEntity extends RasterEntity {
       if (cache.preparePaint(this.width, this.height)) {
         this.paintFrame(index, cache);
       }
-
-      if (this.drawingCropCache == null) {
-        this.app.layout.paintCache(this, index);
-      } else {
-        if ((this.x-this.parentCoverX >= 0) && (this.y-this.parentCoverY >= 0) && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight)) {
-          this.app.layout.paintCache(this, index);
-        } else {
-          var cropX = 0;
-          if (this.x-this.parentCoverX < 0) {
-            cropX = this.x-this.parentCoverX;
-          }
-          if (this.x+this.width > this.parentWidth) {
-            cropX = this.x+this.width-this.parentWidth;
-          }
-          var cropY = 0;
-          if (this.y-this.parentCoverY < 0) {
-            cropY = this.y-this.parentCoverY;
-          }
-          if (this.y+this.height > this.parentHeight) {
-            cropY = this.y+this.height-this.parentHeight;
-          }
-          this.app.layout.paintCropCache(this, index, -cropX, -cropY, -cropX, -cropY);
-        }
-      }
+      this.blitCache(index);
     }
   } // drawEntity
 
