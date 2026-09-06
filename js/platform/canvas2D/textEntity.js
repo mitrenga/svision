@@ -1,12 +1,19 @@
-const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
+const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion);
 // begin code
 
 /**
  * A multi-line text rendering entity. It lays out and draws bitmap-font text with
  * support for alignment (left/right/center/justify), word wrapping, per-glyph colors,
  * flashing animation, caching, and optional crop-to-parent clipping.
+ *
+ * It is a {@link RasterEntity}: the glyphs — lists of rectangles out of the
+ * font — are painted into the frame with {@link RasterEntity#paintRect} on a
+ * transparent ground, once per change, and the frame is blitted (cropped to the
+ * parent when asked to) on every draw. The background, hover and click colours
+ * are painted under it on the main canvas, as for every entity, so a hover
+ * never has to repaint the text.
  */
-export class TextEntity  extends AbstractEntity {
+export class TextEntity extends RasterEntity {
 
   /**
    * Creates a text entity.
@@ -105,27 +112,6 @@ export class TextEntity  extends AbstractEntity {
   } // init
 
   /**
-   * Enables crop-to-parent rendering by creating a crop drawing cache.
-   */
-  enablePaintWithVisibility() {
-    this.app.layout.newDrawingCropCache(this);
-  } // enablePaintWithVisibility
-
-  /**
-   * Disables crop-to-parent rendering by discarding the crop drawing cache.
-   */
-  disablePaintWithVisibility() {
-    this.drawingCropCache = null;
-  } // disablePaintWithVisibility
-
-  /**
-   * Marks the text drawing cache as dirty so it is re-rendered on the next draw.
-   */
-  cleanCache() {
-    this.drawingCache[0].cleanCache();
-  } // cleanCache
-
-  /**
    * Returns the rendered width of a single character at the current scale.
    * @param {string} char - The character to measure.
    * @returns {number} The character width in pixels.
@@ -217,7 +203,7 @@ export class TextEntity  extends AbstractEntity {
   } // glyphMask
 
   /**
-   * Paints a single glyph's pixel rectangles into the drawing cache at the given base
+   * Paints a single glyph's pixel rectangles into the frame at the given base
    * X position and current cursor Y.
    * @param {Object} charData - The glyph data containing its pixel rectangle list.
    * @param {number} baseX - The X position at which to draw the glyph.
@@ -225,7 +211,7 @@ export class TextEntity  extends AbstractEntity {
    */
   paintGlyph(charData, baseX, penColor) {
     for (var x = 0; x < charData.data.length; x++) {
-      this.drawingCache[0].paint(baseX+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
+      this.paintRect(baseX+charData.data[x][0], this.cursorY+charData.data[x][1], charData.data[x][2], charData.data[x][3], penColor);
     }
   } // paintGlyph
 
@@ -264,9 +250,12 @@ export class TextEntity  extends AbstractEntity {
    * to the parent bounds when crop rendering is enabled.
    */
   drawEntity() {
-    super.drawEntity();
+    this.paintBackground();
 
-    if (this.drawingCache[0].preparePaint(this.width, this.height)) {
+    var cache = this.drawingCache[0];
+    if (cache.preparePaint(this.width, this.height)) {
+      var frame = this.frameBytes(cache);
+      this.pixels.fill(0);
       this.cursorY = this.options.topMargin;
 
       var formattedText = this.text;
@@ -363,31 +352,10 @@ export class TextEntity  extends AbstractEntity {
       // Total laid-out height (entity top to the bottom of the last line), so a
       // container such as ScrollViewEntity can size to the wrapped content.
       this.usedHeight = this.cursorY+(this.fonts.charsHeight+this.fonts.lineSpacing)*this.options.scale+this.options.bottomMargin;
+      cache.ctx.putImageData(frame, 0, 0);
     }
 
-    if (this.drawingCropCache == null) {
-      this.app.layout.paintCache(this, 0);
-    } else {
-      if ((this.x-this.parentCoverX >= 0) && (this.y-this.parentCoverY >= 0) && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight)) {
-        this.app.layout.paintCache(this, 0);
-      } else {
-        var cropX = 0;
-        if (this.x-this.parentCoverX < 0) {
-          cropX = this.x-this.parentCoverX;
-        }
-        if (this.x+this.width > this.parentWidth) {
-          cropX = this.x+this.width-this.parentWidth;
-        }
-        var cropY = 0;
-        if (this.y-this.parentCoverY < 0) {
-          cropY = this.y-this.parentCoverY;
-        }
-        if (this.y+this.height > this.parentHeight) {
-          cropY = this.y+this.height-this.parentHeight;
-        }
-        this.app.layout.paintCropCache(this, 0, -cropX, -cropY, -cropX, -cropY);
-      }
-    }
+    this.blitCache(0);
   } // drawEntity
 
   /**

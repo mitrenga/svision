@@ -65,7 +65,17 @@ const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.sr
  * A raster that has no machine memory under it — a tile map decoded straight
  * to colour, or a picture composed pixel by pixel — writes into the bytes it
  * is handed, or through the `Uint32Array` view of {@link RasterEntity#pixels}
- * when a whole pixel at a time is easier than four bytes.
+ * when a whole pixel at a time is easier than four bytes, or by rectangles
+ * through {@link RasterEntity#paintRect} when it is text.
+ *
+ * ## The pieces an entity with its own draw order takes
+ *
+ * {@link SpriteEntity} has a cache per animation frame, {@link TextEntity} crops
+ * to its parent, {@link SlidingTextEntity} paints a frame wider than itself and
+ * shows a moving window of it. They override `drawEntity()` and put it together
+ * from the same pieces every raster uses: {@link RasterEntity#paintBackground},
+ * {@link RasterEntity#frameBytes}, {@link RasterEntity#paintRect} /
+ * {@link RasterEntity#pixels}, and {@link RasterEntity#blitCache}.
  */
 export class RasterEntity extends AbstractEntity {
 
@@ -227,14 +237,101 @@ export class RasterEntity extends AbstractEntity {
    * @param {DrawingCache} cache - The cache the frame is going to be put into.
    * @returns {ImageData} The frame's bytes, width × height × 4.
    */
-  frameBytes(cache) {
-    if (this.imageData === null || this.imageData.width != this.width
-        || this.imageData.height != this.height) {
-      this.imageData = cache.ctx.createImageData(this.width, this.height);
+  frameBytes(cache, width, height) {
+    var w = width === undefined ? this.width : width;
+    var h = height === undefined ? this.height : height;
+    if (this.imageData === null || this.imageData.width != w || this.imageData.height != h) {
+      this.imageData = cache.ctx.createImageData(w, h);
       this.pixels32 = null;
     }
     return this.imageData;
   } // frameBytes
+
+  /**
+   * Fills a rectangle of the current frame with a colour, clipped to the frame —
+   * what `DrawingCache.paint()` does with `fillRect`, done on the bytes. Text
+   * glyphs are lists of such rectangles, so this is how the text entities
+   * paint. Only valid inside a paint, after {@link RasterEntity#frameBytes}.
+   * @param {number} x - Left edge, may be negative.
+   * @param {number} y - Top edge, may be negative.
+   * @param {number} width - Width in pixels.
+   * @param {number} height - Height in pixels.
+   * @param {string|false} color - Any CSS colour; false paints nothing.
+   */
+  paintRect(x, y, width, height, color) {
+    if (color === false || color === undefined) {
+      return;
+    }
+    var frame = this.imageData;
+    var x0 = Math.max(0, x), y0 = Math.max(0, y);
+    var x1 = Math.min(frame.width, x+width), y1 = Math.min(frame.height, y+height);
+    if (x0 >= x1 || y0 >= y1) {
+      return;
+    }
+    var px = this.pixels;
+    var value = RasterEntity.colorValue(color);
+    for (var row = y0; row < y1; row++) {
+      px.fill(value, row*frame.width+x0, row*frame.width+x1);
+    }
+  } // paintRect
+
+  /**
+   * Paints what AbstractEntity paints for every entity — the background in
+   * `bkColor`, or the hover/click colour while the pointer is on it — straight
+   * onto the main canvas, under the raster. Separate from
+   * {@link RasterEntity#drawEntity} so that an entity with its own draw order
+   * (text with crop, a sprite with many caches) can still have it.
+   */
+  paintBackground() {
+    super.drawEntity();
+  } // paintBackground
+
+  /**
+   * Enables crop-to-parent rendering: a second cache the visible part of the
+   * frame is copied into when the entity reaches past its parent. See
+   * {@link RasterEntity#blitCache}.
+   */
+  enablePaintWithVisibility() {
+    this.app.layout.newDrawingCropCache(this);
+  } // enablePaintWithVisibility
+
+  /**
+   * Disables crop-to-parent rendering by discarding the crop cache.
+   */
+  disablePaintWithVisibility() {
+    this.drawingCropCache = null;
+  } // disablePaintWithVisibility
+
+  /**
+   * Blits one cache to the screen — whole, or, with crop-to-parent enabled and
+   * the entity reaching past its parent, only the part inside the parent. The
+   * crop arithmetic was the same in every entity that had it; it lives here now.
+   * @param {number} [index] - The cache to blit, 0 by default.
+   */
+  blitCache(index) {
+    var i = index || 0;
+    if (this.drawingCropCache == null
+        || ((this.x-this.parentCoverX >= 0) && (this.y-this.parentCoverY >= 0)
+            && (this.x+this.width-1 <= this.parentWidth) && (this.y+this.height-1 <= this.parentHeight))) {
+      this.app.layout.paintCache(this, i);
+      return;
+    }
+    var cropX = 0;
+    if (this.x-this.parentCoverX < 0) {
+      cropX = this.x-this.parentCoverX;
+    }
+    if (this.x+this.width > this.parentWidth) {
+      cropX = this.x+this.width-this.parentWidth;
+    }
+    var cropY = 0;
+    if (this.y-this.parentCoverY < 0) {
+      cropY = this.y-this.parentCoverY;
+    }
+    if (this.y+this.height > this.parentHeight) {
+      cropY = this.y+this.height-this.parentHeight;
+    }
+    this.app.layout.paintCropCache(this, i, -cropX, -cropY, -cropX, -cropY);
+  } // blitCache
 
   /**
    * Fills the frame. The base version does nothing; a game overrides it and
@@ -256,6 +353,7 @@ export class RasterEntity extends AbstractEntity {
     if (this.hide) {
       return;
     }
+    this.paintBackground();
     if (this.watchFlash && this.stack.flashState !== this.flashState) {
       this.flashState = this.stack.flashState;
       this.cleanCache();
@@ -266,7 +364,7 @@ export class RasterEntity extends AbstractEntity {
       this.paintRaster(frame.data);
       cache.ctx.putImageData(frame, 0, 0);
     }
-    this.app.layout.paintCache(this, 0);
+    this.blitCache(0);
     this.drawSubEntities();
   } // drawEntity
 

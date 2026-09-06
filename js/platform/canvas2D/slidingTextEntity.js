@@ -1,12 +1,17 @@
-const { AbstractEntity } = await import('../../abstractEntity.js?ver='+window.srcVersion);
+const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion);
 // begin code
 
 /**
  * A scrolling text entity that renders a single line of text wider than its viewport
  * and animates it horizontally (ping-pong, scroll-to-left, looping, or custom). The
  * full text is cached once and a cropped window of it is drawn each frame.
+ *
+ * It is a {@link RasterEntity} whose frame is **wider than the entity**: the
+ * whole line is painted once with {@link RasterEntity#paintRect}, into a cache
+ * `animationWidth` wide, and the scroll is nothing but the window
+ * `paintCropCache()` copies out of it every draw.
  */
-export class SlidingTextEntity extends AbstractEntity {
+export class SlidingTextEntity extends RasterEntity {
 
   /**
    * Creates a sliding text entity.
@@ -153,17 +158,21 @@ export class SlidingTextEntity extends AbstractEntity {
    * visible window of it at the animation position.
    */
   drawEntity() {
-    super.drawEntity();
+    this.paintBackground();
 
-    if (this.drawingCache[0].preparePaint(this.animationWidth, this.height)) {
+    var cache = this.drawingCache[0];
+    if (cache.preparePaint(this.animationWidth, this.height)) {
+      var frame = this.frameBytes(cache, this.animationWidth, this.height);
+      this.pixels.fill(0);
       this.cursorX = this.options.leftMargin;
       for (var ch = 0; ch < this.text.length; ch++) {
         var charData = this.fonts.getCharData(this.text[ch], '1', 1);
         for (var x = 0; x < charData.data.length; x++) {
-          this.drawingCache[0].paint(this.cursorX+charData.data[x][0], this.options.topMargin+charData.data[x][1], charData.data[x][2], charData.data[x][3], this.penColor);
+          this.paintRect(this.cursorX+charData.data[x][0], this.options.topMargin+charData.data[x][1], charData.data[x][2], charData.data[x][3], this.penColor);
         }
         this.cursorX += charData.width+this.fonts.charsSpacing;
       }
+      cache.ctx.putImageData(frame, 0, 0);
     }
     this.app.layout.paintCropCache(this, 0, this.animationPosition, 0, 0, 0);
   } // drawEntity
@@ -192,13 +201,6 @@ export class SlidingTextEntity extends AbstractEntity {
     }
     return false;
   } // handleEvent
-
-  /**
-   * Marks the text drawing cache as dirty so it is re-rendered on the next draw.
-   */
-  cleanCache() {
-    this.drawingCache[0].cleanCache();
-  } // cleanCache
 
   /**
    * Advances the scrolling animation based on the elapsed time and the configured
