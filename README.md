@@ -58,6 +58,24 @@ send-up / send-down / send-to-model event system.
 - **`SpriteEntity`** — draws a sprite with frames/directions, mono (`penChar`)
   or palette-based colours, with caching.
 
+### ZX Spectrum video memory
+- **`ZXVideoRAM`** (canvas2D / zxSpectrum) is the **model of the machine's
+  screen**, not of any game: the 6912 bytes of `$4000-$5AFF`, the ULA's
+  interleaved line addressing (`lineOffset`, `addressOf`,
+  `attributeAddressOf`), `peek`/`poke` with the write operation the original
+  used (`'none'`, `'xor'`, `'and'`, `'or'`), and the turning of bytes plus
+  attributes into RGBA — all of it, or a rectangle of character cells
+  (`paint`), with an optional attribute mask for games that keep something of
+  their own in a spare attribute bit. `setLinear()`/`toLinear()` convert to and
+  from the flat bitmap/attribute pair some games pass around, and
+  `paintLinear()` paints such a pair directly. It touches no DOM, so the same
+  code renders in the browser and in an offline `match*` tool under Node.
+- **`ZXVideoRAMEntity`** puts that memory on the screen: it owns the drawing
+  cache, watches the FLASH phase and paints once per game frame rather than
+  once per display frame. A game either writes into `videoRAM` and calls
+  `invalidate()`, or overrides `compose()` to build the screen lazily.
+  Sabre Wulf's play area is one of these.
+
 ### Text & fonts
 - **`TextEntity`** and **`SlidingTextEntity`** (scrolling text).
 - **`AbstractFonts`** plus built-in bitmap fonts: `Fonts3x3`, `Fonts5x5`,
