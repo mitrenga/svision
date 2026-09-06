@@ -1,4 +1,3 @@
-const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -63,37 +62,87 @@ export class ZXMachineSounds {
   } // tapeRndData
 
   /**
-   * Tape data carrying real bytes: the two sync pulses and then every bit of
-   * the given data encoded the way the tape format does it.
+   * Tape data carrying real bytes: the two sync pulses, every bit of the given
+   * data encoded the way the tape format does it, and the terminating pulse
+   * the ROM writes after the last bit.
+   *
+   * ## Bytes that are also pictures
+   *
+   * A block can say where it is: with `byteEvent` the sound carries one event
+   * per byte, fired the moment that byte has finished going down the tape, and
+   * with `endEvent` one more when the block is over. A game showing a loading
+   * screen puts the bytes into its video memory as they arrive and gets the
+   * real thing — the picture appears at the speed of the sound because it *is*
+   * the sound — instead of an animation timed to look like it.
+   *
+   * The events are dispatched by every handler, the silent one included, so a
+   * player with no audio or a muted bus still sees the picture load.
+   *
    * @param {number} sampleRate - The audio context sample rate.
    * @param {number} volume - Bus volume level.
-   * @param {string} hexData - The bytes to encode, as a hexadecimal string.
+   * @param {Uint8Array|number[]|string} data - The bytes to encode, or a
+   *        hexadecimal string of them.
+   * @param {Object} [options] - {byteEvent, endEvent, firstByte}: `byteEvent`
+   *        and `endEvent` are event ids; `firstByte` is the offset reported for
+   *        the first byte, 0 by default.
    * @returns {Object} svision pulse data.
    */
-  static tapeData(sampleRate, volume, hexData) {
+  static tapeData(sampleRate, volume, data, options) {
+    var opts = options || {};
+    var bytes = this.dataBytes(data);
     var pulses = [0, 0, 1, 1];
-    for (var x = 0; x < hexData.length/2; x++) {
-      var binByte = Tool.hexToBin(hexData.substring(x*2, x*2+2));
-      for (var b = 0; b < binByte.length; b++) {
-        var fragment = (binByte[b] == '1') ? 3 : 2;
+    var events = false;
+    for (var x = 0; x < bytes.length; x++) {
+      for (var b = 7; b >= 0; b--) {
+        var fragment = ((bytes[x] >> b) & 1) ? 3 : 2;
         pulses.push(fragment);
         pulses.push(fragment);
       }
+      if (opts.byteEvent) {
+        events = events || {};
+        events[pulses.length] = {id: opts.byteEvent,
+                                 at: (opts.firstByte || 0)+x, value: bytes[x]};
+      }
     }
-    return {fragments: this.tapeFragments(sampleRate), pulses: pulses, volume: volume};
+    pulses.push(4);
+    if (opts.endEvent) {
+      events = events || {};
+      events[pulses.length] = {id: opts.endEvent, bytes: bytes.length};
+    }
+    var audioData = {fragments: this.tapeFragments(sampleRate),
+                     pulses: pulses, volume: volume};
+    if (events !== false) {
+      audioData.events = events;
+    }
+    return audioData;
   } // tapeData
 
   /**
-   * The four pulse lengths of the tape format: the two sync pulses (667 and
-   * 735 T states) and the two data bit pulses (855 for a zero, 1710 for a one).
+   * The bytes of a block, however the caller happens to hold them.
+   * @param {Uint8Array|number[]|string} data - Bytes, or a hexadecimal string.
+   * @returns {Uint8Array|number[]} The bytes.
+   */
+  static dataBytes(data) {
+    if (typeof data !== 'string') {
+      return data;
+    }
+    var bytes = new Uint8Array(Math.floor(data.length/2));
+    for (var x = 0; x < bytes.length; x++) {
+      bytes[x] = parseInt(data.substring(x*2, x*2+2), 16);
+    }
+    return bytes;
+  } // dataBytes
+
+  /**
+   * The pulse lengths of the tape format: the two sync pulses (667 and 735
+   * T states), the two data bit pulses (855 for a zero, 1710 for a one) and
+   * the terminating pulse (945) that closes a block.
    * @param {number} sampleRate - The audio context sample rate.
    * @returns {number[]} The pulse lengths in samples.
    */
   static tapeFragments(sampleRate) {
-    return [
-      this.pulse(sampleRate, 667), this.pulse(sampleRate, 735),
-      this.pulse(sampleRate, 855), this.pulse(sampleRate, 1710)
-    ];
+    return [667, 735, 855, 1710, 945].map(
+      (tStates) => this.pulse(sampleRate, tStates));
   } // tapeFragments
 
   /**
