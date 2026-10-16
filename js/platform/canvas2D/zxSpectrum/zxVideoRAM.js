@@ -47,6 +47,14 @@ const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
  *
  * Anything outside $4000-$5AFF is silently dropped: on the real machine those
  * addresses are ROM, and writing to ROM does nothing.
+ *
+ * ## And one thing the machine has not got
+ *
+ * {@link ZXVideoRAM#enableInkPlane} adds an optional **ink plane**: a byte per
+ * pixel remembering which ink lit it, so a remake can paint without attribute
+ * clash while its video memory stays byte for byte the original's. It is off
+ * by default and costs nothing off — see the ink plane section below for what
+ * it is and why it is not a change to the model of the machine.
  */
 export class ZXVideoRAM {
 
@@ -96,6 +104,10 @@ export class ZXVideoRAM {
     this.id = 'ZXVideoRAM';
 
     this.bytes = new Uint8Array(ZXVideoRAM.BYTES);
+    /** the optional ink plane, one byte per pixel; null until asked for */
+    this.inkPlane = null;
+    /** the pen the ink plane is written with; 0 means "leave it to the cell" */
+    this.pen = 0;
     if (bytes) {
       this.bytes.set(ZXVideoRAM.decode(bytes).subarray(0, ZXVideoRAM.BYTES));
     }
@@ -112,6 +124,17 @@ export class ZXVideoRAM {
   static lineOffset(line) {
     return ((line & 0xC0) << 5) | ((line & 0x07) << 8) | ((line & 0x38) << 2);
   } // lineOffset
+
+  /**
+   * The other way round: which pixel line a bitmap offset belongs to. The
+   * ULA's interleaving is a permutation of bits, so undoing it is the same
+   * shuffle backwards.
+   * @param {number} offset - An offset into the bitmap, 0 to $17FF.
+   * @returns {number} The pixel line, 0-191.
+   */
+  static lineOfOffset(offset) {
+    return ((offset & 0x1800) >> 5) | ((offset & 0x0700) >> 8) | ((offset & 0x00E0) >> 2);
+  } // lineOfOffset
 
   /**
    * The screen address of a pixel position, in the two halves the machine
@@ -250,6 +273,9 @@ export class ZXVideoRAM {
 
   /**
    * Writes a byte at an offset from BASE, without the address arithmetic.
+   * A write into the bitmap also keeps the ink plane up to date when one is
+   * on (enableInkPlane): markInk() gives the bits the write drew to the
+   * current pen and takes the owner away from the bits it put out.
    * @param {number} offset - 0 to 6911.
    * @param {number} value - The byte to write.
    * @param {string} [extraOperation] - 'none' (default), 'xor', 'and' or 'or'.
@@ -259,7 +285,12 @@ export class ZXVideoRAM {
     if (offset < 0 || offset >= ZXVideoRAM.BYTES) {
       return false;
     }
-    this.bytes[offset] = ZXVideoRAM.combine(this.bytes[offset], value, extraOperation);
+    var before = this.bytes[offset];
+    var after = ZXVideoRAM.combine(before, value, extraOperation);
+    this.bytes[offset] = after;
+    if (this.inkPlane && offset < ZXVideoRAM.ATTRIBUTES_OFFSET) {
+      this.markInk(offset, before, after, value & 0xFF, extraOperation);
+    }
     return true;
   } // pokeOffset
 
@@ -279,10 +310,146 @@ export class ZXVideoRAM {
                            value, extraOperation);
   } // pokeAttribute
 
+  // -------------------------------------------------------------- the ink plane
+
+  /**
+   * ## Colour at pixel resolution, without touching a single byte
+   *
+   * The ULA gives a cell one ink and one paper, and that is the whole of the
+   * machine: two things of different colours in one 8x8 cell cannot both keep
+   * theirs. That is *attribute clash*, and reproducing it is the point of this
+   * class — the 6912 bytes are the model of the machine and nothing here is
+   * allowed to change them.
+   *
+   * The ink plane sits **beside** them. It is one byte per pixel, saying which
+   * ink the thing that lit that pixel was drawn with, and it is maintained by
+   * the very same writes: what a write lights up takes the current `pen`, what
+   * a write puts out loses its owner. So it follows the bitmap exactly, mask
+   * and all, and it costs nothing to keep true — there is no second drawing
+   * pass and no second model of the picture.
+   *
+   * {@link ZXVideoRAM#paint} then colours an owned pixel with its owner's ink
+   * and every other pixel out of the cell attribute exactly as before. A game
+   * that never sets a pen has no owners, so nothing changes for it, and a game
+   * that sets one everywhere loses its clash while its video memory stays byte
+   * for byte what the original's was.
+   *
+   * ★ It is therefore a **deliberate departure from the machine**, not a
+   * correction of it: switch it off and the picture is the Spectrum's again.
+   * A remake that measures itself against an original keeps measuring the
+   * bytes; only what reaches the glass is different.
+   *
+   * The byte is not an attribute — it only has to carry the ink:
+   *
+   * ```
+   *   bit 7    owned; a byte of 0 means "no owner, use the cell"
+   *   bit 4    FLASH
+   *   bit 3    BRIGHT
+   *   bits 0-2 ink
+   * ```
+   */
+
+  /** an ink plane byte with an owner in it */
+  static get INK_OWNED() { return 0x80; }
+
+  /**
+   * Turns the ink plane on or off. Off is the default and costs nothing: the
+   * plane is not allocated, `pokeOffset` does not look at it and `paint` is
+   * the ULA's own again.
+   * @param {boolean} on - Whether to keep an ink plane.
+   * @returns {ZXVideoRAM} This, so calls can be chained.
+   */
+  enableInkPlane(on) {
+    if (on && !this.inkPlane) {
+      this.inkPlane = new Uint8Array(ZXVideoRAM.WIDTH*ZXVideoRAM.HEIGHT);
+    } else if (!on) {
+      this.inkPlane = null;
+    }
+    return this;
+  } // enableInkPlane
+
+  /**
+   * Packs an attribute byte into an ink plane byte.
+   * @param {number} attr - An attribute byte, as the game would write it.
+   * @returns {number} The plane byte, with bit 7 set.
+   */
+  static encodeInk(attr) {
+    return ZXVideoRAM.INK_OWNED | (attr & 0x07)
+           | ((attr & 0x40) ? 0x08 : 0) | ((attr & 0x80) ? 0x10 : 0);
+  } // encodeInk
+
+  /**
+   * Sets the pen every following write marks the pixels it lights with.
+   * @param {number|null} attr - The attribute the thing being drawn carries,
+   *        or null/undefined to draw **unowned** — which is what something
+   *        whose colour is the cell's own business does (a rocket that is also
+   *        a fuel gauge, a score printed in the colour of its row).
+   * @returns {ZXVideoRAM} This.
+   */
+  setPen(attr) {
+    this.pen = (attr === null || attr === undefined)
+               ? 0 : ZXVideoRAM.encodeInk(attr);
+    return this;
+  } // setPen
+
+  /**
+   * Carries one write of the bitmap over into the ink plane.
+   *
+   * Which bits the write **drew** depends on the operation, and that is the
+   * whole of the rule: 'and' is how these games rub a sprite out (they write
+   * the complement of the silhouette), so it draws nothing and only takes
+   * owners away; everything else draws whatever bits it wrote and left lit.
+   * A bit that ended up dark loses its owner either way.
+   * @param {number} offset - The bitmap offset written.
+   * @param {number} before - The byte that was there.
+   * @param {number} after - The byte that is there now.
+   * @param {number} value - The byte the caller wrote.
+   * @param {string} [extraOperation] - The operation it wrote it with.
+   */
+  markInk(offset, before, after, value, extraOperation) {
+    var drawn = (extraOperation === 'and') ? 0 : (value & after);
+    if (before === after && !drawn) {
+      return;
+    }
+    var plane = this.inkPlane;
+    var base = ZXVideoRAM.lineOfOffset(offset)*ZXVideoRAM.WIDTH+(offset & 0x1F)*8;
+    var pen = this.pen;
+    for (var bit = 0; bit < 8; bit++) {
+      var mask = 0x80 >> bit;
+      if (!(after & mask)) {
+        if (before & mask) {
+          plane[base+bit] = 0;
+        }
+      } else if (drawn & mask) {
+        plane[base+bit] = pen;
+      }
+    }
+  } // markInk
+
+  /**
+   * Forgets the owners of a rectangle of cells, so that what is drawn there
+   * next starts from the cell attribute again.
+   * @param {Object} [area] - {col, row, cols, rows} in cells; all of it by default.
+   * @returns {ZXVideoRAM} This.
+   */
+  clearInk(area) {
+    if (!this.inkPlane) {
+      return this;
+    }
+    var box = ZXVideoRAM.area(area);
+    for (var line = box.row*ZXVideoRAM.CELL;
+         line < (box.row+box.rows)*ZXVideoRAM.CELL; line++) {
+      var at = line*ZXVideoRAM.WIDTH+box.col*ZXVideoRAM.CELL;
+      this.inkPlane.fill(0, at, at+box.cols*ZXVideoRAM.CELL);
+    }
+    return this;
+  } // clearInk
+
   // ------------------------------------------------------------- whole areas
 
   /**
-   * Clears the memory, or fills it with a byte.
+   * Clears the memory, or fills it with a byte. The ink plane, when there is
+   * one, is wiped as well: nothing on the screen has an owner any more.
    * @param {number} [bitmap] - The byte to put in the bitmap, 0 by default.
    * @param {number} [attribute] - And in the attributes, 0 by default.
    * @returns {ZXVideoRAM} This, so calls can be chained.
@@ -290,6 +457,9 @@ export class ZXVideoRAM {
   clear(bitmap, attribute) {
     this.bytes.fill(bitmap || 0, 0, ZXVideoRAM.ATTRIBUTES_OFFSET);
     this.bytes.fill(attribute || 0, ZXVideoRAM.ATTRIBUTES_OFFSET, ZXVideoRAM.BYTES);
+    if (this.inkPlane) {
+      this.inkPlane.fill(0);
+    }
     return this;
   } // clear
 
@@ -311,15 +481,109 @@ export class ZXVideoRAM {
   } // fillAttributes
 
   /**
+   * Empties a rectangle of character cells: zero bitmap, one attribute — what
+   * a game does to the rows of its panel before it composes them again.
+   * @param {Object} area - {col, row, cols, rows} in character cells.
+   * @param {number} [attribute] - The attribute byte of every cell, 0 by default.
+   * @returns {ZXVideoRAM} This.
+   */
+  clearArea(area, attribute) {
+    var box = ZXVideoRAM.area(area);
+    for (var line = box.row*ZXVideoRAM.CELL; line < (box.row+box.rows)*ZXVideoRAM.CELL; line++) {
+      var at = ZXVideoRAM.lineOffset(line)+box.col;
+      this.bytes.fill(0, at, at+box.cols);
+    }
+    this.clearInk(box);
+    return this.fillAttributes(box, attribute || 0);
+  } // clearArea
+
+  /**
+   * Writes the eight bitmap bytes of one character cell — a glyph of a
+   * character set, a tile of a display list. The attribute is not touched.
+   * @param {number} row - Character row, 0-23.
+   * @param {number} col - Character column, 0-31.
+   * @param {Uint8Array|Array} cell - The eight bytes, top line first.
+   * @param {string} [extraOperation] - 'none' (default), 'xor', 'and' or 'or'.
+   * @returns {boolean} True when the cell was on the screen.
+   */
+  pokeCell(row, col, cell, extraOperation) {
+    if (row < 0 || row >= ZXVideoRAM.ROWS || col < 0 || col >= ZXVideoRAM.COLS) {
+      return false;
+    }
+    for (var line = 0; line < ZXVideoRAM.CELL; line++) {
+      this.pokeOffset(ZXVideoRAM.lineOffset(row*ZXVideoRAM.CELL+line)+col, cell[line], extraOperation);
+    }
+    return true;
+  } // pokeCell
+
+  /**
+   * Blits a bitmap at a pixel position, shifted inside the cell the way the
+   * Spectrum blitters do it: byte by byte with the carry handed to the next
+   * one, so a sprite that does not start on a cell boundary widens by a byte
+   * (Underwurlde $97A5, Nodes of Yesod $9508). XOR is the usual operation —
+   * that is how those games rub a sprite out again, and why it punches holes
+   * in the scenery instead of covering it.
+   *
+   * Lines outside `area` are not written, nor bytes beyond its columns: the
+   * originals never let a sprite leave its window. A zero byte is written like
+   * any other, which for 'xor' and 'or' changes nothing.
+   * @param {Uint8Array} bitmap - `bytesPerLine` bytes per pixel line, top line first.
+   * @param {number} bytesPerLine - Width of the bitmap in bytes.
+   * @param {number} height - Height of the bitmap in pixel lines.
+   * @param {number} x - Left edge in pixels; may be negative or beyond the screen.
+   * @param {number} y - Top edge in pixel lines of the screen; may be outside.
+   * @param {Object} [area] - {col, row, cols, rows} in cells the blit is clipped to;
+   *        the whole screen by default.
+   * @param {string} [extraOperation] - 'none' (default), 'xor', 'and' or 'or'.
+   * @returns {number} The width of the blit in bytes: `bytesPerLine`, plus one
+   *          when it was shifted — the width the attribute rules of the games
+   *          work with.
+   */
+  blitShifted(bitmap, bytesPerLine, height, x, y, area, extraOperation) {
+    var box = ZXVideoRAM.area(area);
+    var top = box.row*ZXVideoRAM.CELL, bottom = (box.row+box.rows)*ZXVideoRAM.CELL;
+    var shift = ((x % 8)+8) % 8;
+    var byte0 = Math.floor(x/8);
+    var span = bytesPerLine+(shift ? 1 : 0);
+    for (var line = 0; line < height; line++) {
+      var target = y+line;
+      if (target < top || target >= bottom) {
+        continue;
+      }
+      var at = ZXVideoRAM.lineOffset(target);
+      var carry = 0;
+      for (var i = 0; i < span; i++) {
+        var source = (i < bytesPerLine) ? bitmap[line*bytesPerLine+i] : 0;
+        var value = shift ? ((source >> shift) | carry) : source;
+        carry = shift ? ((source << (8-shift)) & 0xFF) : 0;
+        var column = byte0+i;
+        if (column < box.col || column >= box.col+box.cols) {
+          continue;
+        }
+        this.pokeOffset(at+column, value, extraOperation);
+      }
+    }
+    return span;
+  } // blitShifted
+
+  /**
    * Replaces the whole content in one go — the fastest way to start a frame
    * from a prepared picture, and what a game does when it composes every frame
-   * from a clean room rather than rubbing the last one out.
+   * from a clean room rather than rubbing the last one out. The ink plane,
+   * when there is one, is wiped: a whole picture carries no owners.
    * @param {ZXVideoRAM|Uint8Array|string} source - What to copy in.
    * @returns {ZXVideoRAM} This.
    */
   restore(source) {
-    this.bytes.set(source instanceof ZXVideoRAM
-      ? source.bytes : ZXVideoRAM.decode(source).subarray(0, ZXVideoRAM.BYTES));
+    // duck-typed rather than `instanceof`: a Node tool that imports this
+    // module without the `?ver=` query gets a second copy of the class, and a
+    // memory made by one copy has to be a memory for the other (R-001)
+    var memory = source && source.bytes instanceof Uint8Array && source.id === this.id;
+    this.bytes.set(memory ? source.bytes : ZXVideoRAM.decode(source).subarray(0, ZXVideoRAM.BYTES));
+    if (this.inkPlane) {
+      // a whole picture arrives without any notion of who drew what
+      this.inkPlane.fill(0);
+    }
     return this;
   } // restore
 
@@ -330,6 +594,10 @@ export class ZXVideoRAM {
   copy() {
     var made = new ZXVideoRAM();
     made.bytes.set(this.bytes);
+    if (this.inkPlane) {
+      made.enableInkPlane(true).inkPlane.set(this.inkPlane);
+      made.pen = this.pen;
+    }
     return made;
   } // copy
 
@@ -423,6 +691,12 @@ export class ZXVideoRAM {
    * It reads the interleaved memory **directly**, so nothing is copied into a
    * linear buffer on the way; the target is filled line by line all the same.
    *
+   * The one exception to the ULA is the ink plane (enableInkPlane, setPen):
+   * a lit pixel with an owner takes the owner's ink and BRIGHT instead of
+   * the cell's, and the owner's own FLASH bit makes it take the paper while
+   * `flashState` is on. Dark pixels and pixels without an owner are painted
+   * exactly as the ULA paints them, so a screen with no owners looks as before.
+   *
    * @param {Uint8ClampedArray|Uint8Array} rgba - Target, cols*8 * rows*8 * 4 bytes.
    * @param {boolean} [flashState] - When true, FLASH cells swap ink and paper.
    * @param {Object} [area] - {col, row, cols, rows} in cells; all of it by default.
@@ -437,12 +711,15 @@ export class ZXVideoRAM {
     var palette = ZXVideoRAM.PALETTE;
     var width = box.cols*ZXVideoRAM.CELL;
     var bytes = this.bytes;
+    var plane = this.inkPlane;
     for (var row = 0; row < box.rows; row++) {
       var attrAt = ZXVideoRAM.ATTRIBUTES_OFFSET
                    +(box.row+row)*ZXVideoRAM.COLS+box.col;
       for (var pixel = 0; pixel < ZXVideoRAM.CELL; pixel++) {
         var line = row*ZXVideoRAM.CELL+pixel;
-        var bitmapAt = ZXVideoRAM.lineOffset((box.row+row)*ZXVideoRAM.CELL+pixel)+box.col;
+        var screenLine = (box.row+row)*ZXVideoRAM.CELL+pixel;
+        var bitmapAt = ZXVideoRAM.lineOffset(screenLine)+box.col;
+        var planeAt = plane ? screenLine*ZXVideoRAM.WIDTH+box.col*ZXVideoRAM.CELL : 0;
         for (var col = 0; col < box.cols; col++) {
           var bits = bytes[bitmapAt+col];
           var attr = bytes[attrAt+col] & mask;
@@ -460,7 +737,20 @@ export class ZXVideoRAM {
           var inkColor = palette[ink];
           var paperColor = palette[paper];
           for (var bit = 0; bit < 8; bit++) {
-            var color = ((bits >> (7-bit)) & 1) ? inkColor : paperColor;
+            var color;
+            if (!((bits >> (7-bit)) & 1)) {
+              color = paperColor;
+            } else {
+              // an owned pixel brings its own ink; everything else is the
+              // ULA's, so a screen with no owners paints exactly as before
+              var own = plane ? plane[planeAt+col*8+bit] : 0;
+              if (!own) {
+                color = inkColor;
+              } else {
+                var pen = (own & 0x07) | ((own & 0x08) ? 8 : 0);
+                color = ((own & 0x10) && flashState) ? paperColor : palette[pen];
+              }
+            }
             var offset = (line*width+col*8+bit)*4;
             rgba[offset] = color[0];
             rgba[offset+1] = color[1];
@@ -529,14 +819,26 @@ export class ZXVideoRAM {
   /**
    * Decodes a base64 block into bytes; bytes that are already bytes pass
    * through untouched. The data files of the games carry video memory as
-   * base64, but a room composed at run time arrives as a Uint8Array.
-   * @param {string|Uint8Array|ArrayBuffer} data - The block.
+   * base64, but a room composed at run time arrives as a Uint8Array, and a
+   * ZXVideoRAM (anything shaped like one: `bytes` a Uint8Array and `id`
+   * 'ZXVideoRAM', duck-typed for the sake of Node tools, R-001) gives its
+   * bytes. An array, ArrayBuffer or typed array view is wrapped in a
+   * Uint8Array; any other object is refused.
+   * @param {string|Uint8Array|ArrayBuffer|ArrayBufferView|number[]|ZXVideoRAM} data - The block.
    * @returns {Uint8Array} The bytes.
+   * @throws {Error} 'ZXVideoRAM.decode: not a byte block' for an object nobody meant as bytes — failing loudly beats an empty screen.
    */
   static decode(data) {
     if (typeof data !== 'string') {
       if (data instanceof Uint8Array) {
         return data;
+      }
+      if (data && data.bytes instanceof Uint8Array && data.id === 'ZXVideoRAM') {
+        return data.bytes;
+      }
+      if (data && !Array.isArray(data) && !(data instanceof ArrayBuffer) && !ArrayBuffer.isView(data)) {
+        // an object nobody meant as bytes: failing loudly beats an empty screen
+        throw new Error('ZXVideoRAM.decode: not a byte block');
       }
       return data ? new Uint8Array(data) : new Uint8Array(0);
     }

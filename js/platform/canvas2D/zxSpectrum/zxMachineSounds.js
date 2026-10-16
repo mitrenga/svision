@@ -20,7 +20,7 @@
 export class ZXMachineSounds {
 
   /** The Z80 clock of the machine: 3.5 million T states a second. */
-  static tStatesPerSecond = 3500000;
+  static get tStatesPerSecond() { return 3500000; }
 
   /**
    * Converts a duration in Z80 T states into a pulse length in samples.
@@ -116,6 +116,77 @@ export class ZXMachineSounds {
     }
     return audioData;
   } // tapeData
+
+  /**
+   * A whole tape block **in its own timing**: the pilot, the two sync pulses,
+   * every bit of the bytes and the terminating pulse — as one sound.
+   *
+   * `tapePilotTone` and `tapeData` are the ROM's block in two halves, the
+   * pilot repeated for as long as the caller lets it run. A tape with
+   * **turbo blocks** (TZX ID $11) needs more: the pilot is part of what the
+   * block is — Booty's two turbo blocks have 497 pilot pulses where the ROM
+   * writes 3223 or 8063, and that short pilot is what is heard — and the bit
+   * lengths may differ from the ROM's. So the whole block is one pulse list,
+   * timed by the numbers the tape gives, and it says itself when it gets
+   * somewhere:
+   *
+   * - `pilotEndEvent` when the pilot is over (the stripes change),
+   * - `byteEvent` after every byte from `firstEventByte` to `lastEventByte`
+   *   (a picture's bytes without the flag and the checksum), with `at`
+   *   counted from `firstEventByte` and `value`,
+   * - `endEvent` when the block is over.
+   *
+   * Every event carries `eventData` merged in, so a caller playing several
+   * blocks can tell whose event it is. The events are dispatched by every
+   * handler, the silent one included.
+   *
+   * @param {number} sampleRate - The audio context sample rate.
+   * @param {number} volume - Bus volume level.
+   * @param {Object} timing - In T states: {pilot, pilotPulses, sync: [first,
+   *        second], zero, one}; a missing entry is the ROM's (2168, 3223,
+   *        [667, 735], 855, 1710).
+   * @param {Uint8Array|number[]|string} data - The bytes as they go on the
+   *        tape (flag and checksum included), or a hexadecimal string.
+   * @param {Object} [options] - {pilotEndEvent, byteEvent, firstEventByte,
+   *        lastEventByte, endEvent, eventData}.
+   * @returns {Object} svision pulse data.
+   */
+  static tapeBlock(sampleRate, volume, timing, data, options) {
+    var t = timing || {};
+    var opts = options || {};
+    var bytes = this.dataBytes(data);
+    var sync = t.sync || [667, 735];
+    // 0 pilot, 1 and 2 sync, 3 zero, 4 one, 5 the terminating pulse
+    var fragments = [t.pilot || 2168, sync[0], sync[1], t.zero || 855, t.one || 1710, 945].map(
+      (tStates) => this.pulse(sampleRate, tStates));
+    var extra = opts.eventData || {};
+    var events = {};
+    var pulses = new Array(t.pilotPulses === undefined ? 3223 : t.pilotPulses).fill(0);
+    if (opts.pilotEndEvent) {
+      events[pulses.length] = Object.assign({id: opts.pilotEndEvent}, extra);
+    }
+    pulses.push(1, 2);
+    var first = opts.firstEventByte || 0;
+    var last = opts.lastEventByte === undefined ? bytes.length-1 : opts.lastEventByte;
+    for (var x = 0; x < bytes.length; x++) {
+      for (var b = 7; b >= 0; b--) {
+        var fragment = ((bytes[x] >> b) & 1) ? 4 : 3;
+        pulses.push(fragment, fragment);
+      }
+      if (opts.byteEvent && x >= first && x <= last) {
+        events[pulses.length] = Object.assign({id: opts.byteEvent, at: x-first, value: bytes[x]}, extra);
+      }
+    }
+    pulses.push(5);
+    if (opts.endEvent) {
+      events[pulses.length] = Object.assign({id: opts.endEvent, bytes: bytes.length}, extra);
+    }
+    var audioData = {fragments: fragments, pulses: pulses, volume: volume};
+    if (Object.keys(events).length) {
+      audioData.events = events;
+    }
+    return audioData;
+  } // tapeBlock
 
   /**
    * The bytes of a block, however the caller happens to hold them.

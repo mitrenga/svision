@@ -133,6 +133,27 @@ export class ZXFonts8x8 extends AbstractFonts {
   } // validChar
 
   /**
+   * The eight bytes of a glyph, top line first, the way the ROM keeps them at
+   * $3D00 — for writing a character straight into {@link ZXVideoRAM} with
+   * `pokeCell()` rather than through rectangles. Ignores the `proportional`
+   * setting, because a cell of the video memory is always eight pixels wide.
+   * A character the font lacks gives the glyph of '?'.
+   * @param {string} char - The character.
+   * @returns {Uint8Array} 8 bytes.
+   */
+  glyphBytes(char) {
+    var letter = this.fontsChars.indexOf(char);
+    if (letter < 0) {
+      letter = this.fontsChars.indexOf('?');
+    }
+    var rows = new Uint8Array(8);
+    for (var y = 0; y < 8; y++) {
+      rows[y] = parseInt(this.fontsData.substring(letter*16+y*2, letter*16+y*2+2), 16);
+    }
+    return rows;
+  } // glyphBytes
+
+  /**
    * Replaces the base glyph data table, re-appending the extra glyph data.
    * @param {string} fontsData - Hex glyph data for the base character set.
    */
