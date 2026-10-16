@@ -6,6 +6,10 @@ const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion
  * and animates it horizontally (ping-pong, scroll-to-left, looping, or custom). The
  * full text is cached once and a cropped window of it is drawn each frame.
  *
+ * A text that fits is not scrolled at all, and then `align` places it the way
+ * a TextEntity would (left by default, right or center) — so a menu can use
+ * one entity for a value that is usually short and sometimes not.
+ *
  * It is a {@link RasterEntity} whose frame is **wider than the entity**: the
  * whole line is painted once with {@link RasterEntity#paintRect}, into a cache
  * `animationWidth` wide, and the scroll is nothing but the window
@@ -42,7 +46,8 @@ export class SlidingTextEntity extends RasterEntity {
       scale: 1,               // 1, 2, 3 ...
       animation: 'pingPong',  // pingPong, moveLeft, custom
       speed: 30,              // one pixel movement speed in miliseconds
-      freezing: 1500          // freezing on change direction in miliseconds
+      freezing: 1500,         // freezing on change direction in miliseconds
+      align: 'left'           // left, right, center: where a text that fits sits
     };
     Object.keys(options).forEach(key => {
       if (key in this.options) {
@@ -159,12 +164,25 @@ export class SlidingTextEntity extends RasterEntity {
    */
   drawEntity() {
     this.paintBackground();
+    // a window with no room shows nothing — and an empty canvas cannot be
+    // drawn (MenuEntity squeezes a value to nothing behind a long label)
+    if (this.width <= 0 || this.height <= 0) {
+      return;
+    }
 
     var cache = this.drawingCache[0];
     if (cache.preparePaint(this.animationWidth, this.height)) {
       var frame = this.frameBytes(cache, this.animationWidth, this.height);
       this.pixels.fill(0);
+      // a text that fits does not scroll, so it can be aligned like a TextEntity;
+      // textWidth() carries both margins, so the right hand margin holds too
       this.cursorX = this.options.leftMargin;
+      var slack = this.width-this.textWidth();
+      if (slack > 0 && this.options.align === 'right') {
+        this.cursorX += slack;
+      } else if (slack > 0 && this.options.align === 'center') {
+        this.cursorX += Math.floor(slack/2);
+      }
       for (var ch = 0; ch < this.text.length; ch++) {
         var charData = this.fonts.getCharData(this.text[ch], '1', 1);
         for (var x = 0; x < charData.data.length; x++) {
