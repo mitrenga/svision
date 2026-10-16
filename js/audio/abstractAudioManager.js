@@ -1,5 +1,6 @@
 const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+window.srcVersion);
 const { Tool } = await import('../tool.js?ver='+window.srcVersion);
+const { PCMSample } = await import('./pcmSample.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -324,6 +325,132 @@ export class AbstractAudioManager {
       }
     }
   } // playSound
+
+  /**
+   * A sound file (AAC, MP3, Ogg — whatever the browser decodes) fetched and
+   * decoded into a sample for a sample bus: `decodeAudioData` needs the
+   * context, which is opened for it (a context may be made before the
+   * user's gesture; it only stays suspended until then). The sample is an
+   * AudioBuffer, plain data usable under any later context.
+   * @param {string} url - The file.
+   * @param {Function} done - `(sample|null) => void` — null when the fetch or the decoding failed (logged).
+   */
+  loadSample(url, done) {
+    this.openAudioContext();
+    if (this.ctx == null) {
+      done(null);
+      return;
+    }
+    fetch(url).then((response) => {
+      // a missing file behind the rewrite of the site is the page itself (200, text/html): not a sound
+      var type = response.headers.get('content-type') || '';
+      if (!response.ok || !/^(audio|video|application\/octet-stream)/.test(type)) {
+        console.warn(url+': not a sound ('+(response.ok ? type : response.status)+')');
+        return null;
+      }
+      return response.arrayBuffer();
+    }).then((bytes) => bytes === null ? null : new Promise((resolve, reject) => {
+      // the callback form: Safari's promise form came late; the promise Chrome returns as well is taken care of
+      var p = this.ctx.decodeAudioData(bytes, resolve, (error) => reject(error || new Error(url+': decoding failed')));
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {});
+      }
+    })).then((buffer) => done(buffer ? PCMSample.fromAudioBuffer(buffer) : null)).catch((error) => {
+      console.error(error.message ? error.message : error);
+      done(null);
+    });
+  } // loadSample
+
+  /**
+   * The playback rate of a bus that plays samples (the music slowing down
+   * with the energy): straight to the handler, no event — a game sets it
+   * every frame.
+   * @param {string} bus - Identifier of the bus.
+   * @param {number} rate - 1 = the sample's own speed.
+   * @returns {boolean} True when the bus is open and takes a rate.
+   */
+  rateBus(bus, rate) {
+    if (!(bus in this.buses) || typeof this.buses[bus].setRate !== 'function') {
+      return false;
+    }
+    this.buses[bus].setRate(rate);
+    return true;
+  } // rateBus
+
+  /**
+   * Fades a bus out over a time and stops it (a bus that cannot fade stops
+   * at once).
+   * @param {string} bus - Identifier of the bus.
+   * @param {number} seconds - The fade.
+   */
+  fadeBus(bus, seconds) {
+    if (!(bus in this.buses)) {
+      return;
+    }
+    if (typeof this.buses[bus].fadeBus === 'function') {
+      this.buses[bus].fadeBus(seconds);
+    } else {
+      this.stopBus(bus);
+    }
+  } // fadeBus
+
+  /**
+   * A live control of an instrument playing on a bus (the engine's rev, a
+   * buzz's volume): straight to the handler, no event — a game calls it
+   * every frame and it must not queue.
+   * @param {string} bus - Identifier of the bus.
+   * @param {string} instrument - The instrument's name in the playing score.
+   * @param {string} control - The control.
+   * @param {number} value - Its value.
+   * @returns {boolean} True when the bus is open and the instrument took it.
+   */
+  controlSound(bus, instrument, control, value) {
+    if (!(bus in this.buses)) {
+      return false;
+    }
+    return this.buses[bus].controlInstrument(instrument, control, value);
+  } // controlSound
+
+  /**
+   * One frame of register writes for a chip bus (AudioChipHandler): what the
+   * game's worker reports the original wrote into the chip this frame, with
+   * the line of each write, `{frame, writes: [[line, register, value], …]}`.
+   * A closed bus drops it.
+   * @param {string} bus - Identifier of the bus.
+   * @param {Object} batch - The frame's writes.
+   * @returns {void}
+   */
+  writeChip(bus, batch) {
+    if (bus in this.buses) {
+      this.buses[bus].writeChip(batch);
+      return;
+    }
+    // ★ A closed bus drops the writes — but **a tagged block is still
+    // reported**, because a game may wait for digitised sound to finish
+    // (`AbstractAudioHandler.reportBlocksDone`).
+    if (batch && batch.blocks && batch.blocks.length && this.app && this.app.model) {
+      var tags = [];
+      for (var i = 0; i < batch.blocks.length; i++) {
+        if (batch.blocks[i][4] !== undefined) { tags.push(batch.blocks[i][4]); }
+      }
+      if (tags.length) {
+        this.app.model.sendEvent(1, {id: 'blockDone', data: {id: 'blockDone', tags: tags}});
+      }
+    }
+  } // writeChip
+
+  /**
+   * Whether a bus is playing something — for a game that starts a sound only
+   * when the channel is free (the priority rule of Battlezone's channel 1).
+   * @param {string} bus - Identifier of the bus.
+   * @returns {boolean} True while a sound plays; false for a closed bus.
+   */
+  busIsPlaying(bus) {
+    if (!(bus in this.buses)) {
+      return false;
+    }
+    return this.buses[bus].isPlaying();
+  } // busIsPlaying
 
   /**
    * Looks up cached, decoded audio data for a sound on a bus.

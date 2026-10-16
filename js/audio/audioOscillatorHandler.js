@@ -2,6 +2,7 @@ const { AbstractAudioHandler } = await import('./abstractAudioHandler.js?ver='+w
 const { OscillatorInstrument } = await import('./instrument/oscillatorInstrument.js?ver='+window.srcVersion);
 const { NoiseInstrument } = await import('./instrument/noiseInstrument.js?ver='+window.srcVersion);
 const { VoiceInstrument } = await import('./instrument/voiceInstrument.js?ver='+window.srcVersion);
+const { EngineInstrument } = await import('./instrument/engineInstrument.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -52,7 +53,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.flangerNodes = null;
     this.score = false;
     this.instruments = {};
-    this.instrumentClasses = {OscillatorInstrument: OscillatorInstrument, NoiseInstrument: NoiseInstrument, VoiceInstrument: VoiceInstrument};
+    this.instrumentClasses = {OscillatorInstrument: OscillatorInstrument, NoiseInstrument: NoiseInstrument, VoiceInstrument: VoiceInstrument, EngineInstrument: EngineInstrument};
 
     this.schedulerId = false;
     this.schedulerActive = false;
@@ -691,6 +692,24 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
       entry.instrument.play(entry.time, entry.pitch, entry.duration, entry.vol);
     }
   } // dispatchPendingNotes
+
+  /**
+   * A live control of one of the playing score's instruments — what a game
+   * moves every frame (the engine's rev, a buzz's volume by distance), which
+   * no score written ahead can hold.
+   * @param {string} name - The instrument's name in the score.
+   * @param {string} control - The control (`AbstractInstrument.control`).
+   * @param {number} value - Its value.
+   * @returns {boolean} True when the instrument is there.
+   */
+  controlInstrument(name, control, value) {
+    var instrument = this.instruments[name];
+    if (instrument == null) {
+      return false;
+    }
+    instrument.control(control, value);
+    return true;
+  } // controlInstrument
 
   /**
    * Stops playback: halts the scheduler and quickly fades the master gain to

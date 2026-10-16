@@ -139,12 +139,68 @@ export class AbstractAudioHandler {
   } // setBusVolume
 
   /**
+   * One frame of register writes for a chip bus (`{frame, writes}`, see
+   * AudioChipHandler). No-op in the base class — except that ★ **a tagged
+   * block of samples is reported done right away**: a game may be waiting
+   * for a digitised sound to play out, and a bus that cannot play it will
+   * never say so. Every tagged block is reported exactly once, whoever
+   * takes it.
+   * @param {Object} batch - The frame's writes.
+   * @returns {void}
+   */
+  writeChip(batch) {
+    this.reportBlocksDone(batch);
+  } // writeChip
+
+  /**
+   * Reports the tags of a batch's blocks as done, for a bus that is not
+   * going to play them.
+   * @param {Object} batch - `{frame, writes, blocks}`, or nothing.
+   * @returns {void}
+   */
+  reportBlocksDone(batch) {
+    if (!batch || !batch.blocks || !batch.blocks.length) {
+      return;
+    }
+    var tags = [];
+    for (var i = 0; i < batch.blocks.length; i++) {
+      if (batch.blocks[i][4] !== undefined) {
+        tags.push(batch.blocks[i][4]);
+      }
+    }
+    if (tags.length && this.app && this.app.model) {
+      this.app.model.sendEvent(1, {id: 'blockDone', data: {id: 'blockDone', tags: tags}});
+    }
+  } // reportBlocksDone
+
+  /**
+   * A live control of a playing instrument. No-op in the base class; the
+   * oscillator handler routes it to the instrument of the score.
+   * @param {string} name - The instrument's name.
+   * @param {string} control - The control.
+   * @param {number} value - Its value.
+   * @returns {boolean} True when something took it.
+   */
+  controlInstrument(name, control, value) {
+    return false;
+  } // controlInstrument
+
+  /**
    * Indicates whether the bus is ready to play sounds.
    * @returns {boolean} True when the bus is ready; always true in the base class.
    */
   busIsReady() {
     return true;
   } // busIsReady
+
+  /**
+   * Whether a sound is playing on the bus. False in the base class; a handler
+   * that knows overrides it (the sample handler counts its sources).
+   * @returns {boolean} True while something plays.
+   */
+  isPlaying() {
+    return false;
+  } // isPlaying
 
   /**
    * Plays the given sound data. No-op in the base class; overridden by subclasses.

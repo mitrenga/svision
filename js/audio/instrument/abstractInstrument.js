@@ -22,6 +22,7 @@ const { MusicNotes } = await import('../musicNotes.js?ver='+window.srcVersion);
  *     pan: 0.4,                                    // -1 (L) .. 1 (R)
  *     env: {attack, decay, sustain, release},      // ADSR (seconds; sustain 0..1)
  *     gain: 0.25,                                   // peak level of the envelope
+ *     level: 1,                                     // the instrument's gain, what control('volume') moves
  *     echoSend: true,                               // route this voice to the bus echo (if any)
  *     reverbSend: true                              // route this voice to the bus reverb (if any)
  *   }
@@ -69,6 +70,10 @@ export class AbstractInstrument {
       tail = this.filter;
     }
     this.instrumentGain = ctx.createGain();
+    // `level` is the instrument's own gain, 1 unless told otherwise — the
+    // live `control('volume')` moves it, so a voice a game fades by distance
+    // starts at 0
+    this.instrumentGain.gain.value = ('level' in descriptor) ? descriptor.level : 1;
     this.instrumentGain.connect(tail);
     this.input = this.instrumentGain;
   } // constructor
@@ -219,6 +224,23 @@ export class AbstractInstrument {
    */
   play(time, pitch, duration, vol) {
   } // play
+
+  /**
+   * A live control from the game while the score plays (through
+   * `AudioOscillatorHandler.controlInstrument`), as opposed to the automation
+   * written into the score: `volume` moves the instrument's gain (0..1, a
+   * short ramp so it does not click). Instruments with more to move — the
+   * engine's rev — extend this.
+   * @param {string} name - The control.
+   * @param {number} value - Its value.
+   */
+  control(name, value) {
+    if (name === 'volume' && this.instrumentGain) {
+      var now = this.ctx.currentTime;
+      this.instrumentGain.gain.cancelScheduledValues(now);
+      this.instrumentGain.gain.setTargetAtTime(Math.max(0, value), now, 0.01);
+    }
+  } // control
 
   /**
    * Resolves an automation parameter path to the AudioParam it controls on the
