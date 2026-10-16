@@ -1,3 +1,5 @@
 node_modules/
 docs/
 sources/
+__pycache__/
+*.pyc
