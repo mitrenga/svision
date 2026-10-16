@@ -41,9 +41,12 @@ class ServiceWorkerPage extends AbstractPage {
    * Collects the list of asset URLs the service worker should pre-cache: the
    * app root, manifest and favicon, plus every JavaScript (from the active
    * import path directory), css and image file found by scanning the relevant
-   * directories. The JavaScript directory follows importPath() so the pre-cache
-   * matches whichever module set the app actually loads (js/ when a bundle is
-   * served, app/ when it runs from the sources).
+   * directories, and the static data of assets/ where a project has it (json,
+   * m4a, ogg and mp3 — meshes, tracks and music a game fetches on demand;
+   * data/ is not scanned, the worker passes it through as dynamic). The
+   * JavaScript directory follows importPath() so the pre-cache matches
+   * whichever module set the app actually loads (js/ when a bundle is served,
+   * app/ when it runs from the sources).
    *
    * @return array The list of asset paths (relative, prefixed with './').
    */
@@ -56,6 +59,10 @@ class ServiceWorkerPage extends AbstractPage {
     $this->scanDir($this->importPath(), $assets, ['js']);
     $this->scanDir('app/svision/css', $assets, ['css']);
     $this->scanDir('images', $assets, ['png', 'svg', 'jpg', 'gif', 'ico']);
+    // static data a game fetches on demand (geometryrace: the meshes of the
+    // ships, the tracks of the worlds, the music of the worlds) — not under
+    // data/, which the worker passes through as dynamic
+    $this->scanDir('assets', $assets, ['json', 'm4a', 'ogg', 'mp3']);
     return $assets;
   } // collectAssets
 

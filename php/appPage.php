@@ -45,13 +45,14 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <script>window.appPrefix = "'.$GLOBALS['appPrefix'].'";</script>';
     $this->data[] = '    <script>window.wsURL = "'.$GLOBALS['wsURL'].'";</script>';     
     $this->data[] = '    <script>window.srcVersion = "'.$srcVersion.'";</script>';
+    $bundle = $this->bundleFile();
     $this->data[] = '    <script>window.devMode = '.json_encode($GLOBALS['devMode'] ?? false).';</script>';
-    $this->data[] = '    <script>window.devModeName = '.((empty($GLOBALS['devModeName'])) ? 'false' : '"'.$GLOBALS['devModeName'].'"').';</script>';
+    $devModeName = $this->devModeName($bundle);
+    $this->data[] = '    <script>window.devModeName = '.(($devModeName === false) ? 'false' : '"'.$devModeName.'"').';</script>';
     $this->data[] = '    <script>window.appIconSprite = false;</script>';
 
     $this->data[] = '    <script>window.importPath = "'.$this->importPath().'";</script>';
 
-    $bundle = $this->bundleFile();
     if ($bundle !== false) {
       $this->data[] = '    <script type="module" src="'.$bundle.'?ver='.$srcVersion.'"></script>';
     } elseif (!empty($GLOBALS['devMode'])) {
@@ -62,6 +63,41 @@ class AppPage extends AbstractPage {
     $this->data[] = '  </body>';
     $this->data[] = '</html>';
   } // createPage
+
+  /**
+   * The developer-mode banner text for the border (R-025):
+   *
+   * 1. no $devMode — no banner at all, whatever the configuration says;
+   * 2. $devMode with a configured $devModeName — that text, as it is: the
+   *    configured banner is for the special cases (a test flight, say) and
+   *    says what it needs to say;
+   * 3. $devMode without a configured $devModeName — the standard banner:
+   *    yellow DEVELOPER MODE when the sources under app/ are served, and a
+   *    **red** banner naming the bundle when js/bundle.<version> is, so that a
+   *    stale bundle can never again pass for the sources without anyone
+   *    seeing it.
+   *
+   * The text starts with a JSON block of TextEntity properties
+   * ('.{\"penColor\":\"#000000\",...}text'); the quotes are escaped for the
+   * JavaScript string literal the value is emitted into, and a configured value
+   * is emitted as it is, never re-encoded. No width is given: the border sizes
+   * the banner to its text.
+   *
+   * @param string|false $bundle The bundle this request serves, or false.
+   * @return string|false The banner text, or false when there is no banner.
+   */
+  protected function devModeName($bundle) {
+    if (empty($GLOBALS['devMode'])) {
+      return false;
+    }
+    if (!empty($GLOBALS['devModeName'])) {
+      return $GLOBALS['devModeName'];
+    }
+    if ($bundle === false) {
+      return '.{\\"penColor\\":\\"#000000\\",\\"bkColor\\":\\"#fefe00\\"} ◢◤ ◢◤ ◢◤ ◢◤  DEVELOPER MODE ◢◤ ◢◤ ◢◤ ◢◤ ';
+    }
+    return sprintf('.{\\"penColor\\":\\"#ffffff\\",\\"bkColor\\":\\"#ff0000\\"} >>>>  %s  <<<< ', basename($bundle));
+  } // devModeName
 
   /**
    * Emits Open Graph (and Twitter card) meta tags. Generated only when the
