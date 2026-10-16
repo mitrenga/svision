@@ -2,13 +2,20 @@ const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
-const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
+const { ZXDialogProperties } = await import('./zxDialogProperties.js?ver='+window.srcVersion);
 // begin code
 
 /**
  * ZX Spectrum themed dialog that walks the player through rebinding each action of
  * a device (keyboard, mouse or gamepad) one key at a time, then persists the new
  * bindings. A blinking cursor marks the action awaiting input.
+ *
+ * Contents only, no frame and no title: ZXSettingsEntity opens it in a window
+ * (ZXDialogEntity) with the `remapKeys` part of the dialog properties, whose
+ * `theme` colours it. The layout is made for 185 x 105 px. The new bindings go
+ * up to the owner as 'updateEntity' and 'refreshGamepadActions' events; the
+ * window passes them through. Closing sends 'contentClosed' to the parent so
+ * the window can close with it.
  */
 export class ZXRemapKeysEntity extends AbstractEntity {
 
@@ -21,11 +28,15 @@ export class ZXRemapKeysEntity extends AbstractEntity {
    * @param {number} width - Dialog width.
    * @param {number} height - Dialog height.
    * @param {Object} options - Device definition with its name and list of remappable keys.
+   * @param {Object} [properties] - The `remapKeys` dialog properties, see ZXDialogProperties; the contents use its `theme`.
    */
-  constructor(parentEntity, x, y, width, height, options) {
-    super(parentEntity, x, y, width, height, false, false);
+  constructor(parentEntity, x, y, width, height, options, properties = {}) {
+    properties = ZXDialogProperties.merge(properties, 'remapKeys');
+    super(parentEntity, x, y, width, height, false, properties.theme.bkColor);
     this.id = 'ZXRemapKeysEntity';
 
+    this.properties = properties;
+    this.theme = properties.theme;
     this.options = options;
     this.newKeys = [];
     this.position = 0;
@@ -37,25 +48,31 @@ export class ZXRemapKeysEntity extends AbstractEntity {
   } // constructor
 
   /**
-   * Builds the dialog contents: the framed background, title, one label/value row per
-   * remappable key, the skip button and the close button, and highlights the first action.
+   * Builds the dialog contents: one label/value row per remappable key, the skip
+   * button and the close button, and highlights the first action.
    */
   init() {
     super.init();
 
-    this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
-    this.addEntity(new AbstractEntity(this, 1, 1, this.width-2, this.height-2, false, ZXColor.white));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'REMAP '+this.options.device+' KEYS', ZXColor.brightWhite, ZXColor.black, {align: 'center', margin: 2}));
-
     for (var k = 0; k < this.options.keys.length; k++) {
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 11, 18+12*k, 74, 9, this.options.keys[k].label, ZXColor.black, false, {margin: 2}));
-      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-83, 18+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.options.keys[k].action}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 10, 9+12*k, 74, 9, this.options.keys[k].label, this.theme.penColor, false, {margin: 2}));
+      this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, this.width-82, 9+12*k, 32, 9, this.cursorText(), false, false, {align: 'center', margin: 2, hide: true, member: this.options.keys[k].action}));
     }
-    this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[0].action, penColor: ZXColor.brightWhite, bkColor: ZXColor.brightBlue, text: this.cursorText(), hide: false});
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-44, 18, 32, 9, 'SKIP', {id: 'skipKey'}, [], ZXColor.brightWhite, ZXColor.red, {align: 'center', margin: 2, member: 'skipKey'}));
+    this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[0].action, penColor: this.theme.selectionPenColor, bkColor: this.theme.selectionColor, text: this.cursorText(), hide: false});
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-43, 9, 32, 9, 'SKIP', {id: 'skipKey'}, [], this.theme.buttonPenColor, this.theme.dangerButtonColor, {align: 'center', margin: 2, member: 'skipKey'}));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-39, this.height-16, 36, 13, 'CLOSE', {id: 'closeZXRemapKeys'}, ['Escape', 'GamepadExit'], ZXColor.brightWhite, ZXColor.blue, {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-38, this.height-15, 36, 13, 'CLOSE', {id: 'closeZXRemapKeys'}, ['Escape', 'GamepadExit'], this.theme.buttonPenColor, this.theme.closeButtonColor, {align: 'center', margin: 4}));
   } // init
+
+  /**
+   * Closes the dialog: the contents go, and the parent is told so a window
+   * can go with them.
+   */
+  close() {
+    this.app.inputEventsManager.gamepadsConfig = false;
+    this.destroy();
+    this.sendEvent(-1, 0, {id: 'contentClosed', entity: this});
+  } // close
 
   /**
    * Returns the blinking cursor glyph for the action currently awaiting input.
@@ -83,8 +100,7 @@ export class ZXRemapKeysEntity extends AbstractEntity {
     switch (event.id) { 
 
       case 'closeZXRemapKeys':
-        this.app.inputEventsManager.gamepadsConfig = false;
-        this.destroy();
+        this.close();
         return true;
 
       case 'changeFlashState':
@@ -110,16 +126,15 @@ export class ZXRemapKeysEntity extends AbstractEntity {
         }
         if ((newKey !== false && this.newKeys.find((key) => key.key == newKey) === undefined) || newKey == 'NoKey') {
           this.newKeys.push({action: this.options.keys[this.position].action, key: newKey});
-          this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: ZXColor.brightBlue, bkColor: false, text: Tool.prettyKey(newKey)});
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: this.theme.valueColor, bkColor: false, text: Tool.prettyKey(newKey)});
           this.position++;
           if (this.position == this.options.keys.length) {
             this.saveKeys();
-            this.app.inputEventsManager.gamepadsConfig = false;
-            this.destroy();
+            this.close();
             return true;
           }
-          this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: ZXColor.brightWhite, bkColor: ZXColor.brightBlue, text: this.cursorText(), hide: false});
-          this.sendEvent(1, 0, {id: 'updateEntity', member: 'skipKey', y: 18+12*this.position});
+          this.sendEvent(1, 0, {id: 'updateEntity', member: this.options.keys[this.position].action, penColor: this.theme.selectionPenColor, bkColor: this.theme.selectionColor, text: this.cursorText(), hide: false});
+          this.sendEvent(1, 0, {id: 'updateEntity', member: 'skipKey', y: 9+12*this.position});
         }
         break;
     }
@@ -129,7 +144,9 @@ export class ZXRemapKeysEntity extends AbstractEntity {
 
   /**
    * Persists the collected bindings for the active device, writing them into the
-   * app's controls, saving cookies and (for gamepads) refreshing the gamepad actions.
+   * app's controls, saving cookies and (for gamepads) refreshing the gamepad
+   * actions. The owner (ZXSettingsEntity) learns of them through the events
+   * sent up; the window between passes them through.
    */
   saveKeys() {
     switch (this.options.device) {

@@ -1,11 +1,20 @@
 const { AbstractEntity } = await import('../../../abstractEntity.js?ver='+window.srcVersion);
 const { TextEntity } = await import('../textEntity.js?ver='+window.srcVersion);
+const { ZXDialogProperties } = await import('./zxDialogProperties.js?ver='+window.srcVersion);
 // begin code
 
 /**
  * ZX Spectrum themed modal entity shown when audio playback requires a user
  * gesture. It prompts the user to press Enter, click or touch, then emits a
  * configured continuation event so audio can start.
+ *
+ * Contents only, no frame: the opener (ZXVolumeEntity before PLAY SAMPLE, a
+ * menu before the game starts) puts it in a window (ZXDialogEntity, without a
+ * title) with the `waitForAudioEvent` part of the dialog properties, whose
+ * `theme.penColor` is the colour of the message. The message fills the
+ * contents with a margin of 3 px, made for 122 x 39. It closes itself after
+ * five seconds, or when the opener sends 'closePressAnyKey' down; closing
+ * sends 'contentClosed' to the parent so the window can close with it.
  */
 export class ZXWaitForAudioEventEntity extends AbstractEntity {
 
@@ -16,29 +25,38 @@ export class ZXWaitForAudioEventEntity extends AbstractEntity {
    * @param {number} y - The y position relative to the parent.
    * @param {number} width - The entity width.
    * @param {number} height - The entity height.
-   * @param {string} penColor - The foreground (text and frame) colour.
-   * @param {string} bkColor - The background colour.
    * @param {string} continueEvent - The id of the event emitted once a user gesture is received.
+   * @param {Object} [properties] - The `waitForAudioEvent` dialog properties, see ZXDialogProperties; the contents use its `theme`.
    */
-  constructor(parentEntity, x, y, width, height, penColor, bkColor, continueEvent) {
-    super(parentEntity, x, y, width, height, penColor, bkColor);
-    this.id = 'ZXWaitForAudioEventEntity';    
+  constructor(parentEntity, x, y, width, height, continueEvent, properties = {}) {
+    properties = ZXDialogProperties.merge(properties, 'waitForAudioEvent');
+    super(parentEntity, x, y, width, height, properties.theme.penColor, properties.theme.bkColor);
+    this.id = 'ZXWaitForAudioEventEntity';
 
+    this.properties = properties;
+    this.theme = properties.theme;
     this.continueEvent = continueEvent;
   } // constructor
 
   /**
-   * Builds the framed prompt box with the explanatory message and schedules an
+   * Builds the prompt with the explanatory message and schedules an
    * automatic close after a timeout.
    */
   init() {
     super.init();
-    this.addEntity(new AbstractEntity(this, 2, 2, this.width-4, this.height-4, false, this.penColor));
-    this.addEntity(new AbstractEntity(this, 3, 3, this.width-6, this.height-6, false, this.bkColor));
     var message = 'WE APOLOGIZE, BUT TO START THE AUDIO, YOU MUST PRESS THE ENTER KEY, CLICK THE MOUSE OR TOUCH THE TOUCHSCREEN. ␣';
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 1, 1, this.width-2, this.height-2, message, this.penColor, false, {align: 'justify', textWrap: true, margin: 5}));
+    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, this.height, message, this.theme.penColor, false, {align: 'justify', textWrap: true, margin: 3}));
     this.sendEvent(0, 5000, {id: 'closePressAnyKey'});
   } // init
+
+  /**
+   * Closes the prompt: the contents go, and the parent is told so a window
+   * can go with them.
+   */
+  close() {
+    this.destroy();
+    this.sendEvent(-1, 0, {id: 'contentClosed', entity: this});
+  } // close
 
   /**
    * Handles key, mouse and touch events, emitting the configured continuation
@@ -84,7 +102,7 @@ export class ZXWaitForAudioEventEntity extends AbstractEntity {
         break;
 
       case 'closePressAnyKey':
-        this.destroy();
+        this.close();
         return true;
     }
     return false;

@@ -11,6 +11,19 @@ export class AbstractApp {
   /**
    * Creates the application, wiring up the platform, canvas element, layout
    * and input manager, and initializing the control/state defaults.
+   *
+   * `this.controls` is the state of the input devices the user has set up,
+   * filled in by the settings dialogs and read by the input manager:
+   * - `keyboard` — the key bindings
+   * - `mouse.enable` — whether the mouse serves as a game control
+   * - `gamepads.supported` — whether the browser exposes the Gamepad API;
+   *   `gamepads.devices` — the configured pads keyed by gamepad id, each
+   *   `{buttons: {index: {action, event}}, axes: {index: {'+'|'-': {action, event}}}}`
+   *   as ZXRemapKeysEntity writes it; InputEventsManager.updateGamepadsStates()
+   *   polls only the pads found here and ZXSettingsEntity shows their bindings
+   * - `touchscreen.supported` — set on the first touch;
+   *   `touchscreen.type` — the chosen layout of the touch controls, one of
+   *   the keys of the game's `touchscreen.types` (persisted in a cookie)
    * @param {AbstractPlatform} platform - The platform implementation used to create the canvas, layout and entities.
    * @param {HTMLElement|string} parentElement - The parent element (or its id) that hosts the canvas.
    * @param {string} importPath - Base path used when dynamically importing application modules.
@@ -43,11 +56,13 @@ export class AbstractApp {
       mouse: {
         enable: false
       },
-      gamepad: {
-        supported: false
+      gamepads: {
+        supported: false,
+        devices: {}
       },
       touchscreen: {
-        supported: false
+        supported: false,
+        type: false
       }
     }
   } // constructor

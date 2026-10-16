@@ -5,12 +5,23 @@ const { KeyboardEntity } = await import('../keyboardEntity.js?ver='+window.srcVe
 const { ButtonEntity } = await import('../buttonEntity.js?ver='+window.srcVersion);
 const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
+const { ZXDialogTheme } = await import('./zxDialogTheme.js?ver='+window.srcVersion);
+const { ZXDialogProperties } = await import('./zxDialogProperties.js?ver='+window.srcVersion);
 // begin code
 
 /**
  * ZX Spectrum themed dialog for entering the player's name. Renders a text input
  * with a character counter and an on-screen Spectrum-style keyboard, then persists
  * the name and optionally starts the game on confirmation.
+ *
+ * Contents only, no frame and no title: a game puts it into a window
+ * (ZXDialogEntity) or onto its screen and colours it through the `theme` of
+ * its dialog properties (ZXDialogProperties). The
+ * layout is made for 200 x 124 px; in another height the block of prompt,
+ * input and keyboard stays centred over the buttons, and the keyboard is
+ * centred and as big as its layout, which the theme's `keyboardLayout` may
+ * alter. CANCEL and OK send a 'contentClosed' event to
+ * the parent so a window can close with it.
  */
 export class ZXPlayerNameEntity extends AbstractEntity {
 
@@ -22,22 +33,24 @@ export class ZXPlayerNameEntity extends AbstractEntity {
    * @param {number} width - Dialog width.
    * @param {number} height - Dialog height.
    * @param {boolean} autoStartGame - Whether confirming the name should start the game immediately.
-   * @param {string} [bkColor] - Background color of the dialog panel.
-   * @param {string} [buttonsBkColor] - Background color of the on-screen keyboard buttons.
-   * @param {string|false} [buttonsHoverColor] - Background color of a keyboard button under the mouse cursor, or false for none.
-   * @param {string|false} [buttonsClickColor] - Background color of a pressed keyboard button, or false for none.
+   * @param {Object} [properties] - The dialog properties, see ZXDialogProperties; the dialog uses `theme` (the colours and `keyboardLayout`).
    */
-  constructor(parentEntity, x, y, width, height, autoStartGame, bkColor = ZXColor.yellow, buttonsBkColor = ZXColor.brightWhite, buttonsHoverColor = false, buttonsClickColor = false) {
-    super(parentEntity, x, y, width, height, false, false);
+  constructor(parentEntity, x, y, width, height, autoStartGame, properties = {}) {
+    properties = ZXDialogProperties.merge(properties);
+    var theme = properties.theme;
+    super(parentEntity, x, y, width, height, false, theme.bkColor);
     this.id = 'ZXPlayerNameEntity';
 
-    this.panelBkColor = bkColor;
+    this.properties = properties;
+    this.theme = theme;
     this.maxNameChars = 15;
     this.inputEntity = null;
     this.charsCounter = null;
     this.autoStartGame = autoStartGame;
 
-    this.keyboardLayout = {
+    // the ZX Spectrum keyboard; the theme's `keyboardLayout` alters it or
+    // replaces it (ZXDialogTheme.keyboardLayout)
+    this.keyboardLayout = ZXDialogTheme.keyboardLayout({
       options: {
         fnKeys: {
           '∅': false,
@@ -49,17 +62,17 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           '→': 'ArrowRight'
         },
         shiftKeys: {
-          '⇧': {activeBkColor: ZXColor.white},
-          '⌥': {activeBkColor: ZXColor.white}
+          '⇧': {activeBkColor: theme.keyboardButtonsShiftColor},
+          '⌥': {activeBkColor: theme.keyboardButtonsShiftColor}
         },
         buttons: {
           default: {
             width: 16, height: 16, keySpacing: 1, align: 'center', topMargin: 4,
             fonts: this.app.fonts.zxFonts8x8Keys,
-            penColor: ZXColor.brightBlack,
-            bkColor: buttonsBkColor,
-            hoverColor: buttonsHoverColor,
-            clickColor: buttonsClickColor
+            penColor: theme.keyboardButtonsPenColor,
+            bkColor: theme.keyboardButtonsBkColor,
+            hoverColor: theme.keyboardButtonsHoverColor,
+            clickColor: theme.keyboardButtonsClickColor
           },
 
           '←': {fonts: this.app.fonts.fonts5x5, topMargin: 6},
@@ -94,30 +107,37 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           ['⇧', ':','£','?','/','*',',','.', '⌥', ' ']
         ]
       }
-    };
+    }, theme.keyboardLayout);
   } // constructor
 
   /**
-   * Builds the dialog contents: title, prompt, name input, character counter,
+   * Builds the dialog contents: prompt, name input, character counter,
    * on-screen keyboard and the cancel/confirm buttons.
    */
   init() {
     super.init();
 
-    this.addEntity(new AbstractEntity(this, 0, 0, this.width, this.height, false, ZXColor.black));
-    this.addEntity(new TextEntity(this, this.app.fonts.fonts5x5, 0, 0, this.width, 9, 'PLAYER NAME', ZXColor.brightWhite, false, {align: 'center', topMargin: 2}));
-    this.addEntity(new AbstractEntity(this, 1, 9, this.width-2, this.height-10, false, this.panelBkColor));
 
-    this.addEntity(new TextEntity(this, this.app.fonts.zxFonts8x8, 4, 18, this.width-8, 8, 'Enter your player name:', ZXColor.black, false, {}));
-    this.inputEntity = new InputEntity(this.app, this.app.fonts.zxFonts8x8, 4, 28, this.width-38, 8, 'playerName', this.app.playerName, ZXColor.brightWhite, ZXColor.brightBlue, this.maxNameChars, {leftMargin: 1});
+    // the block of the prompt, the input and the keyboard — the keyboard as big
+    // as its layout and centred — sits centred between the top and the buttons
+    // (at height-15), so another height or keyboard moves it as a whole; at
+    // 200 x 124 with the default keyboard of 194 x 67 that is the prompt at 9,
+    // the input at 19 and the keyboard at 33
+    var keyboardSize = KeyboardEntity.measure(this.keyboardLayout);
+    var keyboardX = Math.floor((this.width-keyboardSize.width)/2);
+    var blockY = Math.floor((this.height-15-(24+keyboardSize.height))/2);
+    var keyboardY = blockY+24;
+
+    this.addEntity(new TextEntity(this, this.app.fonts.zxFonts8x8, 3, blockY, this.width-6, 8, 'Enter your player name:', this.theme.penColor, false, {}));
+    this.inputEntity = new InputEntity(this.app, this.app.fonts.zxFonts8x8, 3, blockY+10, this.width-36, 8, 'playerName', this.app.playerName, this.theme.inputPenColor, this.theme.inputBkColor, this.maxNameChars, {leftMargin: 1});
     this.addEntity(this.inputEntity);
-    this.charsCounter = new TextEntity(this, this.app.fonts.fonts5x5, this.width-34, 28, 30, 8, this.inputEntity.value.length+'/'+this.maxNameChars, ZXColor.white, ZXColor.brightBlue, {align: 'right', rightMargin: 1, topMargin: 2});
+    this.charsCounter = new TextEntity(this, this.app.fonts.fonts5x5, this.width-33, blockY+10, 30, 8, this.inputEntity.value.length+'/'+this.maxNameChars, this.theme.inputPenColor, this.theme.inputBkColor, {align: 'right', rightMargin: 1, topMargin: 2});
     this.addEntity(this.charsCounter);
 
-    this.addEntity(new KeyboardEntity(this, 4, 42, 194, 67, this.keyboardLayout, false));
+    this.addEntity(new KeyboardEntity(this, keyboardX, keyboardY, keyboardSize.width, keyboardSize.height, this.keyboardLayout, false));
 
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-98, this.height-16, 46, 13, 'CANCEL', {id: 'closeZXPlayerName'}, ['Escape', 'GamepadExit'], ZXColor.white, ZXColor.red, {align: 'center', margin: 4}));
-    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-50, this.height-16, 46, 13, 'OK', {id: 'saveZXPlayerName'}, ['Enter', 'GamepadOK'], ZXColor.brightWhite, ZXColor.green, {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-97, this.height-15, 46, 13, 'CANCEL', {id: 'closeZXPlayerName'}, ['Escape', 'GamepadExit'], this.theme.buttonPenColor, this.theme.dangerButtonColor, {align: 'center', margin: 4}));
+    this.addEntity(new ButtonEntity(this, this.app.fonts.fonts5x5, this.width-49, this.height-15, 46, 13, 'OK', {id: 'saveZXPlayerName'}, ['Enter', 'GamepadOK'], this.theme.buttonPenColor, this.theme.okButtonColor, {align: 'center', margin: 4}));
   } // init
 
   /**
@@ -134,6 +154,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
     switch (event.id) { 
       case 'closeZXPlayerName':
         this.destroy();
+        this.sendEvent(-1, 0, {id: 'contentClosed', entity: this});
         return true;
 
       case 'changeInputValue':
@@ -152,6 +173,7 @@ export class ZXPlayerNameEntity extends AbstractEntity {
           } else {
             this.sendEvent(0, 0, {id: 'refreshMenu'});
             this.destroy();
+            this.sendEvent(-1, 0, {id: 'contentClosed', entity: this});
           }
         }
         return true;

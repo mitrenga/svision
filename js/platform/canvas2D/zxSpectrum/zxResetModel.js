@@ -6,21 +6,19 @@ const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 
 /**
  * Boot model that orchestrates the ZX Spectrum reset sequence: it plays the
- * reset animation, then shows the copyright line, loads application data and
- * finally hands over to the menu model.
+ * reset animation, then shows the original ROM copyright line, loads
+ * application data and finally hands over to the menu model.
  */
 export class ZXResetModel extends AbstractModel {
 
   /**
-   * Creates the reset model and stores the copyright text to be displayed.
+   * Creates the reset model.
    * @param {Object} app - The application instance.
-   * @param {string} copyright - The copyright text shown after the reset animation.
    */
-  constructor(app, copyright) {
+  constructor(app) {
     super(app);   
     this.id = 'ZXResetModel'
     
-    this.copyright = copyright;
     this.resetEntity = null;
     this.inputLineEntity = null;
   } // constructor
@@ -35,7 +33,7 @@ export class ZXResetModel extends AbstractModel {
     this.resetEntity = new ZXResetEntity(this.desktopEntity, 0, 0, 32*8, 24*8);
     this.resetEntity.hide = true;
     this.desktopEntity.addEntity(this.resetEntity);
-    this.inputLineEntity = new TextEntity(this.desktopEntity, this.app.fonts.zxFonts8x8, 0, 23*8, 32*8, 8, this.copyright, ZXColor.black, false, {align: 'center'});
+    this.inputLineEntity = new TextEntity(this.desktopEntity, this.app.fonts.zxFonts8x8Mono, 0, 23*8, 32*8, 8, '© 1982 Sinclair Research Ltd', ZXColor.black, false, {align: 'left'});
     this.inputLineEntity.hide = true;
     this.desktopEntity.addEntity(this.inputLineEntity);
     this.sendEvent(500, {id: 'showReset'});
