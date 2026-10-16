@@ -57,7 +57,7 @@ export class InputEntity extends TextEntity {
       }
     }
     this.options.penColorsMap = penColorsMap;
-    this.drawingCache[0].cleanCache();
+    this.cleanCache();
   } // setInputLineColors
 
   /**
@@ -79,13 +79,13 @@ export class InputEntity extends TextEntity {
             this.cursor = Math.max(this.cursor-1, 0);
             this.text = this.value.substring(0, this.cursor)+this.cursorChar+this.value.substring(this.cursor);
             this.setInputLineColors();
-            this.drawingCache[0].cleanCache();
+            this.cleanCache();
             return true;
           case 'ArrowRight':
             this.cursor = Math.min(this.cursor+1, this.value.length);
             this.text = this.value.substring(0, this.cursor)+this.cursorChar+this.value.substring(this.cursor);
             this.setInputLineColors();
-            this.drawingCache[0].cleanCache();
+            this.cleanCache();
             return true;
           case 'Backspace':
             if (this.cursor > 0) {
@@ -93,7 +93,7 @@ export class InputEntity extends TextEntity {
               this.value = this.value.substring(0, this.cursor-1)+this.value.substring(this.cursor);
               this.cursor--;
               this.setInputLineColors();
-              this.drawingCache[0].cleanCache();
+              this.cleanCache();
               this.sendEvent(0, 0, {id: 'changeInputValue', inputId: this.inputId});
             }
             return true;
@@ -102,7 +102,7 @@ export class InputEntity extends TextEntity {
               this.text = this.value.substring(0, this.cursor)+this.cursorChar+this.value.substring(this.cursor+1);
               this.value = this.value.substring(0, this.cursor)+this.value.substring(this.cursor+1);
               this.setInputLineColors();
-              this.drawingCache[0].cleanCache();
+              this.cleanCache();
               this.sendEvent(0, 0, {id: 'changeInputValue', inputId: this.inputId});
             }
             return true;
@@ -110,13 +110,13 @@ export class InputEntity extends TextEntity {
             this.cursor = 0;
             this.text = this.cursorChar+this.value;
             this.setInputLineColors();
-            this.drawingCache[0].cleanCache();
+            this.cleanCache();
             return true;
           case 'End':
             this.cursor = this.value.length;
             this.text = this.value+this.cursorChar;
             this.setInputLineColors();
-            this.drawingCache[0].cleanCache();
+            this.cleanCache();
             return true;
           default:
             if (this.value.length < this.maxLength && event.key.length == 1 && this.fonts.validChar(event.key)) {
@@ -124,7 +124,7 @@ export class InputEntity extends TextEntity {
               this.value = this.value.substring(0, this.cursor)+event.key+this.value.substring(this.cursor);
               this.cursor++;
               this.setInputLineColors();
-              this.drawingCache[0].cleanCache();
+              this.cleanCache();
               this.sendEvent(0, 0, {id: 'changeInputValue', inputId: this.inputId});
               return true;
             }

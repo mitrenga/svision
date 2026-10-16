@@ -66,7 +66,67 @@ export class SpriteEntity extends RasterEntity {
     this.fixHeight = 0;
     this.sharedPalette = false;
     this.framePalettes = [];
+    /** parts of the sprite lit in another colour this frame; see setTints() */
+    this.tints = [];
+    /**
+     * Whether the lit parts are left for the owner to draw with drawTints() —
+     * after the entities that would otherwise cover them. False draws them
+     * right after the sprite.
+     */
+    this.deferTints = false;
   } // constructor
+
+  /**
+   * Tells the sprite which parts of it are lit in another colour — a Spectrum
+   * sprite standing in cells whose attribute something else has changed (the
+   * light beam of Manic Miner) shows the beam's ink there. Each part is drawn
+   * over the sprite after the sprite itself, with every opaque pixel of the part
+   * in the given colour; the cache is untouched, so this costs nothing when
+   * nothing is lit. Set every frame; an empty list turns it off.
+   *
+   * A lit part is what the machine shows **on top**: the cell's attribute
+   * colours whatever is in the cell, including the object that lit it. So when
+   * another entity drawn after this sprite covers the part — a conveyor under
+   * Willy's feet — the owner sets `deferTints` and calls
+   * {@link SpriteEntity#drawTints} once everything else is down.
+   * @param {Object[]} tints - [{x, y, width, height, color}], relative to the
+   *        sprite, in logical pixels; parts outside the sprite are clipped.
+   */
+  setTints(tints) {
+    this.tints = tints || [];
+  } // setTints
+
+  /**
+   * The cache the current frame and direction are painted in.
+   * @returns {number} The cache index.
+   */
+  cacheIndex() {
+    var d = this.direction;
+    if (this.directions == 1) {
+      d = 0;
+    }
+    return this.frame+d*this.frames;
+  } // cacheIndex
+
+  /**
+   * Draws the lit parts of the current frame over whatever is on the screen,
+   * each clipped to the sprite. Called by drawEntity() unless `deferTints` is
+   * set, in which case the owner calls it at the right moment.
+   */
+  drawTints() {
+    if (this.spriteData === null || this.tints.length == 0) {
+      return;
+    }
+    var index = this.cacheIndex();
+    for (var t = 0; t < this.tints.length; t++) {
+      var tint = this.tints[t];
+      var x0 = Math.max(0, tint.x), y0 = Math.max(0, tint.y);
+      var x1 = Math.min(this.width, tint.x+tint.width), y1 = Math.min(this.height, tint.y+tint.height);
+      if (x0 < x1 && y0 < y1) {
+        this.app.layout.paintCacheTinted(this, index, {x: x0, y: y0, width: x1-x0, height: y1-y0}, tint.color);
+      }
+    }
+  } // drawTints
 
   /**
    * Forces a fixed sprite cell size, updating the entity dimensions according to the
@@ -388,16 +448,15 @@ export class SpriteEntity extends RasterEntity {
    */
   drawEntity() {
     if (this.spriteData !== null) {
-      var d = this.direction;
-      if (this.directions == 1) {
-        d = 0;
-      }
-      var index = this.frame+d*this.frames;
+      var index = this.cacheIndex();
       var cache = this.drawingCache[index];
       if (cache.preparePaint(this.width, this.height)) {
         this.paintFrame(index, cache);
       }
       this.blitCache(index);
+      if (!this.deferTints) {
+        this.drawTints();
+      }
     }
   } // drawEntity
 

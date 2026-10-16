@@ -28,6 +28,34 @@ export class KeyboardEntity extends AbstractEntity {
   } // constructor
 
   /**
+   * Measures a layout: the width of its widest row over all the shift layers
+   * and the height of its rows, the way init() lays the keys out. Lets the
+   * owner size and centre the keyboard from the layout instead of constants.
+   * @param {Object} layout - The keyboard layout definition (keymap and options).
+   * @returns {{width: number, height: number}} The size of the keyboard in pixels.
+   */
+  static measure(layout) {
+    var width = 0, height = 0;
+    var spacing = layout.options.buttons.default.keySpacing;
+    Object.keys(layout.keymap).forEach((layoutId) => {
+      var y = 0;
+      for (var row = 0; row < layout.keymap[layoutId].length; row++) {
+        var x = layout.options.rows[row].shiftX;
+        var rowHeight = layout.options.buttons.default.height;
+        for (var key = 0; key < layout.keymap[layoutId][row].length; key++) {
+          var options = {...layout.options.buttons.default, ...(layout.options.buttons[layout.keymap[layoutId][row][key]] || {})};
+          x += options.width + (key+1 < layout.keymap[layoutId][row].length ? options.keySpacing : 0);
+          rowHeight = options.height;
+        }
+        width = Math.max(width, x);
+        y += rowHeight + (row+1 < layout.keymap[layoutId].length ? spacing : 0);
+      }
+      height = Math.max(height, y);
+    });
+    return {width: width, height: height};
+  } // measure
+
+  /**
    * Builds and positions all key ButtonEntity instances for every layout in the
    * keymap, assigning each key its event prefix, label, colors, and layout group,
    * and hiding keys that do not belong to the default layout.

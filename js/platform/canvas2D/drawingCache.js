@@ -6,6 +6,13 @@
  * holds the entity in its native (logical) resolution; scaling by the layout
  * ratio happens only when the cache is blitted to the screen. A dirty flag and
  * a dimension check decide when the cache must be refreshed.
+ *
+ * That is all it is: a canvas, a flag, and the size check. Nothing paints
+ * *through* it — an entity paints pixels into a {@link RasterEntity} frame and
+ * puts the frame here, the layout blits it. Until 2026-09-07 it also had
+ * `paint()`, a `fillRect` with a colour cache, which every game reached into
+ * (`drawingCache[0].paint(...)`, ~200 calls); those all went through
+ * `RasterEntity.paintRect()` and the method is gone (DECISIONS.md R-014).
  */
 export class DrawingCache {
 
@@ -20,12 +27,6 @@ export class DrawingCache {
     this.canvas = document.createElement('canvas');
     this.ctx = this.canvas.getContext('2d');
     this.clean = false;
-    // The colour currently set on the context, so paint() can skip assigning
-    // fillStyle again. The value is a CSS string and the browser parses it on
-    // every assignment, which dominates the cost of a small fill: SpriteEntity
-    // paints one 1x1 rect per sprite pixel, and most sprites are a single
-    // colour, so this turns N parses into one. false means "unknown, assign it".
-    this.lastColor = false;
   } // constructor
 
   /**
@@ -36,9 +37,6 @@ export class DrawingCache {
   init(width, height) {
     this.canvas.width = width;
     this.canvas.height = height;
-    // Assigning canvas.width resets the whole 2D context state, fillStyle
-    // included, so the remembered colour no longer describes the context.
-    this.lastColor = false;
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
   } // init
 
@@ -69,27 +67,5 @@ export class DrawingCache {
     }
     return false;
   } // preparePaint
-
-  /**
-   * Paints a rectangle into this cache's off-screen context. The cache is kept
-   * in logical resolution, so coordinates are used as-is without ratio scaling.
-   * @param {number} x - X position in model coordinates.
-   * @param {number} y - Y position in model coordinates.
-   * @param {number} width - Rectangle width.
-   * @param {number} height - Rectangle height.
-   * @param {string} color - Fill color.
-   */
-  paint(x, y, width, height, color) {
-    // fillStyle is assigned only when the colour actually changes (this.lastColor).
-    // ★ Anything that writes to this.ctx.fillStyle outside this method must
-    // reset this.lastColor, otherwise the skip goes stale and fills come out in
-    // the wrong colour. Today nothing does — clearRect and putImageData, the
-    // only other operations on this context, leave fillStyle alone.
-    if (color !== this.lastColor) {
-      this.ctx.fillStyle = color;
-      this.lastColor = color;
-    }
-    this.ctx.fillRect(x, y, width, height);
-  } // paint
 
 } // DrawingCache

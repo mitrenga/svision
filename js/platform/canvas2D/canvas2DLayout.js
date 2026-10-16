@@ -410,6 +410,166 @@ export class Canvas2DLayout extends AbstractLayout {
   } // paintCropCache
 
   /**
+   * Draws a rectangle of an entity's cached image onto the main canvas **in one
+   * flat colour**: every opaque pixel of that part of the cache comes out in
+   * `color`, every transparent one stays transparent. That is what a Spectrum
+   * does to a sprite standing in a cell whose attribute was changed under it —
+   * the light beam of Manic Miner — and it used to be done one `fillRect` per
+   * pixel. Here it is three canvas operations: the part is copied into a scratch
+   * cache in logical resolution, filled with `source-in` (which paints only
+   * where the copy is opaque), and blitted scaled like any cache.
+   * @param {AbstractEntity} entity - The entity whose cache is drawn.
+   * @param {number} index - The cache slot index.
+   * @param {Object} rect - {x, y, width, height} of the part, relative to the entity, in logical pixels.
+   * @param {string} color - The colour every opaque pixel of the part is painted in.
+   */
+  paintCacheTinted(entity, index, rect, color) {
+    if (rect.width <= 0 || rect.height <= 0) {
+      return;
+    }
+    if (!this.tintCache) {
+      this.tintCache = new DrawingCache(this.app);
+    }
+    var scratch = this.tintCache;
+    scratch.preparePaint(rect.width, rect.height);
+    var ctx = scratch.ctx;
+    ctx.clearRect(0, 0, rect.width, rect.height);
+    ctx.drawImage(entity.drawingCache[index].canvas, -rect.x, -rect.y);
+    ctx.globalCompositeOperation = 'source-in';
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.globalCompositeOperation = 'source-over';
+    this.app.stack.ctx.drawImage(scratch.canvas, (entity.parentX+entity.x+rect.x)*this.ratio, (entity.parentY+entity.y+rect.y)*this.ratio, rect.width*this.ratio, rect.height*this.ratio);
+  } // paintCacheTinted
+
+  /**
+   * Draws an image — a decoded PNG, say — onto the main canvas at a position
+   * relative to an entity, scaled by the layout ratio like every cache. The one
+   * kind of picture that does not go through a RasterEntity's frame: it is
+   * already pixels, and the browser decoded it.
+   * @param {AbstractEntity} entity - The entity the position is relative to.
+   * @param {HTMLImageElement} image - A loaded image.
+   * @param {number} x - X offset relative to the entity, in logical pixels.
+   * @param {number} y - Y offset relative to the entity.
+   * @param {number} width - Width in logical pixels the image is fitted to.
+   * @param {number} height - Height in logical pixels.
+   */
+  paintImage(entity, image, x, y, width, height) {
+    this.app.stack.ctx.drawImage(image, (entity.parentX+entity.x+x)*this.ratio, (entity.parentY+entity.y+y)*this.ratio, width*this.ratio, height*this.ratio);
+  } // paintImage
+
+  /**
+   * Draws a part of an image (a cache canvas, as a rule) into the entity —
+   * `paintImage` with a source rectangle, for a platform whose picture is
+   * larger than the desktop shows: the Atari 8-bit frame is 240 scan lines
+   * and a game may show a window of it.
+   * @param {AbstractEntity} entity - The entity being painted.
+   * @param {Object} image - The image or canvas to draw.
+   * @param {number} sx - Left of the source rectangle, in the image's pixels.
+   * @param {number} sy - Top of the source rectangle.
+   * @param {number} sWidth - Width of the source rectangle.
+   * @param {number} sHeight - Height of the source rectangle.
+   * @param {number} x - X in the entity.
+   * @param {number} y - Y in the entity.
+   * @param {number} width - Logical width to fit the part to.
+   * @param {number} height - Logical height to fit the part to.
+   */
+  paintImagePart(entity, image, sx, sy, sWidth, sHeight, x, y, width, height) {
+    this.app.stack.ctx.drawImage(image, sx, sy, sWidth, sHeight,
+      (entity.parentX+entity.x+x)*this.ratio, (entity.parentY+entity.y+y)*this.ratio,
+      width*this.ratio, height*this.ratio);
+  } // paintImagePart
+
+  /**
+   * Strokes a {@link VectorDisplayList} of an entity onto the main canvas —
+   * the bridge that lets a {@link VectorEntity} sit over a raster game. The
+   * list is drawn in the entity's coordinates scaled by the layout ratio and
+   * clipped to the entity's visible rectangle when it clips.
+   * @param {AbstractEntity} entity - The entity owning the list.
+   * @param {VectorDisplayList} list - The primitives to draw.
+   */
+  paintDisplayList(entity, list) {
+    var ctx = this.app.stack.ctx;
+    var r = this.ratio;
+    ctx.save();
+    ctx.translate((entity.parentX+entity.x)*r, (entity.parentY+entity.y)*r);
+    if (entity.clipsList) {
+      var cx = Math.max(0, entity.parentCoverX-entity.x);
+      var cy = Math.max(0, entity.parentCoverY-entity.y);
+      var cw = Math.min(entity.width, entity.parentWidth-entity.x)-cx;
+      var ch = Math.min(entity.height, entity.parentHeight-entity.y)-cy;
+      ctx.beginPath();
+      ctx.rect(cx*r, cy*r, Math.max(0, cw)*r, Math.max(0, ch)*r);
+      ctx.clip();
+    }
+    ctx.scale(r, r);
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+    list.items.forEach((item) => {
+      ctx.globalAlpha = item.opacity*(item.intensity/15);
+      ctx.strokeStyle = item.color;
+      ctx.lineWidth = item.strokeWidth;
+      ctx.fillStyle = item.fill;
+      var i;
+      switch (item.type) {
+        case 'line':
+          ctx.beginPath();
+          ctx.moveTo(item.x1, item.y1);
+          ctx.lineTo(item.x2, item.y2);
+          ctx.stroke();
+          break;
+        case 'polyline':
+        case 'polygon':
+          ctx.beginPath();
+          for (i = 0; i+1 < item.points.length; i += 2) {
+            if (i == 0) {
+              ctx.moveTo(item.points[i], item.points[i+1]);
+            } else {
+              ctx.lineTo(item.points[i], item.points[i+1]);
+            }
+          }
+          if (item.type == 'polygon' || item.close) {
+            ctx.closePath();
+          }
+          if (item.fill != 'none') {
+            ctx.fill();
+          }
+          ctx.stroke();
+          break;
+        case 'rect':
+          if (item.fill != 'none') {
+            ctx.fillRect(item.x, item.y, item.width, item.height);
+          }
+          ctx.strokeRect(item.x, item.y, item.width, item.height);
+          break;
+        case 'circle':
+          ctx.beginPath();
+          ctx.arc(item.cx, item.cy, item.r, 0, 2*Math.PI);
+          if (item.fill != 'none') {
+            ctx.fill();
+          }
+          ctx.stroke();
+          break;
+        case 'text':
+          ctx.fillStyle = item.color;
+          ctx.font = item.weight+' '+item.size+'px '+item.font;
+          ctx.textAlign = item.anchor == 'middle' ? 'center' : (item.anchor == 'end' ? 'right' : 'left');
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText(item.text, item.x, item.y);
+          break;
+        case 'path':
+          var path = new Path2D(item.d);
+          if (item.fill != 'none') {
+            ctx.fill(path);
+          }
+          ctx.stroke(path);
+          break;
+      }
+    });
+    ctx.restore();
+  } // paintDisplayList
+
+  /**
    * Converts a client (DOM) X coordinate into a model X coordinate, undoing the
    * layout ratio the drawing side applies (paintRect, paintCache). Every
    * subclass used to carry an identical copy of this with the ratio in it while

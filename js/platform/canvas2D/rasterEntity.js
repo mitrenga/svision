@@ -262,6 +262,15 @@ export class RasterEntity extends AbstractEntity {
     if (color === false || color === undefined) {
       return;
     }
+    // a negative size runs the other way, as it does for fillRect
+    if (width < 0) {
+      x += width;
+      width = -width;
+    }
+    if (height < 0) {
+      y += height;
+      height = -height;
+    }
     var frame = this.imageData;
     var x0 = Math.max(0, x), y0 = Math.max(0, y);
     var x1 = Math.min(frame.width, x+width), y1 = Math.min(frame.height, y+height);
@@ -301,6 +310,15 @@ export class RasterEntity extends AbstractEntity {
   disablePaintWithVisibility() {
     this.drawingCropCache = null;
   } // disablePaintWithVisibility
+
+  /**
+   * Whether crop-to-parent rendering is on — the question an owner asks before
+   * switching it off once the entity has come fully into view.
+   * @returns {boolean} True while the entity is drawn through the crop cache.
+   */
+  paintsWithVisibility() {
+    return this.drawingCropCache !== null;
+  } // paintsWithVisibility
 
   /**
    * Blits one cache to the screen — whole, or, with crop-to-parent enabled and

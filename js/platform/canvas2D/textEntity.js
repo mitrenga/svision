@@ -174,8 +174,13 @@ export class TextEntity extends RasterEntity {
   /**
    * Determines the pen color for the glyph at the given index, applying flash-color
    * animation and any per-character color overrides.
+   *
+   * A glyph whose colour comes out `false` — `penColor` false and no entry for
+   * it in `penColorsMap` — is **not painted**. Until 2026-09-07 it silently took
+   * the colour of the glyph before it (`fillRect` kept the last `fillStyle`),
+   * which is why a map covering only the first letters used to look finished.
    * @param {number} i - The character index within the text.
-   * @returns {string|false} The color to use for the glyph.
+   * @returns {string|false} The color to use for the glyph, or false for none.
    */
   glyphColor(i) {
     var penColor = this.penColor;
