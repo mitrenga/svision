@@ -294,6 +294,26 @@ export class Tool {
   } // deleteCookie
 
   /**
+   * Reads a data file delivered with appData: the PHP side puts every file of
+   * `data/` into localStorage as '<appPrefix>.<key>', and the models read them
+   * back synchronously, before their first frame. Until 2026-09-07 every model
+   * of every game carried this method of its own (21 identical copies).
+   * @param {string} key - The data file name without its extension.
+   * @param {string} [prefix] - The storage prefix; `window.appPrefix` by default.
+   * @returns {Object|null} The parsed content, or null when it is missing or
+   *          unreadable (which is logged, not thrown).
+   */
+  static loadDataFile(key, prefix) {
+    try {
+      var stored = localStorage.getItem((prefix === undefined ? window.appPrefix : prefix)+'.'+key);
+      return stored === null ? null : JSON.parse(stored);
+    } catch (error) {
+      console.error(error.message);
+      return null;
+    }
+  } // loadDataFile
+
+  /**
    * Reads the value of a cookie by name, trimming leading spaces from keys and
    * values, and returns a default when the cookie is not present.
    * @param {string} name - The cookie name to look up.

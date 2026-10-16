@@ -1,4 +1,5 @@
 const { AbstractEntity } = await import('./abstractEntity.js?ver='+window.srcVersion);
+const { Tool } = await import('./tool.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -112,7 +113,8 @@ export class AbstractModel {
    * @param {string} id - The event id to cancel.
    */
   cancelEvent(id) {
-    for (var e = 0; e < this.events.length; e++) {
+    // backwards, so that removing an entry does not skip the one behind it
+    for (var e = this.events.length-1; e >= 0; e--) {
       if (id == this.events[e].id) {
         this.events.splice(e, 1);
       }
@@ -203,6 +205,17 @@ export class AbstractModel {
   } // fetchData
 
   /**
+   * Reads a data file delivered with appData (localStorage '<prefix>.<key>');
+   * see {@link Tool.loadDataFile}. Models read their data this way in init(),
+   * synchronously — the rooms, the scenery, the sprites, the sounds.
+   * @param {string} key - The data file name without its extension.
+   * @returns {Object|null} The parsed content, or null.
+   */
+  loadDataFile(key) {
+    return Tool.loadDataFile(key);
+  } // loadDataFile
+
+  /**
    * Distributes fetched data to the border and desktop entities and redraws
    * the model.
    * @param {Object} data - The received data payload.
@@ -230,11 +243,19 @@ export class AbstractModel {
    */
   loopModel(timestamp) {
     this.app.inputEventsManager.updateGamepadsStates();
+    // ★ The due events are taken out of the queue **before** any of them is
+    // handled. A handler may cancel or queue events itself (RoomModel of Sabre
+    // Wulf stops its pause border, which cancels a queued 'pauseBorder'), and
+    // splicing the array while walking it then removed the wrong entry: the
+    // modal's 'destroy' queued right behind 'continueGame' was dropped and the
+    // pause panel stayed on the screen with the game running (2026-09-07).
+    var due = [], rest = [];
     for (var m = 0; m < this.events.length; m++) {
-      if (this.events[m].timing <= timestamp) {
-        this.sendEvent(0, this.events[m].event);
-        this.events.splice(m, 1);
-      }
+      (this.events[m].timing <= timestamp ? due : rest).push(this.events[m]);
+    }
+    this.events = rest;
+    for (var d = 0; d < due.length; d++) {
+      this.sendEvent(0, due[d].event);
     }
     if (this.app.audioManager != false) {
       this.app.audioManager.refreshAllBuses();

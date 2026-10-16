@@ -45,6 +45,13 @@ export class AbstractEntity {
     this.group = '';
     this.modal = false;
     this.modalEntity = null;
+    // a window whose contents send their events to the owner of the window
+    // (ZXDialogEntity): sendEvent(-1) of a child skips it, see there
+    this.passesEventsUp = false;
+    // false lets the children draw outside this entity's rectangle, anywhere
+    // its own parent lets it draw (drawSubEntity): the contents of a dialog
+    // open nested dialogs over the whole window, its title bar included
+    this.clipsChildren = true;
 
     this.parentX = 0;
     this.parentY = 0;
@@ -118,6 +125,9 @@ export class AbstractEntity {
    * Dispatches an event in a given direction within the entity tree, or
    * schedules it via the model when timing is non-zero.
    * @param {number} direction - Routing for immediate events: -1 to the parent (and its children), 0 to the model, 1 to this entity's children.
+   *   A parent that `passesEventsUp` (a dialog window) is skipped: the event
+   *   goes to the nearest ancestor that does not, and to its children — the
+   *   window is one of them, so it still gets what is meant for it.
    * @param {number} timing - Delay in milliseconds; 0 dispatches now, otherwise it is scheduled on the model.
    * @param {Object} event - The event object to dispatch.
    */
@@ -125,10 +135,14 @@ export class AbstractEntity {
     if (timing == 0) {
       switch (direction) {
         case -1:
-          if (this.parentEntity != null) {
-            if (this.parentEntity.handleEvent(event) == false) {
-              for (var v = 0; v < this.parentEntity.entities.length; v++) {
-                if (this.parentEntity.entities[v].handleEvent(event) == true) {
+          var parent = this.parentEntity;
+          while (parent != null && parent.passesEventsUp) {
+            parent = parent.parentEntity;
+          }
+          if (parent != null) {
+            if (parent.handleEvent(event) == false) {
+              for (var v = 0; v < parent.entities.length; v++) {
+                if (parent.entities[v].handleEvent(event) == true) {
                   break;
                 }
               }
@@ -350,13 +364,24 @@ export class AbstractEntity {
 
   /**
    * Computes a child entity's absolute parent offset and clipped parent
-   * cover/size, then draws it.
+   * cover/size, then draws it. An entity that does not `clipsChildren` passes
+   * its own visible area on instead, so a child may lie outside it.
    * @param {AbstractEntity} entity - The child entity to position and draw.
    */
   drawSubEntity(entity) {
     entity.parentX = this.parentX+this.x;
     entity.parentY = this.parentY+this.y;
-    
+
+    if (!this.clipsChildren) {
+      // the visible area of this entity's parent, in this entity's coordinates
+      entity.parentCoverX = this.parentCoverX-this.x;
+      entity.parentCoverY = this.parentCoverY-this.y;
+      entity.parentWidth = this.parentWidth-this.x;
+      entity.parentHeight = this.parentHeight-this.y;
+      entity.drawEntity();
+      return;
+    }
+
     var w = this.width;
     if (this.x+this.width > this.parentWidth) {
       w = this.parentWidth-this.x;
@@ -426,6 +451,9 @@ export class AbstractEntity {
 
   /**
    * Computes the entity's absolute x position by summing parent offsets.
+   * The root (the desktop) counts as 0: the result is in desktop units, not
+   * in the layout's (which include the border — those are `parentX + x`,
+   * what the pointer events and pointOnEntity use).
    * @returns {number} The absolute x coordinate.
    */
   absoluteX() {
@@ -436,7 +464,8 @@ export class AbstractEntity {
   } // absolutePosX
 
   /**
-   * Computes the entity's absolute y position by summing parent offsets.
+   * Computes the entity's absolute y position by summing parent offsets;
+   * see absoluteX().
    * @returns {number} The absolute y coordinate.
    */
   absoluteY() {
