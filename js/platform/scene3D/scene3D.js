@@ -150,7 +150,7 @@ export class Scene3D {
    * of it from `end` on — or removes it (`null`). Without `color` the fog
    * takes the background's colour, so the far end melts into the sky (the
    * skybox-and-fog look of Geometry Race, R-032 phase 1). Bumps the version.
-   * @param {{start: number, end: number, color?: string}|null} fog
+   * @param {?{start: number, end: number, color: (string|undefined)}} fog
    * @returns {Scene3D} this
    */
   setFog(fog) {

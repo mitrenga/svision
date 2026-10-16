@@ -118,7 +118,7 @@ export class Scene3DHeadlessLayout extends AbstractLayout {
    * does not repaint the middle (its background is false so the 3D picture
    * shows through), so a full border would cover the GL canvas.
    * @param {AbstractModel} model
-   * @returns {{x: number, y: number, width: number, height: number}[]}
+   * @returns {Array.<{x: number, y: number, width: number, height: number}>}
    */
   static borderStrips(model) {
     var d = model.desktopEntity;
