@@ -9,6 +9,10 @@ runtime for drawing sprites and text, playing audio, handling unified input, and
 shipping the result as an installable, offline-capable progressive web app — all
 the way down from a single `index.php` entry point.
 
+> References such as **R-029** point to the author's internal register of
+> design decisions. They record why something is the way it is; nothing in
+> them is needed to use the library.
+
 ## What you can build with it
 
 - **Retro games and graphical apps** rendered on an HTML canvas, organised as a
@@ -23,6 +27,10 @@ the way down from a single `index.php` entry point.
   an app icon, full-screen launch and offline caching out of the box.
 - **A ZX Spectrum flavoured platform** with the authentic palette, fonts and
   helper screens (volume, controls, key remapping, reset, …).
+- **Models of other machines** as platforms: VGA / MS-DOS, Commodore 64,
+  Atari 8-bit, the XY monitor of the vector arcades and a 3D scene rendered
+  through WebGL2 — plus their sound chips (OPL2, POKEY, SID, discrete arcade
+  boards) and DOM-free halves that run unchanged under Node.
 
 ## Architecture in a nutshell
 
@@ -38,15 +46,20 @@ send-up / send-down / send-to-model event system.
 | Platform | Status | Description |
 |---|---|---|
 | **canvas2D** | stable | The main 2D renderer. Draws entities onto an HTML `<canvas>`. |
-| **canvas2D / zxSpectrum** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. |
+| **canvas2D / zxSpectrum** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. The ZX dialogs (`ZXSettingsEntity`, `ZXVolumeEntity`, `ZXPlayerNameEntity`, `ZXRemapKeysEntity`, `ZXSelectingGamepadEntity`, `ZXWaitForAudioEventEntity`) are now **contents only** — no frame, no title of their own: they are coloured through `ZXDialogProperties`/`ZXDialogTheme`, placed on the panel of a `ZXDialogEntity` window and send `'contentClosed'` up when they close. Their constructors take a `properties` object and no colour arguments any more (R-027/R-028). |
 | **canvas2D / arcade** | stable | Fixed-size raster arcade monitor (e.g. 224×256 portrait) with integer pixel-perfect scaling, bezel and optional colour overlay; configured per game (`new ArcadePlatform({width, height, overlay, …})`). Used by the arcade remakes. |
 | **canvas2D / adaptive** | stable | Layout that adapts the model grid to the available element size. |
-| **canvas2D / ibm** | stable | IBM 8×16 font set. |
-| **webGL2** | ⚠️ experimental | Renders through a WebGL2 context. Early, testing-only — not for deployment. |
+| **canvas2D / vga** | in progress | VGA / MS-DOS platform (R-029): 256-colour palette, mode 13h video RAM, 80×25 text mode, DOS boot model, the 8×16 Uni-VGA font set, `VGAControls` (the control tables of the era's games built from one action list) and `VGALayout` — the 4:3 monitor with a 1.2 pixel aspect. `VGALayout`, `C64Layout` and `Atari8Layout` all extend `AspectLayout` (`canvas2D/aspectLayout.js`): an integer horizontal ratio, the rows stretched by `pixelAspect`. |
+| **canvas2D / c64** | in progress | Commodore 64 platform (R-038): 40×25 text mode with screen codes and the character ROM, colour RAM plus one background register, a recolourable border, hardware sprites (hires/multicolour/expanded) on `SpriteEntity`, power-on/LOAD boot model. |
+| **canvas2D / atari8** | in progress | Atari 8-bit platform (400/800/XL/XE, R-039): ANTIC display list over 64 KB of memory, GTIA colour registers with a computed PAL palette, text mode 2 and tile mode 4, players and missiles, the OS character sets, power-on/READY boot model. |
+| **vector** | in progress | The XY monitor as a platform (R-031), `js/platform/vector/`: `VectorPlatform` (a `<div>` with one `<svg>`, desktop in model units, an optional cabinet `overlay`), `VectorLayout` (retained SVG nodes, `viewBox` fit), `VectorDisplayList` (the DOM-free list of primitives with `markup()`, `toSVG()`, `differences()`), `VectorEntity`, `VectorFont` and `VectorTextEntity` (glyphs as polylines), `VectorMenuEntity`, the dialogs `VectorNoticeEntity`, `VectorNameEntity`, `VectorHallOfFameEntity`, `VectorVolumeEntity` and the `VectorDevModeEntity` banner, `VectorHeadlessLayout` for tools, and in `vector/atari/` the interpreters of the Atari vector generators `AVG` and `DVG` plus the `MathBox`. Demo: `vectordemo`, check: `tools/checkvector.mjs`. |
+| **scene3D** | in progress | The 3D scene as data, DOM- and GL-free (R-032): `Mat4`, `Vec3`, `Quat` (quaternions: Euler orders, `lerp`/`slerp`, `lookRotation`), `Mesh` (generators, JSON), `Scene3D` (items, camera, lights, fog through `setFog()`/`fogSettings()`, `markup()`, `differences()`, `project()` into a display list), `SceneEntity`, `Scene3DHeadlessLayout` — the headless layout of the WebGL2 platform, for tools. Item styles include `pattern: {checker, size}` (a checker over the fill, a texture without an image) and `blend: 'add'` (additive, drawn without writing depth). |
+| **webGL2** | in progress | The renderer of `scene3D` (R-032): a WebGL2 canvas with a canvas 2D overlay as `stack.ctx`, so text, sprites, menus and dialogs of canvas2D work unchanged over the 3D picture. One primitive, `render(scene, view, projection, viewport)`. `GLPrograms` owns the GPU buffers, the two shader programs (`mesh`, `line`) and the cache of a vertex array per mesh (`entry(mesh)`, remade when the mesh's `version` moves). Demo: `webgl2demo`, check: `tools/checkscene.mjs`. |
 
-> The **webGL2** platform is very early work in progress, kept for
-> experimentation only. It is not usable for normal deployment and will be
-> moved to a separate branch in the future.
+> The **scene3D** + **webGL2** pair is phase 0 of the 3D platform: flat
+> shading, one directional and one ambient light, no textures yet. WebXR and
+> WebGPU are planned as a session layer and a second renderer over the same
+> scene.
 
 ## Building blocks
 
@@ -55,8 +68,14 @@ send-up / send-down / send-to-model event system.
   (`hR2`, `lP1`, `lT2` for monochrome; `b90`, `braille` for colored), handles
   palette serialization and grid transforms, and computes the per-frame "blank
   margins" used for pixel-perfect collision detection.
+- **`RasterEntity`** (canvas2D) — an entity whose picture is **pixels, not
+  shapes**: it owns an `ImageData` in its own logical resolution, the game
+  fills it in `paintRaster(data)` and calls `invalidate()` when it changes,
+  and the entity blits it scaled by the layout ratio. It is the base of
+  `SpriteEntity`, `TextEntity` and `SlidingTextEntity`.
 - **`SpriteEntity`** — draws a sprite with frames/directions, mono (`penChar`)
-  or palette-based colours, with caching.
+  or palette-based colours, with caching; `setTints()` lights parts of it in
+  another colour for one frame.
 
 ### ZX Spectrum video memory
 - **`ZXVideoRAM`** (canvas2D / zxSpectrum) is the **model of the machine's
@@ -70,6 +89,11 @@ send-up / send-down / send-to-model event system.
   from the flat bitmap/attribute pair some games pass around, and
   `paintLinear()` paints such a pair directly. It touches no DOM, so the same
   code renders in the browser and in an offline `match*` tool under Node.
+  Optionally it also keeps an **ink plane** (`enableInkPlane`, `setPen`): a
+  byte per pixel saying which ink lit it, filled by the very same writes that
+  fill the bitmap, so a remake can paint **without attribute clash** while its
+  video memory stays byte for byte the original's. Off by default and free
+  when off — see the [ink plane tutorial](https://mitrenga.github.io/svision/tutorial-inkplane.html).
 - **`ZXVideoRAMEntity`** puts that memory on the screen: it owns the drawing
   cache, watches the FLASH phase and paints once per game frame rather than
   once per display frame. A game either writes into `videoRAM` and calls
@@ -79,7 +103,17 @@ send-up / send-down / send-to-model event system.
 ### Text & fonts
 - **`TextEntity`** and **`SlidingTextEntity`** (scrolling text).
 - **`AbstractFonts`** plus built-in bitmap fonts: `Fonts3x3`, `Fonts5x5`,
-  the ZX `ZXFonts8x8` and `IBMFonts8x16`.
+  the ZX `ZXFonts8x8`, `VGAFonts8x16`, `C64Fonts8x8` (the character ROM
+  901225-01, two sets of 256 glyphs by screen code) and `Atari8Fonts8x8`
+  (the XL OS ROM's standard and international sets by internal code).
+- A font handed to a text memory — `VGATextRAM` (`glyphBytes(codePoint)`),
+  `C64TextRAM` (`glyphBytes(code, set)`) — must provide `glyphBytes()`: the
+  raw row bytes of a glyph, the way a character generator reads its ROM;
+  `ZXFonts8x8.glyphBytes(char)` feeds `ZXVideoRAM.pokeCell()` the same way.
+  `Atari8Screen` takes a whole 1 KB set instead (`Atari8Fonts8x8.setBytes()`),
+  as ANTIC reads it from CHBASE; `C64Fonts8x8.setBytes(set)` gives a whole
+  2 KB C64 set the same way, and `C64Charset` is a game's own character set
+  for `C64TextRAM`. See the [fonts tutorial](https://mitrenga.github.io/svision/tutorial-fonts.html).
 - Core fonts ship printable ASCII plus one normal (breaking) space — no
   application-specific graphics. Spaces are data-driven: each font holds a
   `spaces` table of `{width, breaking, stretch}` entries that drive word
@@ -100,7 +134,49 @@ send-up / send-down / send-to-model event system.
   together on that one context. It dispatches each bus to the best
   available handler: **`AudioWorkletHandler`** (modern),
   **`AudioScriptProcessorHandler`** (fallback), **`AudioOscillatorHandler`**,
-  and **`AudioSilentHandler`**.
+  **`AudioSampleHandler`** (a PCM bus), **`AudioChipHandler`** (a sound chip
+  driven by register writes, see below) and **`AudioSilentHandler`**.
+- Manager calls added for the sample and instrument buses:
+  `loadSample(url, done)` fetches and decodes a sound file into a
+  `PCMSample` (`done(sample|null)`); `rateBus(bus, rate)` sets the playback
+  rate of a sample bus (1 = the sample's own speed); `fadeBus(bus, seconds)`
+  fades a bus out and stops it (a bus that cannot fade stops at once);
+  `controlSound(bus, instrument, control, value)` is a live control of an
+  instrument playing on a bus, straight to the handler without an event;
+  `busIsPlaying(bus)` tells whether a bus is playing something. On the
+  handler side `AbstractAudioHandler.controlInstrument(name, control, value)`
+  and `isPlaying()` back them (no-ops in the base class); an
+  `AbstractInstrument` answers `control('volume', value)` by moving its own
+  gain, whose starting value is the descriptor's `level` field (1 by default).
+- **`AudioSampleHandler`** plays **`PCMSample`**s the way a Sound Blaster
+  played them: one sound at a time out of a DAC (`overlap` lets them mix),
+  with `repeat`, `nextSound`, `volume`, `rate` and timed `events`; pausing
+  holds the sounds at a playback rate of 0, `setRate()` moves everything
+  playing. `PCMSample` is DOM-free: unsigned/signed 8-bit, 16-bit and WAV
+  in and out, or a decoded `AudioBuffer` from `loadSample()`.
+- **`PCMMixer`** is a DOM-free software mixer of `PCMSample`s — so many
+  channels, each at its own rate with a left and right volume, summed into
+  stereo, the way DMX mixed DOOM's effects; `PCMMixer.gainsOf()` is DOOM's
+  volume and separation law turned into two gains.
+- **`MidiFile`** parses a standard MIDI file into a list of events with
+  absolute ticks (no player); the drivers in **`audio/chip/`** turn such
+  data into samples with no DOM at all: **`OPL2`** (the YM3812 of the AdLib
+  card, written through its registers) with the drivers **`AdlibMidi`**
+  (a MIDI file over an instrument bank), **`AdlibSound`** (the id/Apogee
+  `AUDIOT` sound effects), **`AdlibIMF`** (IMF register recordings) and
+  **`AdlibMUS`** (DOOM's MUS music the way the DMX driver played it) over a
+  **`GenMidi`** bank (the `GENMIDI` lump of the DMX games);
+  **`POKEY`** (the four channels of the Atari chip, with the joined 16-bit
+  dividers and the 1.79 MHz clocking of `AUDCTL`); **`SID`** (the MOS 6581
+  of the Commodore 64: three voices, ADSR, the filter and the master volume
+  that digitised speech is written to); and the **discrete**
+  building blocks of the arcade sound boards (`LFSRNoise`, `Clock`,
+  `Lowpass`, `Highpass`, `GatedRC`, `SwitchedGainLowpass`, `LadderDAC`,
+  `CC555`, `TriangleWave`, `SquareWave`, `FixedSquare`, `SampleHold`, `Ramp`,
+  `RCDischarge`, `Filter1`, `Filter2`).
+- **`EngineInstrument`** is the live instrument of the discrete boards — a
+  555 clocking two counters, the rumble of a tank — driven from the game
+  with `control('rev', 0|1)`.
 - Handlers **borrow** the shared context from the manager to build their nodes;
   the manager alone creates and discards the context.
 - **`AudioSilentHandler`** needs no context: it produces no sound but still
@@ -111,11 +187,43 @@ send-up / send-down / send-to-model event system.
   per-channel volume multipliers (`channelVolumes`, e.g. `[1, 0]` for left-only)
   to place it in the stereo field — used in JSW to pan arrow shots left/right.
 - **`audioProcessor`** is the AudioWorklet processor that generates the samples.
+- **`ChipStream`** (`audio/chip/`) is a chip driven by **timed register
+  writes**: a game's worker reports, frame by frame, what the original wrote
+  into the chip and on which scanline (`[[line, register, value], …]`), the
+  stream places every write on its own sample clock and hands it to the chip
+  while rendering, re-anchoring only when the frames fall behind or run away.
+  **`ChipProcessor`** (`audio/worker/`) is the AudioWorklet around it and
+  **`AudioChipHandler`** the bus handler that composes the worklet from the
+  chip's file, `chipStream.js` and `chipProcessor.js` (the bundle
+  transformation, so the chip stays single-sourced for the browser and
+  Node), forwards the frames (`AbstractAudioManager.writeChip(bus, {frame,
+  writes})`) and plays a script of frames as a `playSound` (the sample of a
+  volume dialog). POKEY (Boulder Dash) and SID (Impossible Mission) run on
+  it.
 - **`ZXMachineSounds`** (canvas2D / zxSpectrum) holds the sounds of the
   **machine** rather than of any game: the pulse format of the tape
   (`tapePilotTone`, `tapeRndData`, `tapeData`) and the ROM's key click and
   rising scale (`keyClick`, `basicBeeps`). Every ZX remake shares them, so
-  none of them writes its own.
+  none of them writes its own. `tapeBlock` plays a whole tape block in its
+  own timing — pilot pulse count, sync, bit lengths — with events at the
+  end of the pilot, after every byte and at the end of the block, for tapes
+  with turbo blocks (Booty).
+- **`ZXRomPrint`** (canvas2D / zxSpectrum) is the ROM's printing to the
+  upper screen (`RST $10`) into a `ZXVideoRAM`: characters 32-127 of the
+  ROM font and the control codes INK, PAPER, FLASH, BRIGHT, INVERSE, OVER,
+  AT and CR, a stream ending at `$FF` the way games end theirs. What it
+  does not do (INK 8/9, TAB, block graphics, UDGs, scrolling) it refuses
+  rather than prints differently; checked by `tools/checkzx.mjs`.
+- **`ZXRomDraw`** (canvas2D / zxSpectrum) is the ROM's plotting and line
+  drawing — PIXEL-ADD `$22AA`, PLOT-SUB `$22E5`, PO-ATTR `$0BDB` and
+  DRAW-LINE `$24BA` — instruction for instruction on a game's memory
+  (`{rd, wr}`), with COORDS, ATTR-T, MASK-T and P-FLAG (OVER, INVERSE,
+  INK 9, PAPER 9) where the ROM keeps them (Thunderbirds draws its spiders'
+  threads with it). A **classic script** (R-048), because the game logic that
+  calls it runs in the worker; it declares nothing at the top level but the
+  class (the system variables are `ZXRomDraw.ATTR_T` …), since a worker's
+  classic scripts share one global scope. Checked by `tools/checkzx.mjs`
+  against the real ROM run in SkoolKit (`tools/retro/romdrawref.py`).
 
 ### Input
 **`InputEventsManager`** unifies every input source into a single event stream
@@ -126,7 +234,12 @@ delivered to the model:
   and drag-and-drop. Mouse buttons are bindable keys, so they can be mapped to
   extra actions.
 - **Gamepad** — compatible gamepads with button and axis support, including a
-  configuration mode for remapping the controls.
+  configuration mode for remapping the controls. The app's `controls`
+  object carries `gamepads` (formerly `gamepad`): `gamepads.supported`
+  says whether the browser exposes the Gamepad API and `gamepads.devices`
+  is a map of the configured pads keyed by gamepad id; `touchscreen.type`
+  is the chosen layout of the touch controls (a key of the game's
+  `touchscreen.types`, kept in a cookie).
 - **Touch** — multi-touch press handling and gestures, plus the groundwork for
   an on-screen software joystick for controlling games on touch displays.
 
@@ -154,7 +267,18 @@ Tuning constants live in the `crtStyle` field of `Canvas2DLayout`.
 
 ### Utilities
 - **`Tool`** — number-base conversions (hex / base-36 / base-90 / Braille),
-  cookies and small helpers.
+  cookies and small helpers. `Tool.loadDataFile(key, prefix)` reads a
+  `data/` file the PHP side put into `localStorage` as `<appPrefix>.<key>`
+  and parses it (null when missing); `AbstractModel.loadDataFile(key)` is
+  the same call from a model, the way models read their rooms, sprites and
+  sounds synchronously in `init()`.
+- **`ModuleWorker`** (`js/moduleWorker.js`) builds a web worker at run time
+  out of ES modules of the application: `ModuleWorker.create(app, sources)`
+  fetches the listed files, strips their import headers and `export`
+  keywords the way `svtool build` does, glues them into one classic script
+  and starts a worker from a blob of it; the last source is the worker
+  program. The sources must be reachable by URL, so they belong in the
+  `standalone` list of `config/compile.json`.
 
 ### Server side (PHP)
 A tiny PHP front controller (`php/`) serves the app shell, generates the PWA
@@ -166,7 +290,9 @@ module import method the browser supports.
 
 - **Progressive Web App.** Every app is installable: the server generates the
   web app manifest and a service worker whose pre-cache asset list is collected
-  automatically, so you get an app icon and full-screen launch.
+  automatically (the scripts on the active import path, the CSS, the
+  `images/`, and the `assets/` a game fetches on demand — `.json`, `.m4a`,
+  `.ogg`, `.mp3`), so you get an app icon and full-screen launch.
 - **Offline mode (production).** Service worker support is built in and active in
   the **production** build: the generated service worker pre-caches the app
   assets and serves them from cache with a network fallback, so released
@@ -206,14 +332,22 @@ Two settings in your project's `config/config.php` drive development behaviour:
     registered and asset versions become **stable** (read from `app/version.js`)
     so the cache holds until you bump the version. Using an array also keeps the
     door open for further per-feature dev switches in the future.
-- **`$devModeName`** is an optional dev-mode label. svision only exposes its
-  value to the client as `window.devModeName`; **what to do with it is entirely
-  up to the application** — render it on screen, log it to the console, or ignore
-  it. The example games (Manic Miner, Jet Set Willy) draw it in the ZX Spectrum
-  border and, by their own convention, read an optional leading JSON style block
-  `{penColor, bkColor, width}` from the value; that convention lives in the app,
-  not in the framework. A value as used by those games (the inner quotes are
-  escaped because it ends up embedded into a JavaScript string):
+- **`$devModeName`** is an optional dev-mode banner text. The server
+  (`php/appPage.php`, `devModeName()`) now composes the banner itself and
+  exposes it to the client as `window.devModeName`:
+  - no `$devMode` → no banner (`false`);
+  - a configured `$devModeName` → used verbatim;
+  - otherwise, when the `app/` sources are served, a yellow
+    `◢◤ ◢◤ ◢◤ ◢◤  DEVELOPER MODE ◢◤ ◢◤ ◢◤ ◢◤` block, and when a
+    `js/bundle.<version>` is served, a red `>>>>  bundle.<version>.js  <<<<`
+    banner naming the bundle.
+
+  The emitted text starts with an escaped JSON style block
+  `{penColor, bkColor}` (the inner quotes are escaped because the value ends
+  up embedded into a JavaScript string). **What to do with it is up to the
+  application**: the ZX games draw it in the border, the vector platform's
+  `VectorDevModeEntity` at the bottom of the screen. A configured value in
+  the same shape:
 
   ```php
   $devModeName = '.{\"penColor\":\"#000000\",\"bkColor\":\"#fefe00\",\"width\":185} DEVELOPER MODE ';
@@ -224,7 +358,9 @@ Two settings in your project's `config/config.php` drive development behaviour:
 name) and an auto-collected asset list. The pre-cache list follows the active
 import path, so it caches the `js/` files when a bundle is served and the `app/`
 sources when the app runs from its sources — the cache always matches what the
-app actually loads. On **install** it pre-caches every listed asset; on
+app actually loads. Besides the scripts it lists the CSS, the `images/` and
+the static `assets/` (`.json`, `.m4a`, `.ogg`, `.mp3` — the meshes, tracks
+and music a game fetches on demand; `data/` stays dynamic). On **install** it pre-caches every listed asset; on
 **activate** it deletes stale version caches; on **fetch** it serves same-origin
 GET requests cache-first, adding any successful network response to the cache
 (runtime caching), while passing dynamic data endpoints (`*.data` / `*.db` /
@@ -269,6 +405,31 @@ verification operations on an svision app. It is run from the application root
 | `svtool help` | Show usage. |
 
 A bash completion script is provided in `tools/svtool-completion.bash`.
+
+### Checks and harness
+
+Next to `svtool` the `tools/` directory holds the Node self-checks of the
+DOM-free halves of the platforms: `tools/checkvector.mjs`,
+`checkscene.mjs`, `checkzx.mjs`, `checkvga.mjs`, `checkc64.mjs`,
+`checkatari8.mjs` and `checkaudio.mjs`. Usage is `node tools/checkX.mjs [-v]`;
+every check is one line (what was expected, what came out), the report has
+the shape of the `match*` tools — the number of checks and the number of
+differences — and the **exit code is the number of differences**. They stand
+on `tools/nodeEnv.mjs` (the browser globals the import headers need, imported
+first) and `tools/headlessApp.mjs` (`headlessVectorApp()` and
+`headlessSceneApp()`, a stand-in application that draws a model through the
+headless layouts and reads `markup()`); `tools/classicScript.cjs` loads a
+worker's classic script (no `import`/`export`) into Node. `tools/retro/`
+keeps what the offline tools of several projects share: `png.mjs` (indexed
+and RGBA PNG encoder and decoder on `node:zlib`), `scr2png.py` (ZX Spectrum
+`.scr` to PNG), `pngread.py` (a minimal PNG reader for comparing maps by
+machine), `dis6502.py` (a tracing 6502 disassembler over a memory image,
+with Atari 8-bit and C64 symbols), `romdrawref.py` (the reference values of
+`ZXRomDraw` from the real ROM), `fetchroms.py` (machine ROMs for the tracing
+emulators, into a project's `sources/rom/`) and `fetchsources.py`.
+What those tools need but the library does not carry — whole machine ROMs,
+SkoolKit — lives in `sources/`, which is out of git (R-041);
+`tools/retro/fetchsources.py` fills it in a fresh clone.
 
 ### What goes into the bundle
 
