@@ -13,7 +13,7 @@ const { Tool } = await import('../../../tool.js?ver='+window.srcVersion);
  * `proportional` is set, trim the blank left/right columns to produce
  * variable-width glyphs.
  */
-export class IBMFonts8x16 extends AbstractFonts {
+export class VGAFonts8x16 extends AbstractFonts {
 
   /**
    * Initializes the font metrics and the character/bitmap tables, choosing
@@ -24,7 +24,7 @@ export class IBMFonts8x16 extends AbstractFonts {
    */
   constructor(app, proportional) {
     super(app);
-    this.id = 'IBMFonts8x16';
+    this.id = 'VGAFonts8x16';
 
     this.proportional = proportional;
     this.charsHeight = 16;
@@ -519,6 +519,25 @@ export class IBMFonts8x16 extends AbstractFonts {
   } // getCharData
 
   /**
+   * The raw glyph of a code point: 16 row masks, bit 7 the leftmost pixel —
+   * what a character generator reads out of its ROM. Untrimmed whatever the
+   * `proportional` setting, because a text mode has fixed cells. A code point
+   * the font lacks gives the glyph of '?'. This is how {@link VGATextRAM}
+   * paints an 80x25 screen without going through rectangles.
+   * @param {number} codePoint - The Unicode code point.
+   * @returns {Uint8Array} 16 bytes.
+   */
+  glyphBytes(codePoint) {
+    var at = this.fontsChars[codePoint in this.fontsChars ? codePoint : '?'.codePointAt(0)];
+    var hexData = this.fontsData[at[0]].substring(at[1], at[1]+32);
+    var rows = new Uint8Array(16);
+    for (var y = 0; y < 16; y++) {
+      rows[y] = parseInt(hexData.substring(y*2, y*2+2), 16);
+    }
+    return rows;
+  } // glyphBytes
+
+  /**
    * Tests whether the given character has a glyph defined in this font.
    * @param {string} char - The character to test.
    * @returns {boolean} True if the character is defined, otherwise false.
@@ -533,4 +552,4 @@ export class IBMFonts8x16 extends AbstractFonts {
     return false;
   } // validChar
 
-} // IBMFonts8x16
+} // VGAFonts8x16
