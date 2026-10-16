@@ -1,452 +1,339 @@
-const { AbstractLayout } = await import('../../abstractLayout.js?ver='+window.srcVersion);
+const { Canvas2DLayout } = await import('../canvas2D/canvas2DLayout.js?ver='+window.srcVersion);
+const { Scene3DHeadlessLayout } = await import('../scene3D/scene3DHeadlessLayout.js?ver='+window.srcVersion);
+const { Scene3D } = await import('../scene3D/scene3D.js?ver='+window.srcVersion);
+const { Mat4 } = await import('../scene3D/mat4.js?ver='+window.srcVersion);
+const { GLPrograms } = await import('./glPrograms.js?ver='+window.srcVersion);
 // begin code
 
 /**
- * A layout that renders into a WebGL2 context. It manages the canvas sizing
- * and provides shader/program helpers and 4x4 matrix math used to draw a
- * 3D scene (a rotating cube) via `paint`.
+ * The layout of the WebGL2 platform: a {@link Canvas2DLayout} for the 2D
+ * overlay (`stack.ctx` — the ratio, the caches, the display style, the
+ * pointer conversion, everything a HUD, a menu or a dialog needs) plus the
+ * renderer of {@link Scene3D}s on the GL canvas under it (`stack.gl`).
  *
- * **EXPERIMENTAL — WORK IN PROGRESS.** This layout is at a very early stage
- * and exists only for testing. It is NOT usable for normal deployment and is
- * expected to be moved to a separate branch in the future.
+ * The one drawing primitive is `render(scene, view, projection, viewport)`
+ * — a window calls it once per {@link SceneEntity}, an XR session (phase 2)
+ * twice, once per eye. `paintScene` is what an entity calls: the viewport
+ * is the entity's rectangle, the matrices come from the scene's camera.
  *
- * @experimental
+ * Without a WebGL2 context (`stack.gl` null) the scenes are drawn as
+ * wireframes on the overlay through {@link Scene3D#project} — the same
+ * bridge a SceneEntity uses on the raster layouts.
  */
-export class WebGL2Layout extends AbstractLayout {
+export class WebGL2Layout extends Canvas2DLayout {
 
   /**
-   * @param {Object} app - The owning application instance.
+   * @param {AbstractApp} app
    */
   constructor(app) {
     super(app);
     this.id = 'WebGL2Layout';
-} // constructor
+    this.pixelRatio = 1;
+    this.programs = null;   // made on the first frame with a context
+  } // constructor
 
   /**
-   * Returns the current canvas pixel dimensions.
-   * @returns {Object} An object with `width` and `height`.
+   * The GL canvas the platform made.
+   * @returns {HTMLCanvasElement}
    */
-  canvas() {
-    return {width: this.app.element.clientWidth, height: this.app.element.clientHeight};
-  } // canvas
+  glCanvas() {
+    return this.app.stack.glCanvas;
+  } // glCanvas
 
   /**
-   * Resizes the model's desktop entity to the configured logical dimensions
-   * and syncs the element's pixel size to its client size.
-   * @param {Object} model - The model whose desktop entity is being resized.
+   * The overlay canvas the platform made (the one `stack.ctx` draws on).
+   * @returns {HTMLCanvasElement}
+   */
+  overlayCanvas() {
+    return this.app.stack.overlayCanvas;
+  } // overlayCanvas
+
+  /**
+   * Fits the desktop into the element (the rule of
+   * {@link Scene3DHeadlessLayout.fitModel} — `'contain'` with a border or
+   * `'cover'` over the whole window — shared so a frame under Node has
+   * the browser's numbers), sizes the overlay in CSS pixels × ratio like a
+   * raster canvas and the GL canvas in device pixels (`pixelRatio`), so
+   * the 3D picture is as sharp as the screen.
+   * @param {AbstractModel} model
    */
   resizeModel(model) {
-    super.resizeModel(model);
+    var element = this.app.element;
+    var clientWidth = element.clientWidth;
+    var clientHeight = element.clientHeight;
+    var options = this.app.platform.options || {};
+    Scene3DHeadlessLayout.fitModel(this, model, clientWidth, clientHeight, options.fit);
 
-    this.app.element.width = this.app.element.clientWidth;
-    this.app.element.height = this.app.element.clientHeight;
+    this.pixelRatio = options.pixelRatio || window.devicePixelRatio || 1;
 
-    model.desktopEntity.x = 0;
-    model.desktopEntity.y = 0;
-    model.desktopEntity.width = model.desktopWidth;
-    model.desktopEntity.height = model.desktopHeight;
-    model.desktopEntity.parentWidth = model.desktopWidth;
-    model.desktopEntity.parentHeight = model.desktopHeight;
+    var width = Math.round((model.desktopWidth+2*model.borderWidth)*this.ratio);
+    var height = Math.round((model.desktopHeight+2*model.borderHeight)*this.ratio);
+    var overlay = this.overlayCanvas();
+    overlay.width = width;
+    overlay.height = height;
+    overlay.style.width = width+'px';
+    overlay.style.height = height+'px';
+    var glCanvas = this.glCanvas();
+    glCanvas.width = Math.round(width*this.pixelRatio);
+    glCanvas.height = Math.round(height*this.pixelRatio);
+    glCanvas.style.width = width+'px';
+    glCanvas.style.height = height+'px';
+    // the CRT overlay of the display style measures `element.width` against the ratio
+    element.width = width;
+    element.height = height;
+    this.applyDisplayStyle();
   } // resizeModel
 
   /**
-   * Renders a rotating, perspective-projected 3D cube into the entity's
-   * viewport. Builds and compiles the shaders, uploads the cube vertex and
-   * index buffers, computes the model/projection matrices, and issues the
-   * draw call.
-   * @param {Object} entity - The entity defining the target viewport bounds.
-   * @param {number} x - X coordinate (unused; viewport comes from the entity).
-   * @param {number} y - Y coordinate (unused; viewport comes from the entity).
-   * @param {number} width - Width (unused; viewport comes from the entity).
-   * @param {number} height - Height (unused; viewport comes from the entity).
-   * @param {*} color - Color (unused; colors come from the vertex data).
+   * Starts a frame: clears the overlay and the GL canvas (the platform's
+   * background colour, the depth buffer).
+   */
+  clearCanvas() {
+    var overlay = this.overlayCanvas();
+    this.app.stack.ctx.clearRect(0, 0, overlay.width, overlay.height);
+    var gl = this.app.stack.gl;
+    if (gl) {
+      var options = this.app.platform.options || {};
+      var c = GLPrograms.rgb(options.background || '#000000');
+      gl.disable(gl.SCISSOR_TEST);
+      gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+      gl.clearColor(c[0], c[1], c[2], 1);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    }
+  } // clearCanvas
+
+  /**
+   * Paints an entity's background on the overlay — except that the border
+   * entity paints only the four strips around the desktop: on a raster
+   * platform the desktop repaints the middle, here it does not (its
+   * background is false so the 3D picture shows through), and a border
+   * painted over the whole overlay would hide the GL canvas.
+   * @param {AbstractEntity} entity - The entity whose background is painted.
+   * @param {number} x - Left edge of its rectangle, in model units on the desktop.
+   * @param {number} y - Top edge of its rectangle.
+   * @param {number} width - Width of the rectangle.
+   * @param {number} height - Height of the rectangle.
+   * @param {string} color - The background colour (a CSS colour).
    */
   paint(entity, x, y, width, height, color) {
-    var vertexShaderSource =
-    '#version 300 es\n' +
-    'in vec3 inPeak;' +
-    'in vec3 inColor;' +
-    'uniform mat4 inMatrix;' +
-    'out vec3 outColor;' +
-    'void main() {' +
-    '  outColor = inColor;' +
-    '  gl_Position = inMatrix*vec4(inPeak, 1.0f);' +
-    '}';
-    var fragmentShaderSource = 
-    '#version 300 es\n' +
-    'precision mediump float;' +
-    'in vec3 outColor;' +
-    'out vec4 outFragmentColor;' +
-    'void main() {' +
-    '  outFragmentColor = vec4(outColor, 1.0f);' +
-    '}';
-
-    var peaks = [
-      -0.5, -0.5,  0.5,   1.0,  0.0,  0.0,
-       0.5, -0.5,  0.5,   0.0,  1.0,  0.0,
-       0.5,  0.5,  0.5,   0.0,  0.0,  1.0,
-      -0.5,  0.5,  0.5,   1.0,  1.0,  0.0,
-
-      -0.5, -0.5, -0.5,   1.0,  0.0,  0.0,
-       0.5, -0.5, -0.5,   0.0,  1.0,  0.0,
-       0.5,  0.5, -0.5,   0.0,  0.0,  1.0,
-      -0.5,  0.5, -0.5,   1.0,  1.0,  0.0
-    ]; //x   y    z       R     G     B
-
-    var indexes = [
-      0, 1, 2,    2, 3, 0,  // front face
-      1, 5, 6,    6, 2, 1,  // right face
-      5, 4, 7,    7, 6, 5,  // back face
-      4, 0, 3,    3, 7, 4,  // left face
-      3, 2, 6,    6, 7, 3,  // top face
-      4, 5, 1,    1, 0, 4   // bottom face
-    ]; // first and second triangle of each face
-
-    var ctx = this.app.stack.ctx;
-
-    var vertexShader = this.createShader(ctx, ctx.VERTEX_SHADER, vertexShaderSource);
-    var fragmentShader = this.createShader(ctx, ctx.FRAGMENT_SHADER, fragmentShaderSource);
-    var program = this.createProgram(ctx, [vertexShader, fragmentShader]);
-
-    var vertexArray = ctx.createVertexArray();
-    ctx.bindVertexArray(vertexArray);
-
-    var vertexBuffer = ctx.createBuffer();
-    ctx.bindBuffer(ctx.ARRAY_BUFFER, vertexBuffer);
-    ctx.bufferData(ctx.ARRAY_BUFFER, new Float32Array(peaks), ctx.STATIC_DRAW);
-
-    var elementBuffer = ctx.createBuffer();
-    ctx.bindBuffer(ctx.ELEMENT_ARRAY_BUFFER, elementBuffer);
-    ctx.bufferData(ctx.ELEMENT_ARRAY_BUFFER, new Uint16Array(indexes), ctx.STATIC_DRAW);
-
-    ctx.useProgram(program);
-
-    var peakLocation = ctx.getAttribLocation(program, 'inPeak');
-    ctx.enableVertexAttribArray(peakLocation);
-    var colorLocation = ctx.getAttribLocation(program, 'inColor');
-    ctx.enableVertexAttribArray(colorLocation);
-
-    ctx.vertexAttribPointer(peakLocation, 3, ctx.FLOAT, ctx.FALSE, 6*this.sizeOfType(ctx, ctx.FLOAT), 0*this.sizeOfType(ctx, ctx.FLOAT));
-    ctx.vertexAttribPointer(colorLocation, 3, ctx.FLOAT, ctx.FALSE, 6*this.sizeOfType(ctx, ctx.FLOAT), 3*this.sizeOfType(ctx, ctx.FLOAT));
-
-    // update scene
-    var rotation = 0.5;
-    var yAxis = [0.0, 1.0, 0.0];
-    var zAxis = [0.0, 0.0, 1.0];
-    var unitMatrix = [
-      1.0, 0.0, 0.0, 0.0,
-      0.0, 1.0, 0.0, 0.0,
-      0.0, 0.0, 1.0, 0.0,
-      0.0, 0.0, 0.0, 1.0
-    ];
-
-    var modelMatrix = this.translateMatrix(unitMatrix, 0.0, 0.0, -3.0); // move the object away from the camera (an object at the origin is pushed in front of the camera into negative Z)
-    modelMatrix = this.axisRotateMatrix(modelMatrix, yAxis, rotation); // rotation around the Y axis
-    modelMatrix = this.axisRotateMatrix(modelMatrix, zAxis, rotation); // rotation around the Z axis
-
-    var aspect = (entity.width-entity.x)/(entity.height-entity.y); // aspect ratio for a correct projection
-    var fov = 32.0; // field of view angle of the viewing frustum, in RADIANS
-    var near = 0.1; // distance of the 'near' plane from the camera
-    var far = 20; // distance of the 'far' plane from the camera
-    var projectionMatrix = this.perspectiveMatrix(fov*Math.PI/180, aspect, near, far); // compute the projection matrix
-    var sceneMatrix = this.multiplyMatrix(projectionMatrix, modelMatrix); // compute the resulting scene matrix
-
-    var uniformLocation = ctx.getUniformLocation(program, 'inMatrix'); // index of the uniform variable in the active shader
-    ctx.uniformMatrix4fv(uniformLocation, false, new Float32Array(sceneMatrix)); // set the uniform variable in the shader
-
-    // draw
-    ctx.enable(ctx.DEPTH_TEST); // enable fragment depth testing (back faces no longer cover front faces)
-    ctx.enable(ctx.CULL_FACE); // discard fragments on the back side of polygons (saves GPU resources)
-    ctx.viewport(entity.x, entity.y, entity.width, entity.height); // set the dimensions of the rendered viewport
-
-    ctx.clearColor(1.0, 1.0, 1.0, 1.0);
-    ctx.clear(ctx.COLOR_BUFFER_BIT);
-
-    var start = 0;
-    var count = 36;
-    ctx.drawElements(ctx.TRIANGLES, count, ctx.UNSIGNED_SHORT, start);
+    var model = this.app.model;
+    if (model && entity === model.borderEntity && model.desktopEntity) {
+      Scene3DHeadlessLayout.borderStrips(model).forEach((r) => this.paintRect(this.app.stack.ctx, r.x, r.y, r.width, r.height, color));
+      return;
+    }
+    super.paint(entity, x, y, width, height, color);
   } // paint
 
   /**
-   * Creates, sources, and compiles a WebGL shader, then checks it for errors.
-   * @param {WebGL2RenderingContext} ctx - The WebGL2 rendering context.
-   * @param {number} type - The shader type (e.g. VERTEX_SHADER, FRAGMENT_SHADER).
-   * @param {string} src - The GLSL source code.
-   * @returns {WebGLShader} The compiled shader.
+   * The GL viewport of an entity: its rectangle in device pixels of the GL
+   * canvas (origin bottom-left), and the visible part of it as the scissor
+   * when the entity clips.
+   * @param {AbstractEntity} entity
+   * @returns {{x: number, y: number, width: number, height: number, scissor: Object}}
    */
-  createShader(ctx, type, src) {
-    var shader = ctx.createShader(type);
-    ctx.shaderSource(shader, src);
-    ctx.compileShader(shader);
-    this.checkShader(ctx, shader);
-    return shader;
-  } // createShader
-
-  /**
-   * Creates a WebGL program, attaches the given shaders, links it, and checks
-   * it for errors.
-   * @param {WebGL2RenderingContext} ctx - The WebGL2 rendering context.
-   * @param {Array} shaders - The shaders to attach to the program.
-   * @returns {WebGLProgram} The linked program.
-   */
-  createProgram(ctx, shaders) {
-    var program = ctx.createProgram();
-    var shader;
-    for(var idx in shaders) {
-      shader = shaders[idx];
-      ctx.attachShader(program, shader);
+  entityViewport(entity) {
+    var s = this.ratio*this.pixelRatio;
+    var canvasHeight = this.glCanvas().height;
+    var x = entity.parentX+entity.x;
+    var y = entity.parentY+entity.y;
+    var viewport = {
+      x: Math.round(x*s),
+      y: Math.round(canvasHeight-(y+entity.height)*s),
+      width: Math.round(entity.width*s),
+      height: Math.round(entity.height*s)
+    };
+    var cx = 0, cy = 0, cw = entity.width, ch = entity.height;
+    if (entity.clipsScene) {
+      cx = Math.max(0, entity.parentCoverX-entity.x);
+      cy = Math.max(0, entity.parentCoverY-entity.y);
+      cw = Math.max(0, Math.min(entity.width, entity.parentWidth-entity.x)-cx);
+      ch = Math.max(0, Math.min(entity.height, entity.parentHeight-entity.y)-cy);
     }
-    ctx.linkProgram(program);
-    this.checkProgram(ctx, program);
-    return program;
-  } // createProgram
+    viewport.scissor = {
+      x: Math.round((x+cx)*s),
+      y: Math.round(canvasHeight-(y+cy+ch)*s),
+      width: Math.round(cw*s),
+      height: Math.round(ch*s)
+    };
+    return viewport;
+  } // entityViewport
 
   /**
-   * Logs the shader info log to the console when compilation failed.
-   * @param {WebGL2RenderingContext} ctx - The WebGL2 rendering context.
-   * @param {WebGLShader} shader - The shader to check.
+   * Draws an entity's scene into the entity's rectangle through the scene's
+   * camera — or, without a GL context, its wireframe on the overlay.
+   * @param {AbstractEntity} entity
+   * @param {Scene3D} scene
    */
-  checkShader(ctx, shader) {
-    if (ctx.getShaderParameter(shader, ctx.COMPILE_STATUS) == false) {
-      console.error(ctx.getShaderInfoLog(shader));
+  paintScene(entity, scene) {
+    if (!this.app.stack.gl) {
+      entity.clipsList = entity.clipsScene;
+      this.paintDisplayList(entity, entity.projectedList ? entity.projectedList() : scene.project(entity.width, entity.height));
+      return;
     }
-  } // checkShader
-
-  /**
-   * Logs the program info log to the console when linking failed.
-   * @param {WebGL2RenderingContext} ctx - The WebGL2 rendering context.
-   * @param {WebGLProgram} program - The program to check.
-   */
-  checkProgram(ctx, program) {
-    if (ctx.getProgramParameter(program, ctx.LINK_STATUS) == false) {
-      console.error(ctx.getProgramInfoLog(program));
+    var viewport = this.entityViewport(entity);
+    if (viewport.width <= 0 || viewport.height <= 0) {
+      return;
     }
-  } // checkProgram
+    this.render(scene, scene.viewMatrix(), scene.projectionMatrix(viewport.width/viewport.height), viewport);
+  } // paintScene
 
   /**
-   * Returns the size in bytes of a given WebGL primitive type.
-   * @param {WebGL2RenderingContext} ctx - The WebGL2 rendering context.
-   * @param {number} type - The WebGL type constant (e.g. FLOAT, UNSIGNED_SHORT).
-   * @returns {number} The size of the type in bytes.
+   * The one drawing primitive: a scene through given view and projection
+   * matrices into a viewport of the GL canvas. Clears the viewport with the
+   * scene's background and depth, then draws the items in order — meshes
+   * with the mesh program (depth test, back faces culled), wireframes and
+   * lines with the line program; both fade into the scene's fog, if it has
+   * one, by their view depth.
+   * @param {Scene3D} scene
+   * @param {number[]} view - Column-major 4×4.
+   * @param {number[]} projection - Column-major 4×4.
+   * @param {{x: number, y: number, width: number, height: number, scissor: Object}} viewport - Device pixels, origin bottom-left; `scissor` optional.
    */
-  sizeOfType(ctx, type) {
-    switch(type) {
-      case ctx.BYTE:
-      case ctx.UNSIGNED_BYTE:
-        return 1;
-      case ctx.SHORT:
-      case ctx.UNSIGNED_SHORT:
-        return 2;
-      case ctx.FLOAT:
-        return 4;
+  render(scene, view, projection, viewport) {
+    var gl = this.app.stack.gl;
+    if (!this.programs) {
+      this.programs = new GLPrograms(gl);
     }
-  } // sizeOfType
+    var programs = this.programs;
+    var scissor = viewport.scissor || viewport;
+
+    gl.viewport(viewport.x, viewport.y, viewport.width, viewport.height);
+    gl.enable(gl.SCISSOR_TEST);
+    gl.scissor(scissor.x, scissor.y, scissor.width, scissor.height);
+    var bg = GLPrograms.rgb(scene.background);
+    gl.clearColor(bg[0], bg[1], bg[2], 1);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.enable(gl.DEPTH_TEST);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+
+    // the lights: one directional (the first), one ambient (the sum of the ambient ones)
+    var lightDirection = [0, -1, 0], lightColor = [0, 0, 0], ambient = [0, 0, 0];
+    var directionalSeen = false;
+    scene.lights.forEach((light) => {
+      var c = GLPrograms.rgb(light.color);
+      var k = (light.intensity === undefined ? 15 : light.intensity)/15;
+      if (light.type == 'ambient') {
+        ambient = [ambient[0]+c[0]*k, ambient[1]+c[1]*k, ambient[2]+c[2]*k];
+      } else if (!directionalSeen) {
+        directionalSeen = true;
+        var d = light.direction || [0, -1, 0];
+        var l = Math.sqrt(d[0]*d[0]+d[1]*d[1]+d[2]*d[2]) || 1;
+        lightDirection = [d[0]/l, d[1]/l, d[2]/l];
+        lightColor = [c[0]*k, c[1]*k, c[2]*k];
+      }
+    });
+
+    var viewProjection = Mat4.multiply(projection, view);
+    var viewF = new Float32Array(view);
+    var projectionF = new Float32Array(projection);
+
+    // the fog (Scene3D.fog, linear by view depth): off as uFog 0
+    var fog = scene.fogSettings ? scene.fogSettings() : null;
+    var fogColor = fog ? GLPrograms.rgb(fog.color) : [0, 0, 0];
+    var setFog = (p) => {
+      gl.uniform1f(p.uniforms.uFog, fog ? 1 : 0);
+      gl.uniform3f(p.uniforms.uFogColor, fogColor[0], fogColor[1], fogColor[2]);
+      gl.uniform1f(p.uniforms.uFogStart, fog ? fog.start : 0);
+      gl.uniform1f(p.uniforms.uFogEnd, fog ? fog.end : 1);
+    };
+
+    scene.items.forEach((item) => {
+      var model = Scene3D.transformMatrix(item.transform);
+      var brightness = (item.intensity === undefined ? 15 : item.intensity)/15;
+      var opacity = item.opacity === undefined ? 1 : item.opacity;
+      if (item.type == 'mesh' && !item.wireframe) {
+        var e = programs.entry(item.mesh);
+        var p = programs.mesh;
+        gl.useProgram(p.program);
+        gl.enable(gl.CULL_FACE);
+        gl.uniformMatrix4fv(p.uniforms.uModel, false, new Float32Array(model));
+        gl.uniformMatrix4fv(p.uniforms.uView, false, viewF);
+        gl.uniformMatrix4fv(p.uniforms.uProjection, false, projectionF);
+        var useVertexColor = e.hasColors && item.fill == 'none';
+        var base = GLPrograms.rgb(item.fill != 'none' ? item.fill : item.color);
+        gl.uniform3f(p.uniforms.uColor, base[0], base[1], base[2]);
+        gl.uniform1f(p.uniforms.uBrightness, brightness);
+        gl.uniform1f(p.uniforms.uUseVertexColor, useVertexColor ? 1 : 0);
+        gl.uniform1f(p.uniforms.uShading, item.shading == 'none' ? 0 : 1);
+        gl.uniform3f(p.uniforms.uLightDirection, lightDirection[0], lightDirection[1], lightDirection[2]);
+        gl.uniform3f(p.uniforms.uLightColor, lightColor[0], lightColor[1], lightColor[2]);
+        gl.uniform3f(p.uniforms.uAmbient, ambient[0], ambient[1], ambient[2]);
+        gl.uniform1f(p.uniforms.uOpacity, opacity);
+        // the checker pattern of the item (Scene3D style `pattern: {checker, size}`), off otherwise
+        var pattern = item.pattern && item.pattern.checker ? item.pattern : null;
+        var pc = pattern ? GLPrograms.rgb(pattern.checker) : [0, 0, 0];
+        gl.uniform1f(p.uniforms.uPattern, pattern ? 1 : 0);
+        gl.uniform1f(p.uniforms.uPatternSize, pattern ? (pattern.size || 1) : 1);
+        gl.uniform3f(p.uniforms.uPatternColor, pc[0]*brightness, pc[1]*brightness, pc[2]*brightness);
+        setFog(p);
+        // an additive item (Scene3D style `blend: 'add'`) adds its light and leaves no depth behind
+        var additive = item.blend == 'add';
+        gl.uniform1f(p.uniforms.uAdditive, additive ? 1 : 0);
+        if (additive) {
+          gl.blendFunc(gl.ONE, gl.ONE);
+          gl.depthMask(false);
+        }
+        gl.bindVertexArray(e.vao);
+        gl.drawElements(gl.TRIANGLES, e.count, e.indexType, 0);
+        gl.bindVertexArray(null);
+        if (additive) {
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+          gl.depthMask(true);
+        }
+        return;
+      }
+      // wireframes, lines and polylines
+      var lp = programs.line;
+      gl.useProgram(lp.program);
+      gl.disable(gl.CULL_FACE);
+      gl.uniformMatrix4fv(lp.uniforms.uMatrix, false, new Float32Array(Mat4.multiply(viewProjection, model)));
+      gl.uniformMatrix4fv(lp.uniforms.uModelView, false, new Float32Array(Mat4.multiply(view, model)));
+      var c = GLPrograms.rgb(item.color);
+      gl.uniform4f(lp.uniforms.uColor, c[0]*brightness, c[1]*brightness, c[2]*brightness, opacity);
+      setFog(lp);
+      if (item.type == 'mesh') {
+        var entry = programs.entry(item.mesh);
+        gl.bindVertexArray(entry.edgeVao);
+        gl.drawArrays(gl.LINES, 0, entry.edgeCount);
+        gl.bindVertexArray(null);
+        return;
+      }
+      var points;
+      if (item.type == 'line') {
+        points = new Float32Array([item.x1, item.y1, item.z1, item.x2, item.y2, item.z2]);
+      } else {
+        points = new Float32Array(item.points);
+      }
+      gl.bindVertexArray(programs.lineVao);
+      gl.bindBuffer(gl.ARRAY_BUFFER, programs.lineBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, points, gl.STREAM_DRAW);
+      gl.drawArrays(item.type == 'line' ? gl.LINES : (item.close ? gl.LINE_LOOP : gl.LINE_STRIP), 0, points.length/3);
+      gl.bindVertexArray(null);
+    });
+    gl.disable(gl.SCISSOR_TEST);
+  } // render
 
   /**
-   * Multiplies a 4x4 matrix by a translation of (tx, ty, tz), writing the
-   * result into `dst`.
-   * @param {Array|Float32Array} m - The source 4x4 matrix.
-   * @param {number} tx - Translation along the X axis.
-   * @param {number} ty - Translation along the Y axis.
-   * @param {number} tz - Translation along the Z axis.
-   * @param {Float32Array} [dst] - Optional destination matrix; allocated if omitted.
-   * @returns {Float32Array} The resulting 4x4 matrix.
+   * Converts a client X coordinate into model units: the overlay's bitmap
+   * is the element's CSS size × ratio, so the base rule holds with the
+   * overlay in place of the element.
+   * @param {number} clientX
+   * @returns {number}
    */
-  translateMatrix(m, tx, ty, tz, dst) {
-    dst = dst || new Float32Array(16);
-    var m00 = m[0];
-    var m01 = m[1];
-    var m02 = m[2];
-    var m03 = m[3];
-    var m10 = m[1 * 4 + 0];
-    var m11 = m[1 * 4 + 1];
-    var m12 = m[1 * 4 + 2];
-    var m13 = m[1 * 4 + 3];
-    var m20 = m[2 * 4 + 0];
-    var m21 = m[2 * 4 + 1];
-    var m22 = m[2 * 4 + 2];
-    var m23 = m[2 * 4 + 3];
-    var m30 = m[3 * 4 + 0];
-    var m31 = m[3 * 4 + 1];
-    var m32 = m[3 * 4 + 2];
-    var m33 = m[3 * 4 + 3];
-    if (m !== dst) {
-      dst[ 0] = m00;
-      dst[ 1] = m01;
-      dst[ 2] = m02;
-      dst[ 3] = m03;
-      dst[ 4] = m10;
-      dst[ 5] = m11;
-      dst[ 6] = m12;
-      dst[ 7] = m13;
-      dst[ 8] = m20;
-      dst[ 9] = m21;
-      dst[10] = m22;
-      dst[11] = m23;
-    }
-    dst[12] = m00 * tx + m10 * ty + m20 * tz + m30;
-    dst[13] = m01 * tx + m11 * ty + m21 * tz + m31;
-    dst[14] = m02 * tx + m12 * ty + m22 * tz + m32;
-    dst[15] = m03 * tx + m13 * ty + m23 * tz + m33;
-    return dst;
-  } // translateMatrix
+  convertClientCoordinateX(clientX) {
+    var box = this.app.element.getBoundingClientRect();
+    return Math.round((clientX-box.left)/this.ratio);
+  } // convertClientCoordinateX
 
   /**
-   * Multiplies a 4x4 matrix by a rotation of `angleInRadians` around the given
-   * (normalized internally) axis, writing the result into `dst`.
-   * @param {Array|Float32Array} m - The source 4x4 matrix.
-   * @param {Array} axis - The rotation axis as [x, y, z].
-   * @param {number} angleInRadians - The rotation angle in radians.
-   * @param {Float32Array} [dst] - Optional destination matrix; allocated if omitted.
-   * @returns {Float32Array} The resulting 4x4 matrix.
+   * See convertClientCoordinateX.
+   * @param {number} clientY
+   * @returns {number}
    */
-  axisRotateMatrix(m, axis, angleInRadians, dst) {
-    dst = dst || new Float32Array(16);
-    var x = axis[0];
-    var y = axis[1];
-    var z = axis[2];
-    var n = Math.sqrt(x * x + y * y + z * z);
-    x /= n;
-    y /= n;
-    z /= n;
-    var xx = x * x;
-    var yy = y * y;
-    var zz = z * z;
-    var c = Math.cos(angleInRadians);
-    var s = Math.sin(angleInRadians);
-    var oneMinusCosine = 1 - c;
-    var r00 = xx + (1 - xx) * c;
-    var r01 = x * y * oneMinusCosine + z * s;
-    var r02 = x * z * oneMinusCosine - y * s;
-    var r10 = x * y * oneMinusCosine - z * s;
-    var r11 = yy + (1 - yy) * c;
-    var r12 = y * z * oneMinusCosine + x * s;
-    var r20 = x * z * oneMinusCosine + y * s;
-    var r21 = y * z * oneMinusCosine - x * s;
-    var r22 = zz + (1 - zz) * c;
-    var m00 = m[0];
-    var m01 = m[1];
-    var m02 = m[2];
-    var m03 = m[3];
-    var m10 = m[4];
-    var m11 = m[5];
-    var m12 = m[6];
-    var m13 = m[7];
-    var m20 = m[8];
-    var m21 = m[9];
-    var m22 = m[10];
-    var m23 = m[11];
-    dst[ 0] = r00 * m00 + r01 * m10 + r02 * m20;
-    dst[ 1] = r00 * m01 + r01 * m11 + r02 * m21;
-    dst[ 2] = r00 * m02 + r01 * m12 + r02 * m22;
-    dst[ 3] = r00 * m03 + r01 * m13 + r02 * m23;
-    dst[ 4] = r10 * m00 + r11 * m10 + r12 * m20;
-    dst[ 5] = r10 * m01 + r11 * m11 + r12 * m21;
-    dst[ 6] = r10 * m02 + r11 * m12 + r12 * m22;
-    dst[ 7] = r10 * m03 + r11 * m13 + r12 * m23;
-    dst[ 8] = r20 * m00 + r21 * m10 + r22 * m20;
-    dst[ 9] = r20 * m01 + r21 * m11 + r22 * m21;
-    dst[10] = r20 * m02 + r21 * m12 + r22 * m22;
-    dst[11] = r20 * m03 + r21 * m13 + r22 * m23;
-    if (m !== dst) {
-      dst[12] = m[12];
-      dst[13] = m[13];
-      dst[14] = m[14];
-      dst[15] = m[15];
-    }
-    return dst;
-  } // axisRotateMatrix
-
-  /**
-   * Builds a perspective projection 4x4 matrix, writing the result into `dst`.
-   * @param {number} fieldOfViewInRadians - The vertical field of view in radians.
-   * @param {number} aspect - The viewport aspect ratio (width / height).
-   * @param {number} near - The distance to the near clipping plane.
-   * @param {number} far - The distance to the far clipping plane.
-   * @param {Float32Array} [dst] - Optional destination matrix; allocated if omitted.
-   * @returns {Float32Array} The resulting projection matrix.
-   */
-  perspectiveMatrix(fieldOfViewInRadians, aspect, near, far, dst) {
-    dst = dst || new Float32Array(16);
-    var f = Math.tan(Math.PI * 0.5 - 0.5 * fieldOfViewInRadians);
-    var rangeInv = 1.0 / (near - far);
-    dst[ 0] = f / aspect;
-    dst[ 1] = 0;
-    dst[ 2] = 0;
-    dst[ 3] = 0;
-    dst[ 4] = 0;
-    dst[ 5] = f;
-    dst[ 6] = 0;
-    dst[ 7] = 0;
-    dst[ 8] = 0;
-    dst[ 9] = 0;
-    dst[10] = (near + far) * rangeInv;
-    dst[11] = -1;
-    dst[12] = 0;
-    dst[13] = 0;
-    dst[14] = near * far * rangeInv * 2;
-    dst[15] = 0;
-    return dst;
-  } // perspectiveMatrix
-
-  /**
-   * Multiplies two 4x4 matrices (a * b), writing the result into `dst`.
-   * @param {Array|Float32Array} a - The left-hand 4x4 matrix.
-   * @param {Array|Float32Array} b - The right-hand 4x4 matrix.
-   * @param {Float32Array} [dst] - Optional destination matrix; allocated if omitted.
-   * @returns {Float32Array} The resulting 4x4 matrix.
-   */
-  multiplyMatrix(a, b, dst) {
-    dst = dst || new Float32Array(16);
-    var b00 = b[0 * 4 + 0];
-    var b01 = b[0 * 4 + 1];
-    var b02 = b[0 * 4 + 2];
-    var b03 = b[0 * 4 + 3];
-    var b10 = b[1 * 4 + 0];
-    var b11 = b[1 * 4 + 1];
-    var b12 = b[1 * 4 + 2];
-    var b13 = b[1 * 4 + 3];
-    var b20 = b[2 * 4 + 0];
-    var b21 = b[2 * 4 + 1];
-    var b22 = b[2 * 4 + 2];
-    var b23 = b[2 * 4 + 3];
-    var b30 = b[3 * 4 + 0];
-    var b31 = b[3 * 4 + 1];
-    var b32 = b[3 * 4 + 2];
-    var b33 = b[3 * 4 + 3];
-    var a00 = a[0 * 4 + 0];
-    var a01 = a[0 * 4 + 1];
-    var a02 = a[0 * 4 + 2];
-    var a03 = a[0 * 4 + 3];
-    var a10 = a[1 * 4 + 0];
-    var a11 = a[1 * 4 + 1];
-    var a12 = a[1 * 4 + 2];
-    var a13 = a[1 * 4 + 3];
-    var a20 = a[2 * 4 + 0];
-    var a21 = a[2 * 4 + 1];
-    var a22 = a[2 * 4 + 2];
-    var a23 = a[2 * 4 + 3];
-    var a30 = a[3 * 4 + 0];
-    var a31 = a[3 * 4 + 1];
-    var a32 = a[3 * 4 + 2];
-    var a33 = a[3 * 4 + 3];
-    dst[ 0] = b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30;
-    dst[ 1] = b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31;
-    dst[ 2] = b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32;
-    dst[ 3] = b00 * a03 + b01 * a13 + b02 * a23 + b03 * a33;
-    dst[ 4] = b10 * a00 + b11 * a10 + b12 * a20 + b13 * a30;
-    dst[ 5] = b10 * a01 + b11 * a11 + b12 * a21 + b13 * a31;
-    dst[ 6] = b10 * a02 + b11 * a12 + b12 * a22 + b13 * a32;
-    dst[ 7] = b10 * a03 + b11 * a13 + b12 * a23 + b13 * a33;
-    dst[ 8] = b20 * a00 + b21 * a10 + b22 * a20 + b23 * a30;
-    dst[ 9] = b20 * a01 + b21 * a11 + b22 * a21 + b23 * a31;
-    dst[10] = b20 * a02 + b21 * a12 + b22 * a22 + b23 * a32;
-    dst[11] = b20 * a03 + b21 * a13 + b22 * a23 + b23 * a33;
-    dst[12] = b30 * a00 + b31 * a10 + b32 * a20 + b33 * a30;
-    dst[13] = b30 * a01 + b31 * a11 + b32 * a21 + b33 * a31;
-    dst[14] = b30 * a02 + b31 * a12 + b32 * a22 + b33 * a32;
-    dst[15] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33;
-    return dst;
-  } // multiplyMatrix
+  convertClientCoordinateY(clientY) {
+    var box = this.app.element.getBoundingClientRect();
+    return Math.round((clientY-box.top)/this.ratio);
+  } // convertClientCoordinateY
 
 } // WebGL2Layout
