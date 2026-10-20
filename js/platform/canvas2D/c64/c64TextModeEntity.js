@@ -21,6 +21,14 @@ const { C64TextRAM } = await import('./c64TextRAM.js?ver='+window.srcVersion);
  *   this.desktopWidth, this.desktopHeight, this.app.fonts.c64Fonts8x8);
  * this.screen.textRAM.print('READY.\n');
  * ```
+ *
+ * ## Sprites in the same frame
+ *
+ * A game that multiplexes sprites hands over a {@link C64Sprites} with
+ * {@link C64TextModeEntity#setSprites}: the frame is then composed the way
+ * the chip composes it — the text, the sprites over it line by line, and the
+ * border of the 38-column window over both. One picture, painted by the
+ * DOM-free classes, so a tool under Node gets the same pixels.
  */
 export class C64TextModeEntity extends RasterEntity {
 
@@ -50,7 +58,20 @@ export class C64TextModeEntity extends RasterEntity {
     this.cursorPhase = true;
     /** whether the cursor follows the clock at all */
     this.blinking = true;
+    /** the hardware sprites painted into the frame, or null */
+    this.sprites = null;
+    /** the sprites' version the cache was painted with */
+    this.paintedSpritesVersion = -1;
   } // constructor
+
+  /**
+   * Paints these sprites into the frame, between the text and the border.
+   * @param {C64Sprites|null} sprites - The sprites, or null for none.
+   */
+  setSprites(sprites) {
+    this.sprites = sprites;
+    this.invalidate();
+  } // setSprites
 
   /**
    * Swaps the character set the screen is painted with — a game's own set
@@ -87,14 +108,22 @@ export class C64TextModeEntity extends RasterEntity {
       return;
     }
     this.paintBackground();
-    if (this.textRAM.version !== this.paintedVersion) {
+    if (this.textRAM.version !== this.paintedVersion
+        || (this.sprites && this.sprites.version !== this.paintedSpritesVersion)) {
       this.cleanCache();
     }
     var cache = this.drawingCache[0];
     if (cache.preparePaint(C64TextRAM.WIDTH, C64TextRAM.HEIGHT)) {
       var frame = this.frameBytes(cache, C64TextRAM.WIDTH, C64TextRAM.HEIGHT);
       this.paintedVersion = this.textRAM.version;
-      this.textRAM.paint32(this.pixels, this.font, RasterEntity.littleEndian, {cursorPhase: this.cursorPhase});
+      if (this.sprites) {
+        this.paintedSpritesVersion = this.sprites.version;
+        this.textRAM.paint32(this.pixels, this.font, RasterEntity.littleEndian, {cursorPhase: this.cursorPhase, border: false});
+        this.sprites.paint32(this.pixels, RasterEntity.littleEndian);
+        this.textRAM.paintBorder32(this.pixels, RasterEntity.littleEndian);
+      } else {
+        this.textRAM.paint32(this.pixels, this.font, RasterEntity.littleEndian, {cursorPhase: this.cursorPhase});
+      }
       cache.ctx.putImageData(frame, 0, 0);
     }
     this.app.layout.paintImage(this, cache.canvas, 0, 0, this.width, this.height);

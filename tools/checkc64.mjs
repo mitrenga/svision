@@ -21,6 +21,7 @@ const { C64TextRAM } = await import('../js/platform/canvas2D/c64/c64TextRAM.js')
 const { C64Charset } = await import('../js/platform/canvas2D/c64/c64Charset.js');
 const { C64SpriteData } = await import('../js/platform/canvas2D/c64/c64SpriteData.js');
 const { C64SpriteEntity } = await import('../js/platform/canvas2D/c64/c64SpriteEntity.js');
+const { C64Sprites } = await import('../js/platform/canvas2D/c64/c64Sprites.js');
 // ★ a classic script, not a module — the same file a game's worker pulls in
 import { createRequire } from 'node:module';
 const { loadClassicScript } = createRequire(import.meta.url)('./classicScript.cjs');
@@ -577,6 +578,118 @@ function hex(bytes) {
   text.paint32(pixels, setA, true, {cursor: false});
   check('splits: null goes back to one set of registers',
         [pixels[0], pixels[100*320]], [palette[1], palette[1]]);
+}
+
+// ------------------------- fine scroll, 38 columns, splits inside a line ($D016)
+{
+  // column 0 solid white, everything else empty: the scroll shows where it went
+  const glyphs = new Uint8Array(2048);
+  for (let i = 0; i < 8; i++) glyphs[1*8+i] = 0xFF;          // code 1 solid
+  const set = new C64Charset(glyphs);
+  const text = new C64TextRAM();
+  text.showCursor(false);
+  text.clear(1);
+  text.screen.fill(0);
+  for (let row = 0; row < 25; row++) text.screen[row*40] = 1; // column 0
+  text.setBackground(0).setBorder(2);
+  const pixels = new Uint32Array(320*200);
+  const palette = C64TextRAM.lookup(true);
+  const line = (y, x0, n) => Array.from(pixels.subarray(y*320+x0, y*320+x0+n));
+  const W = palette[1], K = palette[0], R = palette[2];
+
+  text.paint32(pixels, set, true, {cursor: false});
+  check('scroll 0: column 0 at x 0-7', line(0, 0, 9), [W, W, W, W, W, W, W, W, K]);
+  check('scroll 0 and 40 columns keep the old painter', text.needsLinePainter(), false);
+
+  text.setScrollX(3);
+  text.paint32(pixels, set, true, {cursor: false});
+  check('scroll 3: the background uncovered on the left',
+        line(0, 0, 12), [K, K, K, W, W, W, W, W, W, W, W, K]);
+  check('scroll: the register keeps three bits', text.setScrollX(11).scrollX, 3);
+
+  text.setColumns(38);
+  text.paint32(pixels, set, true, {cursor: false});
+  check('38 columns: the border covers 7 pixels on the left',
+        line(0, 0, 12), [R, R, R, R, R, R, R, W, W, W, W, K]);
+  check('38 columns: and 9 on the right', line(0, 310, 10), [K, R, R, R, R, R, R, R, R, R]);
+  text.paint32(pixels, set, true, {cursor: false, border: false});
+  check('border: false leaves it to paintBorder32', line(0, 0, 4), [K, K, K, W]);
+  text.paintBorder32(pixels, true);
+  check('paintBorder32 paints it afterwards', line(0, 0, 4), [R, R, R, R]);
+
+  // a panel: from line 100 on, 40 columns and no scroll
+  text.setSplits([{fromLine: 100, scrollX: 0, columns: 40}]);
+  text.paint32(pixels, set, true, {cursor: false});
+  check('split: scroll and columns per band',
+        [line(99, 0, 8), line(100, 0, 8)], [[R, R, R, R, R, R, R, W], [W, W, W, W, W, W, W, W]]);
+
+  // inside a line: the scroll changes from x 160 of line 50
+  text.setColumns(40).setScrollX(0);
+  for (let row = 0; row < 25; row++) text.screen[row*40+20] = 1;   // column 20 too
+  text.setSplits([{fromLine: 50, fromX: 160, scrollX: 4}]);
+  text.paint32(pixels, set, true, {cursor: false});
+  check('split inside a line: the left part of the line keeps the old scroll',
+        [line(50, 0, 2), line(50, 160, 6)], [[W, W], [K, K, K, K, W, W]]);
+  check('split inside a line: the line above is untouched', line(49, 160, 6), [W, W, W, W, W, W]);
+  check('split inside a line: the line below has it from x 0', line(51, 0, 6), [K, K, K, K, W, W]);
+  check('splitAt honours fromX', [text.splitAt(50, 159).scrollX, text.splitAt(50, 160).scrollX], [0, 4]);
+}
+
+// -------------------------------------------- sprites in the frame, multiplexed
+{
+  const bank = new Uint8Array(16384);
+  for (let i = 0; i < 63; i++) bank[0x80*64+i] = 0xFF;       // block $80: solid
+  for (let i = 0; i < 63; i += 3) bank[0x81*64+i] = 0x40;    // block $81: multicolour 01 in pair 0
+  const sprites = new C64Sprites(bank);
+  const vic = new Uint8Array(0x2F);
+  vic[0x15] = 0x01;                     // sprite 0 on
+  vic[0x00] = 24; vic[0x01] = 50;       // top left of the picture
+  vic[0x27] = 1;                        // white
+  sprites.setRegisters(vic).setPointers([0x80, 0, 0, 0, 0, 0, 0, 0]);
+  const palette = C64TextRAM.lookup(true);
+  const pixels = new Uint32Array(320*200);
+  const at = (x, y) => pixels[y*320+x];
+  const W = palette[1];
+
+  sprites.paint32(pixels, true);
+  check('sprite: Y 50 starts on line 0, 24 wide', [at(0, 0), at(23, 0), at(24, 0)], [W, W, 0]);
+  check('sprite: 21 lines high', [at(0, 20), at(0, 21)], [W, 0]);
+
+  // multiplex: the same sprite again lower down, written on line 30
+  pixels.fill(0);
+  sprites.setWrites([{line: 30, register: 0xD001, value: 150}, {line: 30, register: 0xD000, value: 124},
+                     {line: 30, register: 0xD027, value: 2}]);
+  sprites.paint32(pixels, true);
+  check('multiplex: the first use is drawn whole', at(0, 20), W);
+  check('multiplex: the second use starts at its new Y with its new X and colour',
+        [at(100, 99), at(100, 100), at(100, 120), at(100, 121)], [0, palette[2], palette[2], 0]);
+
+  // a store to Y while the sprite is shown does not restart it
+  pixels.fill(0);
+  sprites.setWrites([{line: 10, register: 0xD001, value: 61}]);
+  sprites.paint32(pixels, true);
+  check('Y written while shown: the sprite runs out its 21 lines', [at(0, 20), at(0, 21)], [W, 0]);
+
+  // expanded both ways, sprite 1 behind sprite 0, X over 255 through $D010
+  pixels.fill(0);
+  vic[0x15] = 0x03; vic[0x17] = 0x01; vic[0x1D] = 0x01;
+  vic[0x02] = 24; vic[0x03] = 50; vic[0x28] = 5;
+  sprites.setRegisters(vic).setPointers([0x80, 0x80, 0, 0, 0, 0, 0, 0]).setWrites(null);
+  sprites.paint32(pixels, true);
+  check('sprite 0 is in front of sprite 1', at(0, 0), W);
+  check('expanded: 48 wide and 42 high', [at(47, 41), at(48, 0), at(0, 42)], [W, 0, 0]);
+  pixels.fill(0);
+  vic[0x15] = 0x01; vic[0x17] = 0; vic[0x1D] = 0; vic[0x00] = 0x20; vic[0x10] = 0x01;
+  sprites.setRegisters(vic).setPointers([0x80]);
+  sprites.paint32(pixels, true);
+  check('$D010: X 288 is picture x 264', [at(263, 0), at(264, 0)], [0, W]);
+
+  // multicolour: pair 01 is $D025, two pixels wide
+  pixels.fill(0);
+  vic[0x10] = 0; vic[0x00] = 24; vic[0x1C] = 0x01; vic[0x25] = 7;
+  sprites.setRegisters(vic).setPointers([0x81]);
+  sprites.paint32(pixels, true);
+  check('multicolour: 01 is $D025 and two pixels wide', [at(0, 0), at(1, 0), at(2, 0)], [palette[7], palette[7], 0]);
 }
 
 console.log(`checkc64: ${checks} checks, ${differences} differences`);
