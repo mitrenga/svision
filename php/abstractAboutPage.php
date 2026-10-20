@@ -32,13 +32,59 @@ class AbstractAboutPage extends AbstractPage {
   } // aboutData
 
   /**
+   * The name the page calls the application; $appName of the configuration by
+   * default. An application overrides it when its page is to use another
+   * spelling than the manifest (R-Type's about page says R·TYPE).
+   *
+   * Public, because the shared /pwa page asks the project's about page for it.
+   *
+   * @return string The application name as shown on the page.
+   */
+  public function appName() {
+    return $GLOBALS['appName'];
+  } // appName
+
+  /**
+   * The page title; "About <name>" by default.
+   *
+   * @return string
+   */
+  protected function pageTitle() {
+    return 'About '.$this->appName();
+  } // pageTitle
+
+  /**
+   * The path of the page under the web root, for the canonical URL ('about').
+   *
+   * @return string
+   */
+  protected function pagePath() {
+    return 'about';
+  } // pagePath
+
+  /**
+   * The paragraph every about page adds after its note on the controls: the
+   * game can be installed as a Progressive Web App — recommended on phones
+   * and tablets — with a link to the shared /pwa page (PwaPage), which says
+   * what a PWA is, what it is good for and how it is installed.
+   *
+   * @return string A <p> element.
+   */
+  protected function installNote() {
+    return '<p>You can also install the game as an app on your phone, tablet or computer: it then starts '.
+           'from its own icon, runs full screen without the browser bars and works offline. On a phone or a '.
+           'tablet this is the recommended way to play. The game is a so-called Progressive Web App (PWA) — '.
+           '<a href="pwa">what that means and how to install it</a>.</p>';
+  } // installNote
+
+  /**
    * Builds the about page HTML into $data: head with SEO metadata, a header
    * with the app name and a play button, the hero image, content sections,
    * the link list and the footer.
    */
   public function createPage() {
     $about = $this->aboutData();
-    $appName = $GLOBALS['appName'];
+    $appName = $this->appName();
     $description = empty($about['description'])
       ? (empty($GLOBALS['appDescription']) ? $appName : $GLOBALS['appDescription'])
       : $about['description'];
@@ -46,11 +92,11 @@ class AbstractAboutPage extends AbstractPage {
     $this->data[] = '<!DOCTYPE html>';
     $this->data[] = '<html lang="en">';
     $this->data[] = '  <head>';
-    $this->data[] = '    <title>About '.$appName.'</title>';
+    $this->data[] = '    <title>'.$this->pageTitle().'</title>';
     $this->data[] = '    <meta name="description" lang="en" content="'.$description.'">';
     $this->data[] = '    <meta charset="UTF-8">';
     $this->data[] = '    <meta name="viewport" content="width=device-width, initial-scale=1.0">';
-    $this->data[] = '    <link rel="canonical" href="'.$GLOBALS['webURL'].'about">';
+    $this->data[] = '    <link rel="canonical" href="'.$GLOBALS['webURL'].$this->pagePath().'">';
     $this->data[] = '    <link rel="shortcut icon" sizes="256x256" href="images/app-icon-256x256.png">';
     $this->data[] = '    <style>';
     $this->data[] = $this->pageStyle();
@@ -119,6 +165,8 @@ class AbstractAboutPage extends AbstractPage {
         justify-content: space-between; gap: 16px; margin-bottom: 8px; }
       h1 { color: #fefe00; font-size: 34px; letter-spacing: 3px; margin: 0; }
       h2 { color: #00fefe; letter-spacing: 2px; margin: 36px 0 8px; }
+      h3 { color: #fefe00; letter-spacing: 1px; margin: 24px 0 4px; font-size: 18px; }
+      ul li { margin: 6px 0; }
       a { color: #fefe00; }
       a:hover { color: #fff; }
       .play {

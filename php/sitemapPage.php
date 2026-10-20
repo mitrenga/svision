@@ -27,6 +27,13 @@ class SitemapPage extends AbstractPage {
       $this->data[] = '    <lastmod>'.date('Y-m-d', filemtime('./aboutPage.php')).'</lastmod>';
       $this->data[] = '  </url>';
     }
+    // the shared /pwa page (how to install the game as an app) goes with the about page
+    if (file_exists('./aboutPage.php')) {
+      $this->data[] = '  <url>';
+      $this->data[] = '    <loc>'.$GLOBALS['webURL'].'pwa</loc>';
+      $this->data[] = '    <lastmod>'.date('Y-m-d', filemtime('./app/svision/php/pwaPage.php')).'</lastmod>';
+      $this->data[] = '  </url>';
+    }
     $this->data[] = '</urlset>';
   } // createPage
 
