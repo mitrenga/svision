@@ -66,6 +66,15 @@
  *    — still makes sound. The offset would leave a step at the output, so
  *    a one-pole **DC blocker** stands at the end, as the capacitor on the
  *    board does.
+ *  - **roles** (R-055): a game whose music and effects share the chip —
+ *    an effect is a track of the song played on one voice for a while —
+ *    can tell the model which **role** a voice has at the moment, through
+ *    the pseudo-registers {@link SID.ROLE_REGISTER} + voice (not on the
+ *    chip, ignored by nothing else; written in the stream, so they keep
+ *    their place in the frame), and the mixer scales the AC part of the
+ *    voice by the gain of its role ({@link SID#setRoleGain}: a music
+ *    slider and an effects slider over one SID). The DC offset of the
+ *    voice stays, so a role change does not click.
  *  - **time**: the model advances in chip clocks. When no voice is
  *    synced or ring-modulated it jumps a whole sample at a time (the
  *    accumulator is linear and the noise shifts are counted, not stepped);
@@ -93,6 +102,26 @@ export class SID {
 
   /** The clock of an NTSC C64. */
   static get CLOCK_NTSC() { return 1022727; }
+
+  /** the first of three pseudo-registers: `write(ROLE_REGISTER + voice, role)` sets a voice's role (R-055) */
+  static get ROLE_REGISTER() { return 0x20; }
+
+  /** the roles a voice can have */
+  static get ROLE_MUSIC() { return 0; }
+  static get ROLE_EFFECTS() { return 1; }
+
+  /**
+   * The gain of a role: what the mixer scales a voice of that role by.
+   * Not reset with the chip — it is the listener's setting, not the
+   * program's state.
+   * @param {number} role - {@link SID.ROLE_MUSIC} or {@link SID.ROLE_EFFECTS}.
+   * @param {number} gain - 0-1.
+   */
+  setRoleGain(role, gain) {
+    if (role === 0 || role === 1) {
+      this.roleGains[role] = Math.max(0, Number(gain) || 0);
+    }
+  } // setRoleGain
 
   /**
    * The rate counter periods of the envelope, one per nibble of `ATDCY`
@@ -129,6 +158,9 @@ export class SID {
     this.dcOut = 0;
     /** the fraction of a chip clock owed to the sample being rendered */
     this.carry = 0;
+    /** the role of each voice (0 music, 1 effects) and the gain of each role (R-055) */
+    this.roles = [0, 0, 0];
+    this.roleGains = [1, 1];
   } // constructor
 
   /**
@@ -167,6 +199,10 @@ export class SID {
         case 5: v.attack = value >> 4; v.decay = value & 0x0F; this.setRate(v); break;
         case 6: v.sustain = value >> 4; v.release = value & 0x0F; this.setRate(v); break;
       }
+      return;
+    }
+    if (register >= SID.ROLE_REGISTER && register < SID.ROLE_REGISTER+3) {
+      this.roles[register-SID.ROLE_REGISTER] = value & 1;
       return;
     }
     switch (register) {
@@ -229,6 +265,7 @@ export class SID {
     this.lowpass = 0;
     this.dcLast = 0;
     this.dcOut = 0;
+    this.roles = [0, 0, 0];
   } // reset
 
   /**
@@ -428,7 +465,7 @@ export class SID {
       if (i === 2 && this.voice3off && !(this.filtered & 0x04)) {
         continue;
       }
-      var level = (this.waveOf(i)-SID.WAVE_ZERO)*v.envelope/(2048*255)+SID.VOICE_DC;
+      var level = (this.waveOf(i)-SID.WAVE_ZERO)*v.envelope/(2048*255)*this.roleGains[this.roles[i]]+SID.VOICE_DC;
       if (this.filtered & (1 << i)) {
         filter += level;
       } else {

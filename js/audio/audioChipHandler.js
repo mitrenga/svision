@@ -67,6 +67,8 @@ export class AudioChipHandler extends AbstractAudioHandler {
    */
   constructor(app) {
     super(app);
+    /** R-055: the gains of the voice roles, posted to the worklet when it is up */
+    this.roleGains = {};
     this.id = 'AudioChipHandler';
     this.node = null;
     this.gain = null;
@@ -154,6 +156,7 @@ export class AudioChipHandler extends AbstractAudioHandler {
       this.gain.gain.value = this.muted ? 0.0 : this.busFactor;
       this.node.connect(this.gain);
       this.gain.connect(this.ctx.destination);
+      Object.keys(this.roleGains).forEach((role) => { this.post({id: 'roleGain', role: Number(role), gain: this.roleGains[role]}); });
       this.node.port.onmessage = (event) => {
         this.app.model.sendEvent(1, {id: event.data.id, data: event.data});
       };
@@ -305,6 +308,19 @@ export class AudioChipHandler extends AbstractAudioHandler {
       this.gain.gain.value = this.muted ? 0.0 : this.busFactor;
     }
   } // setBusVolume
+
+  /**
+   * R-055: the gain of a **role** of the chip's voices — music or effects —
+   * for a chip whose program plays both on the same voices and says which
+   * is which in the stream (`SID.ROLE_REGISTER`). Kept here too, so a bus
+   * opened later gets it when its worklet is up.
+   * @param {number} role - 0 music, 1 effects.
+   * @param {number} gain - 0-1.
+   */
+  setRoleGain(role, gain) {
+    this.roleGains[role] = gain;
+    this.post({id: 'roleGain', role: role, gain: gain});
+  } // setRoleGain
 
   busIsReady() {
     return this.node != null;

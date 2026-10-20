@@ -94,6 +94,12 @@ class ChipProcessor extends AudioWorkletProcessor {
         case 'unmute':
           this.muted = false;
           break;
+        case 'roleGain':
+          // R-055: the gain of a role of the chip's voices (music / effects), for a chip that has roles
+          if (typeof this.chip.setRoleGain === 'function') {
+            this.chip.setRoleGain(m.role, m.gain);
+          }
+          break;
       }
     };
   } // constructor
