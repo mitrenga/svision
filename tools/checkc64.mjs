@@ -52,9 +52,9 @@ function hex(bytes) {
 
 {
   check('colour 0 black', C64Color.color(0), '#000000');
-  check('colour 6 blue', C64Color.color(6), '#352879');
-  check('colour 14 light blue', C64Color.color(14), '#6c5eb5');
-  check('colour 15 light grey', C64Color.color(15), '#959595');
+  check('colour 6 blue', C64Color.color(6), '#2724c4');
+  check('colour 14 light blue', C64Color.color(14), '#6864ff');
+  check('colour 15 light grey', C64Color.color(15), '#aeaeae');
   check('high bits ignored', C64Color.color(22), C64Color.color(6));
   check('index by name', C64Color.index('lightBlue'), 14);
   check('unknown name', C64Color.index('bright'), -1);
@@ -179,8 +179,8 @@ function hex(bytes) {
   const picture = new C64TextRAM();
   const px = new Uint32Array(320*200);
   const lut = C64TextRAM.lookup(true);
-  check('lookup blue', (lut[6] >>> 0).toString(16), 'ff792835');
-  check('lookup big-endian blue', (C64TextRAM.lookup(false)[6] >>> 0).toString(16), '352879ff');
+  check('lookup blue', (lut[6] >>> 0).toString(16), 'ffc42427');
+  check('lookup big-endian blue', (C64TextRAM.lookup(false)[6] >>> 0).toString(16), '2724c4ff');
   picture.showCursor(false);
   picture.paint32(px, font, true);
   check('paint: background everywhere', px[0] === lut[6] && px[320*200-1] === lut[6], true);
@@ -203,7 +203,7 @@ function hex(bytes) {
   check('paint: reverse space is a block', px[8] === lut[7] && px[15+7*320] === lut[7], true);
   const rgba = new Uint8ClampedArray(320*200*4);
   picture.paint(rgba, font, {cursor: false});
-  check('paint rgba: yellow block', [rgba[8*4], rgba[8*4+1], rgba[8*4+2], rgba[8*4+3]], [0xb8, 0xc7, 0x6f, 255]);
+  check('paint rgba: yellow block', [rgba[8*4], rgba[8*4+1], rgba[8*4+2], rgba[8*4+3]], [0xef, 0xf3, 0x47, 255]);
 
   const restored = new C64TextRAM(picture.screen, picture.colorRAM);
   check('constructor from bytes', restored.rowText(0).substring(0, 2), '@ ');
@@ -251,7 +251,7 @@ function hex(bytes) {
   check('decodeBlocks: first is the ball', frames[0][10], '.'+'2'.repeat(22)+'.');
 
   check('palette hires', C64SpriteData.palette(1), {'2': '#ffffff'});
-  check('palette multicolour', C64SpriteData.palette(1, 11, 15), {'2': '#ffffff', '1': '#444444', '3': '#959595'});
+  check('palette multicolour', C64SpriteData.palette(1, 11, 15), {'2': '#ffffff', '1': '#474747', '3': '#aeaeae'});
   check('toDesktop origin', C64SpriteData.toDesktop(24, 50), {x: 0, y: 0});
   check('fromDesktop', C64SpriteData.fromDesktop(100, 100), {x: 124, y: 150});
   check('toDesktop off screen', C64SpriteData.toDesktop(0, 0), {x: -24, y: -50});

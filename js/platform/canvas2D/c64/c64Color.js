@@ -3,9 +3,13 @@
 /**
  * The 16 colours of the VIC-II, as hex strings, with the names the Commodore
  * manuals used and helpers to go from a register value to a colour. The
- * values are Pepto's measured PAL palette (see SOURCES.md), the one most
- * emulators default to; the hardware had no palette registers, so a game
- * never changes these — it only picks one of the 16 for each register.
+ * values are the **Colodore** PAL palette (Pepto's 2017 revision, see
+ * SOURCES.md; R-051), the one today's emulators and most recordings show —
+ * Pepto's 2001 measurement, used until 2026-10-18, has a blue so dark that
+ * multicolour text in it (R-Type's panel) is hard to read. The hardware
+ * had no palette registers, so a game never changes these — it only picks
+ * one of the 16 for each register. `match*` tools compare colour indices,
+ * never these values.
  *
  * Where a colour comes from on the machine:
  *
@@ -41,20 +45,20 @@ export class C64Color {
 
 C64Color.black      = '#000000';
 C64Color.white      = '#ffffff';
-C64Color.red        = '#68372b';
-C64Color.cyan       = '#70a4b2';
-C64Color.purple     = '#6f3d86';
-C64Color.green      = '#588d43';
-C64Color.blue       = '#352879';
-C64Color.yellow     = '#b8c76f';
-C64Color.orange     = '#6f4f25';
-C64Color.brown      = '#433900';
-C64Color.lightRed   = '#9a6759';
-C64Color.darkGrey   = '#444444';
-C64Color.grey       = '#6c6c6c';
-C64Color.lightGreen = '#9ad284';
-C64Color.lightBlue  = '#6c5eb5';
-C64Color.lightGrey  = '#959595';
+C64Color.red        = '#96282e';
+C64Color.cyan       = '#5bd6ce';
+C64Color.purple     = '#9f2dad';
+C64Color.green      = '#41b936';
+C64Color.blue       = '#2724c4';
+C64Color.yellow     = '#eff347';
+C64Color.orange     = '#9f4815';
+C64Color.brown      = '#5e3500';
+C64Color.lightRed   = '#da5f66';
+C64Color.darkGrey   = '#474747';
+C64Color.grey       = '#787878';
+C64Color.lightGreen = '#91ff84';
+C64Color.lightBlue  = '#6864ff';
+C64Color.lightGrey  = '#aeaeae';
 
 /** the names in register order, so `colorsNames[6]` is 'blue' */
 C64Color.colorsNames = [
