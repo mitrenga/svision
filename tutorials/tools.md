@@ -29,6 +29,7 @@ The third group runs under **Node** with no browser:
 | `checkvga.mjs` | the VGA palette, video and text memory, PCM samples, the DOS boot model |
 | `checkc64.mjs` | the C64 colours, screen codes, character ROM, `C64Charset`, text screen, sprite data, sprite collisions (`C64Collision`), the boot model |
 | `checkatari8.mjs` | the Atari 8-bit colours, alphabets, OS character set, display list, ANTIC/GTIA, the boot model |
+| `checksnes.mjs` | the Super Nintendo colours and brightness, planar tiles, the PPU's ports and registers, mode 1 with priorities and scroll, the brightness inside the frame, the sprites with the chip's limits per line, the joypad word, the platform's geometry |
 | `checkaudio.mjs` | the DOM-free audio models: POKEY, the SID 6581, the discrete building blocks, the engine's waveforms, the AdLib sound and IMF drivers, the GENMIDI bank, the MUS player and the PCM mixer's gains |
 | `headlessApp.mjs` | `headlessVectorApp()` / `headlessSceneApp()` — a stand-in application to draw a model through the headless layouts and read `markup()` |
 | `nodeEnv.mjs` | the browser globals the import headers need; imported first by every tool |

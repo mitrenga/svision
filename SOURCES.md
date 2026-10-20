@@ -101,14 +101,36 @@ licence over them and credits each font by its original source:
   (table 14, PAL GTIA color encodings) and appendix D (PAL color encoding)
 - **Source:** https://www.virtualdub.org/downloads/Altirra%20Hardware%20Reference%20Manual.pdf
 
+### SNES colour and brightness conversion (`SNESColor`)
+
+- **Used in:** `js/platform/canvas2D/snes/snesColor.js` — BGR555 and the
+  master brightness of INIDISP to RGB888
+- **Origin:** the conversion of **MesenCE 2.2.1** (the continuation of
+  Mesen2, GPL-3.0), the emulator the first SNES game is measured against:
+  `Core/SNES/SnesPpu.cpp` `ApplyBrightness` (`c * brightness / 15` on the
+  5-bit components, in integers) and `Core/Shared/ColorUtilities.h`
+  `Convert5BitTo8Bit` (`(c << 3) + (c >> 2)`). The console has no palette
+  to measure; the analogue output of a real one is an open point of R-050.
+  The sprite evaluation rules of `SNESPPU` (32 sprites / 34 tiles a line,
+  tiles fetched from the last sprite back) follow the same file's
+  `EvaluateNextLineSprites` / `FetchSpriteData` and agree with anomie's
+  and Fullsnes' descriptions.
+- **Source:** https://github.com/SourMesen/Mesen2 (`Core/SNES/SnesPpu.cpp`,
+  `Core/Shared/ColorUtilities.h`), read 2026-10-18
+
 ### C64 VIC-II palette (`C64Color`)
 
 - **Used in:** `js/platform/canvas2D/c64/c64Color.js` (the 16 hex colours)
-- **Origin:** Pepto's measured PAL palette of the VIC-II, *Calculating the
-  colour palette of the VIC II* (2001), the palette most emulators default to
+- **Origin:** **Colodore**, Pepto's 2017 revision of his measured PAL palette
+  of the VIC-II (*Calculating the colour palette of the VIC II*), the one
+  VICE ships as `colodore.vpl` and most recordings show. Until 2026-10-18 the
+  library carried the 2001 values (`pepto-pal`); swapped by R-051 because
+  multicolour text in the old, dark blue (R-Type's panel) was hard to read.
+  Both are palettes, not data of any game: `match*` tools compare indices.
 - **Author:** Philip "Pepto" Timmermann
-- **Source:** https://www.pepto.de/projects/colorvic/
-- **Status:** sixteen measured colour values, used as numbers
+- **Source:** https://colodore.com/ , https://www.pepto.de/projects/colorvic/ ;
+  values as in VICE 3.7 `C64/colodore.vpl`
+- **Status:** sixteen colour values, used as numbers
 
 ### Uni-VGA 8x16 font (`VGAFonts8x16`)
 
