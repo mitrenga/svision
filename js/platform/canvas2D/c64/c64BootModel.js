@@ -67,13 +67,15 @@ export class C64BootModel extends AbstractModel {
         {command: 'LOAD"*",8,1', output: ['', 'SEARCHING FOR *', 'LOADING'], ready: true},
         {command: 'RUN'}
       ],
+      /** the pauses: a quarter of the first version's (1200/120/400/900/2500/700) — the boot is seen
+          on every start and a key skips it anyway (operator, 2026-10-19) */
       timing: {
-        promptPauseMs: 1200,
-        typingMs: 120,
-        enterMs: 400,
-        outputMs: 900,
-        readyMs: 2500,
-        launchMs: 700
+        promptPauseMs: 300,
+        typingMs: 30,
+        enterMs: 100,
+        outputMs: 225,
+        readyMs: 625,
+        launchMs: 175
       },
       /** the keys that skip the boot; the string 'any' makes every reported
           key skip it */

@@ -7,9 +7,14 @@ const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 /**
  * Boot model that orchestrates the ZX Spectrum reset sequence: it plays the
  * reset animation, then shows the original ROM copyright line, loads
- * application data and finally hands over to the menu model.
+ * application data and finally hands over to the menu model. Any of the
+ * {@link ZXResetModel.SKIP_KEYS} cuts it short and hands over at once, the
+ * way the C64 and Atari boot models do (`C64BootModel.skipKeys`).
  */
 export class ZXResetModel extends AbstractModel {
+
+  /** the keys that skip the reset: as the sibling platforms' boot models */
+  static get SKIP_KEYS() { return ['Escape', 'Enter', ' ', 'GamepadOK', 'Mouse1', 'Mouse2', 'Touch']; }
 
   /**
    * Creates the reset model.
@@ -21,6 +26,8 @@ export class ZXResetModel extends AbstractModel {
     
     this.resetEntity = null;
     this.inputLineEntity = null;
+    /** the hand-over has happened (by the sequence or by a skip) */
+    this.finished = false;
   } // constructor
 
   /**
@@ -64,8 +71,14 @@ export class ZXResetModel extends AbstractModel {
         this.sendEvent(1200, {id: 'setMenuModel'});
         return true;
       case 'setMenuModel':
-        this.app.setModel('MenuModel');
+        this.handOver();
         return true;
+      case 'keyPress':
+        if (ZXResetModel.SKIP_KEYS.indexOf(event.key) >= 0) {
+          this.handOver();
+          return true;
+        }
+        break;
       case 'retryLoadAppData':
         // sent by the error panel's RETRY button: reload the application data
         // and retry the menu handover after the fetch timeout has passed, so
@@ -77,6 +90,19 @@ export class ZXResetModel extends AbstractModel {
 
     return false;
   } // handleEvent
+
+  /**
+   * Hands over to the menu, once: the sequence's end and a skip key both come
+   * here, and the queued events of this model go with it (a model's queue is
+   * its own).
+   */
+  handOver() {
+    if (this.finished) {
+      return;
+    }
+    this.finished = true;
+    this.app.setModel('MenuModel');
+  } // handOver
 
   /**
    * Per-frame update that advances the reset entity animation and redraws the model.
