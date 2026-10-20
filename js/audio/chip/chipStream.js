@@ -259,10 +259,17 @@ export class ChipStream {
    * @param {Array} frames - `[[[line, register, value], …], …]`.
    */
   play(frames) {
-    this.scriptFrame += 1000000;
-    this.reanchor(this.scriptFrame);
+    // ★ The script is placed **directly**, frame `f` at `latency` + f frames from now — not through
+    // `frame()`, whose anchor is for a live stream and moves whenever a frame comes more than
+    // `maxLead` ahead: a script is seconds ahead by nature (R-Type's title tune is 130 s), and
+    // through `frame()` everything past `maxLead` collapsed onto one spot (2026-10-20).
+    var start = this.samples+this.latency*this.sampleRate;
+    var perLine = this.samplesPerFrame/this.lines;
     for (var f = 0; f < frames.length; f++) {
-      this.frame(this.scriptFrame+f, frames[f]);
+      var writes = frames[f];
+      for (var i = 0; i < writes.length; i++) {
+        this.push(Math.round(start+f*this.samplesPerFrame+writes[i][0]*perLine), writes[i][1], writes[i][2]);
+      }
     }
     this.scriptFrame += frames.length;
   } // play
