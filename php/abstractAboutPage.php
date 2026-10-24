@@ -97,7 +97,7 @@ class AbstractAboutPage extends AbstractPage {
     $this->data[] = '    <meta charset="UTF-8">';
     $this->data[] = '    <meta name="viewport" content="width=device-width, initial-scale=1.0">';
     $this->data[] = '    <link rel="canonical" href="'.$GLOBALS['webURL'].$this->pagePath().'">';
-    $this->data[] = '    <link rel="shortcut icon" sizes="256x256" href="images/app-icon-256x256.png">';
+    $this->data[] = '    <link rel="shortcut icon" sizes="256x256" href="images/app-icon-256x256.png?ver='.$this->srcVersion().'">';
     $this->data[] = '    <style>';
     $this->data[] = $this->pageStyle();
     $this->data[] = '    </style>';

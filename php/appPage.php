@@ -30,10 +30,13 @@ class AppPage extends AbstractPage {
     $this->data[] = '    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">';
     $this->data[] = '    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">';
     $this->data[] = '    <meta name="mobile-web-app-capable" content="yes">';
-    $this->data[] = '    <link rel="shortcut icon" sizes="256x256" href="images/app-icon-256x256.png" id="app-icon">';
-    $this->data[] = '    <link rel="apple-touch-icon" sizes="192x192" href="images/app-icon-192x192.png">';
+    // ?ver= on the icons and the manifest, as on the scripts: iOS takes the
+    // icon of an installed app from apple-touch-icon at install time, and
+    // Safari's HTTP cache would otherwise hand it the old picture
+    $this->data[] = '    <link rel="shortcut icon" sizes="256x256" href="images/app-icon-256x256.png?ver='.$srcVersion.'" id="app-icon">';
+    $this->data[] = '    <link rel="apple-touch-icon" sizes="192x192" href="images/app-icon-192x192.png?ver='.$srcVersion.'">';
     $this->data[] = '    <meta name="theme-color" content="#000000">';
-    $this->data[] = '    <link rel="manifest" href="'.$GLOBALS['webURL'].'manifest.webmanifest">';
+    $this->data[] = '    <link rel="manifest" href="'.$GLOBALS['webURL'].'manifest.webmanifest?ver='.$srcVersion.'">';
     $this->data[] = '    <meta http-equiv="X-UA-Compatible" content="IE=Edge; IE=11;" />';
     $this->data[] = '    <link rel="stylesheet" type="text/css" href="app/svision/css/main.css?ver='.$srcVersion.'">';
     $this->addJsonLd($appDescription);

@@ -24,12 +24,27 @@
   if (strlen($srvName) == 0) {
     $srvName = $_SERVER['SERVER_ADDR'];
   }
-  $tmpURL = $webProtocol.'://'.$srvName.$_SERVER['PHP_SELF'];
+  // A non-default port is part of the origin: the manifest's start_url and
+  // scope, the canonical and Open Graph URLs must carry it, or a browser sees
+  // them as another site and refuses to install the app (e.g. a dev vhost on
+  // https://host:34444/). The WebSocket URL keeps its own port ($wsPort).
+  $srvHost = $srvName;
+  $srvPort = (int)($_SERVER['SERVER_PORT'] ?? 0);
+  if ($srvPort > 0 && $srvPort !== ($webProtocol === 'https' ? 443 : 80)) {
+    $srvHost .= ':'.$srvPort;
+  }
+  $tmpURL = $webProtocol.'://'.$srvHost.$_SERVER['PHP_SELF'];
   if ($tmpURL[strlen ($tmpURL)-1] == '/')
     $tmpURL = substr($tmpURL, 0, -1);
   $webURL = substr($tmpURL, 0, -strlen('index.php'));
   $wsURL = $wsProtocol.'://'.$srvName.':'.$wsPort.'/'.$wsPage;
-  $query = $_SERVER['QUERY_STRING'];
+  // The route is the query string up to the first '&': the manifest's link
+  // carries ?ver= for cache-busting, which nginx appends to the rewritten
+  // query as "manifest.webmanifest&ver=...".
+  $query = strtok($_SERVER['QUERY_STRING'], '&');
+  if ($query === false) {
+    $query = '';
+  }
 
   // Routing: pick the page that handles this request. Order matters — the more
   // specific endpoint suffixes are matched before the generic fallbacks.
