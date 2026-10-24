@@ -6,7 +6,7 @@ const { Canvas2DLayout } = await import('../canvas2DLayout.js?ver='+window.srcVe
  * scaling ratio and border sizes that fit the Spectrum desktop into the
  * available element, and provides coordinate conversion and rectangle painting.
  */
-export class ZXSpectrumLayout extends Canvas2DLayout {
+export class ZXLayout extends Canvas2DLayout {
 
   /**
    * Creates the ZX Spectrum layout for the given application.
@@ -14,7 +14,7 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
    */
   constructor(app) {
     super(app);
-    this.id = 'ZXSpectrumLayout';
+    this.id = 'ZXLayout';
   } // constructor
 
   /**
@@ -61,4 +61,4 @@ export class ZXSpectrumLayout extends Canvas2DLayout {
     model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
   } // resizeModel
 
-} // ZXSpectrumLayout
+} // ZXLayout

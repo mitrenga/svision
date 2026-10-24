@@ -16,17 +16,17 @@
  */
 import './nodeEnv.mjs';   // must come first: the import headers read window.srcVersion
 
-const { ZXVideoRAM } = await import('../js/platform/canvas2D/zxSpectrum/zxVideoRAM.js');
-const { ZXColor } = await import('../js/platform/canvas2D/zxSpectrum/zxColor.js');
-const { ZXFonts8x8 } = await import('../js/platform/canvas2D/zxSpectrum/zxFonts8x8.js');
-const { ZXMachineSounds } = await import('../js/platform/canvas2D/zxSpectrum/zxMachineSounds.js');
-const { ZXRomPrint } = await import('../js/platform/canvas2D/zxSpectrum/zxRomPrint.js');
+const { ZXVideoRAM } = await import('../js/platform/canvas2D/zx/zxVideoRAM.js');
+const { ZXColor } = await import('../js/platform/canvas2D/zx/zxColor.js');
+const { ZXFonts8x8 } = await import('../js/platform/canvas2D/zx/zxFonts8x8.js');
+const { ZXMachineSounds } = await import('../js/platform/canvas2D/zx/zxMachineSounds.js');
+const { ZXRomPrint } = await import('../js/platform/canvas2D/zx/zxRomPrint.js');
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 const { loadClassicScript } = createRequire(import.meta.url)('./classicScript.cjs');
 const ZXRomDraw = loadClassicScript(path.join(path.dirname(fileURLToPath(import.meta.url)),
-                                              '../js/platform/canvas2D/zxSpectrum/zxRomDraw.js'));
+                                              '../js/platform/canvas2D/zx/zxRomDraw.js'));
 
 const verbose = process.argv.includes('-v');
 let checks = 0;

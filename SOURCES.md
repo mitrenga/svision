@@ -23,7 +23,7 @@ copyrightable in the UK/USA (explicitly not legal advice). svision claims no
 licence over them and credits each font by its original source:
 
 #### `zx-rom`
-- **Used in:** `js/platform/canvas2D/zxSpectrum/zxFonts8x8.js` (default glyph
+- **Used in:** `js/platform/canvas2D/zx/zxFonts8x8.js` (default glyph
   table), `fonts/zx-rom.*`
 - **Origin:** ZX Spectrum ROM character set (1982)
 - **Author:** Sinclair Research; ROM copyright now held by Amstrad, which
@@ -312,7 +312,7 @@ that the origin of every model can be checked.
 
 ### ZX Spectrum 48K ROM routines (`ZXRomPrint`, `ZXRomDraw`)
 
-- **Used in:** `js/platform/canvas2D/zxSpectrum/zxRomPrint.js` (`RST $10`
+- **Used in:** `js/platform/canvas2D/zx/zxRomPrint.js` (`RST $10`
   printing to the upper screen) and `zxRomDraw.js` (PIXEL-ADD `$22AA`,
   PLOT-SUB `$22E5`, PO-ATTR `$0BDB`, DRAW-LINE `$24BA`)
 - **Origin:** the routines of the 48K ROM, reimplemented instruction for

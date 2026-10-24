@@ -1,5 +1,5 @@
 const { Canvas2DPlatform } = await import('../canvas2DPlatform.js?ver='+window.srcVersion);
-const { ZXSpectrumLayout } = await import('./zxSpectrumLayout.js?ver='+window.srcVersion);
+const { ZXLayout } = await import('./zxLayout.js?ver='+window.srcVersion);
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 // begin code
 
@@ -8,7 +8,7 @@ const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
  * name, desktop and border characteristics, the matching layout and the
  * Spectrum-specific button hover/click colour palette.
  */
-export class ZXSpectrumPlatform extends Canvas2DPlatform {
+export class ZXPlatform extends Canvas2DPlatform {
 
   /**
    * Creates the ZX Spectrum platform instance.
@@ -48,10 +48,10 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
   /**
    * Creates the layout instance used by this platform.
    * @param {Object} app - The application instance.
-   * @returns {ZXSpectrumLayout} A new ZX Spectrum layout.
+   * @returns {ZXLayout} A new ZX Spectrum layout.
    */
   newLayout(app) {
-    return new ZXSpectrumLayout(app);
+    return new ZXLayout(app);
   } // newLayout
 
   /**
@@ -72,4 +72,4 @@ export class ZXSpectrumPlatform extends Canvas2DPlatform {
     return {minimal: 8, defaultColor: ZXColor.white};
   } // border
 
-} // ZXSpectrumPlatform
+} // ZXPlatform

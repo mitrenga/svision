@@ -22,7 +22,7 @@ const { ArcadeLayout } = await import('./arcadeLayout.js?ver='+window.srcVersion
  *     }
  *   }
  *
- * Unlike ZXSpectrumPlatform it does not fill app.stack.ButtonEntity
+ * Unlike ZXPlatform it does not fill app.stack.ButtonEntity
  * (hover/click colors per button color): the arcade UI gets no hover palette
  * for now; a platform-independent mechanism (config.buttonColors) is planned
  * for both platforms.
