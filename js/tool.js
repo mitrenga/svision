@@ -342,6 +342,42 @@ export class Tool {
     return defaultValue;
   } // readCookie
 
+  /**
+   * Reads a developer parameter — a knob a developer build takes from the
+   * address (`?devLevel=2`) or from `$devMode` as an object in `config.php`
+   * (`['level' => 2]`): the level to start in, a pinned seed, immortality.
+   * The address wins over the configuration, so that a pinned value can be
+   * overridden without editing a file.
+   *
+   * ★ The guard is here, once: when `window.devMode` is empty (production),
+   * the address is not even read and the default comes back, so a player
+   * cannot reach a knob the game happens to read. The name must start with
+   * `dev` (`devLevel`, not `level`) — a production parameter cannot be
+   * smuggled in through this channel, and the prefix tells the reader of an
+   * address what it is. The game never reads `URLSearchParams` itself.
+   * @param {string} name - The parameter name, `dev` + capitalised key
+   *        (`devSeed`); the configuration key is the rest in lower case (`seed`).
+   * @param {*} [defaultValue] - Returned when nothing sets the parameter, or
+   *        outside a developer build.
+   * @returns {string|*} The value as a string (the caller parses it), or
+   *          defaultValue.
+   */
+  static devParam(name, defaultValue) {
+    if (!/^dev[A-Z]/.test(name)) {
+      throw new Error('Tool.devParam: the name must start with "dev" ('+name+')');
+    }
+    var mode = (typeof window !== 'undefined') ? window.devMode : undefined;
+    if (!mode) { return defaultValue; }
+    var value = defaultValue;
+    var key = name.charAt(3).toLowerCase()+name.substring(4);
+    if (typeof mode === 'object' && mode[key] !== undefined && mode[key] !== null && mode[key] !== '') {
+      value = String(mode[key]);
+    }
+    var asked = new URLSearchParams(window.location.search).get(name);
+    if (asked !== null && asked !== '') { value = asked; }
+    return value;
+  } // devParam
+
 } // Tool
 
 Tool.base90Alphabet = '!#$%&()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_abcdefghijklmnopqrstuvwxyz{|}~';
