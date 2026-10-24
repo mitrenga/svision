@@ -41,7 +41,9 @@ function bundleCode(text, name) {
  * model feeds it the writes its worker reports frame by frame
  * (`writeChip`, through `AbstractAudioManager.writeChip`). A `playSound`
  * audioData is a script `{script: [[[line, register, value], …], …]}` — one
- * entry per frame — which is how a volume dialog plays its sample.
+ * entry per frame — which is how a volume dialog plays its sample; its
+ * `options.repeat` (true, a count, false) makes the script go round the way
+ * the other handlers repeat a sound.
  *
  * Modelled on {@link AudioWorkletHandler}: the module is fetched and
  * registered from a blob URL so the service worker can serve it offline,
@@ -56,6 +58,18 @@ function bundleCode(text, name) {
  *   clock       the chip clock in Hz
  *   rate, lines, latency, maxLead   the ChipStream's timing (50 frames of 312 lines by default)
  *   gain        the level of the chip's full scale (1)
+ *   fadeIn      seconds the bus gain takes to come up after the first frame
+ *               of writes (0: none). ★ A chip comes out of reset with its
+ *               volume at 0, and the program's first write of the volume
+ *               register steps the output by the chip's whole DC offset — on
+ *               the 6581 the thump every C64 program starts with, loud at the
+ *               bus's gain. The ramp, over the stream's latency plus `fadeIn`,
+ *               covers that first write. Off by default since the SID model
+ *               charges its DC blocker on that write itself (2026-10-21): a
+ *               ramp would only soften the first sound of a sample.
+ *   fadeOut     seconds the gain takes to go down when the bus closes (0.05;
+ *               0 for none): the chip is stopped and the nodes disconnected
+ *               after it, so the DC the chip sits at does not click off.
  *
  * No ScriptProcessor fallback: a browser without AudioWorklet gets the
  * unsupported-bus event and the manager's silent handler.
@@ -75,6 +89,12 @@ export class AudioChipHandler extends AbstractAudioHandler {
     this.backlog = [];
     this.options = {};
     this.busFactor = 1.0;
+    /** the fade-in of the gain after the first frame: seconds, and when it ends on the context's clock */
+    this.fadeIn = 0;
+    this.fadeOut = 0.05;
+    this.latency = 0.06;
+    this.fadeEnd = 0;
+    this.faded = false;
     this.muted = false;
   } // constructor
 
@@ -153,7 +173,13 @@ export class AudioChipHandler extends AbstractAudioHandler {
         processorOptions: o
       });
       this.gain = this.ctx.createGain();
-      this.gain.gain.value = this.muted ? 0.0 : this.busFactor;
+      this.fadeIn = ('fadeIn' in options) ? Number(options.fadeIn) || 0 : 0;
+      this.fadeOut = ('fadeOut' in options) ? Number(options.fadeOut) || 0 : 0.05;
+      this.latency = ('latency' in options) ? options.latency : 0.06;
+      this.faded = false;
+      this.fadeEnd = 0;
+      // the gain waits at 0 for the first frame of writes (startFade), unless there is no fade
+      this.gain.gain.value = (this.fadeIn > 0) ? 0.0 : (this.muted ? 0.0 : this.busFactor);
       this.node.connect(this.gain);
       this.gain.connect(this.ctx.destination);
       Object.keys(this.roleGains).forEach((role) => { this.post({id: 'roleGain', role: Number(role), gain: this.roleGains[role]}); });
@@ -171,7 +197,11 @@ export class AudioChipHandler extends AbstractAudioHandler {
   } // openProcessor
 
   /**
-   * Stops the processor, disconnects the nodes and closes the bus.
+   * Stops the processor, disconnects the nodes and closes the bus. ★ With
+   * `fadeOut` the gain goes down first and the stop and the disconnecting
+   * follow after it (the manager keeps the AudioContext open that long,
+   * {@link AbstractAudioManager#closeAudioContext}); the bus itself counts
+   * as closed at once.
    * @returns {boolean} True when the bus was closed.
    */
   closeBus() {
@@ -179,9 +209,25 @@ export class AudioChipHandler extends AbstractAudioHandler {
       return false;
     }
     if (this.node) {
-      this.node.port.postMessage({id: 'stop'});
-      this.node.disconnect();
+      var node = this.node, gain = this.gain, ctx = this.ctx;
+      var finish = () => {
+        node.port.postMessage({id: 'stop'});
+        node.disconnect();
+        if (gain) {
+          gain.disconnect();
+        }
+      };
+      if (gain && ctx && this.fadeOut > 0 && ctx.state === 'running') {
+        var now = ctx.currentTime;
+        gain.gain.cancelScheduledValues(now);
+        gain.gain.setValueAtTime(gain.gain.value, now);
+        gain.gain.linearRampToValueAtTime(0.0, now+this.fadeOut);
+        setTimeout(finish, Math.round(this.fadeOut*1000)+20);
+      } else {
+        finish();
+      }
       this.node = null;
+      this.gain = null;
     }
     // ★ What is left in the backlog **is still reported**: whoever waits for
     // a block to finish would wait forever once the bus is closed.
@@ -201,6 +247,56 @@ export class AudioChipHandler extends AbstractAudioHandler {
       this.node.port.postMessage(message);
     }
   } // post
+
+  /**
+   * The gain's target as it stands: 0 when muted, the bus factor otherwise.
+   * @returns {number}
+   */
+  gainTarget() {
+    return this.muted ? 0.0 : this.busFactor;
+  } // gainTarget
+
+  /**
+   * Brings the gain up from 0 after the first frame of writes or script:
+   * a linear ramp over the stream's latency plus `fadeIn`, so the chip's
+   * first volume write lands under it. Once per opened bus.
+   */
+  startFade() {
+    if (this.faded || !this.gain) {
+      return;
+    }
+    this.faded = true;
+    if (this.fadeIn <= 0) {
+      return;
+    }
+    var now = this.ctx.currentTime;
+    this.fadeEnd = now+this.latency+this.fadeIn;
+    this.gain.gain.cancelScheduledValues(now);
+    this.gain.gain.setValueAtTime(0.0, now);
+    this.gain.gain.linearRampToValueAtTime(this.gainTarget(), this.fadeEnd);
+  } // startFade
+
+  /**
+   * Applies the gain's target: at once, or — while the fade-in is still
+   * running — as the rest of the ramp, so a volume set or a mute right after
+   * the bus opened does not cut the fade short and let the thump through.
+   */
+  applyGain() {
+    if (!this.gain) {
+      return;
+    }
+    var now = this.ctx.currentTime;
+    var value = this.gain.gain.value;
+    this.gain.gain.cancelScheduledValues(now);
+    if (this.faded && now < this.fadeEnd) {
+      this.gain.gain.setValueAtTime(value, now);
+      this.gain.gain.linearRampToValueAtTime(this.gainTarget(), this.fadeEnd);
+    } else if (!this.faded && this.fadeIn > 0) {
+      this.gain.gain.setValueAtTime(0.0, now);
+    } else {
+      this.gain.gain.setValueAtTime(this.gainTarget(), now);
+    }
+  } // applyGain
 
   /**
    * One frame of the worker's writes: `{frame, writes: [[line, register,
@@ -265,6 +361,7 @@ export class AudioChipHandler extends AbstractAudioHandler {
   postBatch(batch) {
     this.node.port.postMessage({id: 'frame', frame: batch.frame,
                                 writes: batch.writes, blocks: batch.blocks});
+    this.startFade();
   } // postBatch
 
   /** hands over the frames that arrived while the worklet was still loading */
@@ -293,9 +390,7 @@ export class AudioChipHandler extends AbstractAudioHandler {
 
   muteBus(muted) {
     this.muted = !!muted;
-    if (this.gain) {
-      this.gain.gain.value = this.muted ? 0.0 : this.busFactor;
-    }
+    this.applyGain();
   } // muteBus
 
   /**
@@ -304,9 +399,7 @@ export class AudioChipHandler extends AbstractAudioHandler {
    */
   setBusVolume(factor) {
     this.busFactor = factor;
-    if (this.gain) {
-      this.gain.gain.value = this.muted ? 0.0 : this.busFactor;
-    }
+    this.applyGain();
   } // setBusVolume
 
   /**
@@ -332,7 +425,8 @@ export class AudioChipHandler extends AbstractAudioHandler {
    * @param {Object|boolean} options - Unused.
    */
   playSound(audioData, options) {
-    this.post({id: 'play', audioData: audioData});
+    this.post({id: 'play', audioData: audioData, options: {repeat: (options && 'repeat' in options) ? options.repeat : false}});
+    this.startFade();
   } // playSound
 
 } // AudioChipHandler

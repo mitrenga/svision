@@ -94,10 +94,17 @@ export class AbstractAudioManager {
    */
   closeAudioContext() {
     if (this.ctx != null) {
-      this.ctx.close();
+      // ★ Let go of the context at once — a bus opened next gets a fresh one —
+      // but close it only after the buses' fade-outs (AudioChipHandler.closeBus)
+      // have played out, so the chip's DC does not click off with the context.
+      var ctx = this.ctx;
       this.ctx = null;
+      setTimeout(() => { ctx.close(); }, AbstractAudioManager.CLOSE_DELAY);
     }
   } // closeAudioContext
+
+  /** milliseconds a dropped AudioContext stays open for the buses' fade-outs */
+  static get CLOSE_DELAY() { return 150; }
 
   /**
    * Returns the sample rate of the shared AudioContext, falling back to the

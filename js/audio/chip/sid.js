@@ -65,7 +65,13 @@
  *    `SIGVOL` — every C64 speech and sample player, this game's among them
  *    — still makes sound. The offset would leave a step at the output, so
  *    a one-pole **DC blocker** stands at the end, as the capacitor on the
- *    board does.
+ *    board does. ★ The step the first volume write after a silence makes
+ *    — the thump every C64 program starts its music with, loud at a bus's
+ *    gain — is **swallowed**: when the volume comes up from 0 after at
+ *    least a frame of it, the blocker is charged to the new level at once,
+ *    as if the capacitor had been sitting there (2026-10-20). A speech
+ *    player toggling the volume in microseconds is not touched, its gaps
+ *    are far shorter than a frame; only its very first step goes.
  *  - **roles** (R-055): a game whose music and effects share the chip —
  *    an effect is a track of the song played on one voice for a while —
  *    can tell the model which **role** a voice has at the moment, through
@@ -156,6 +162,9 @@ export class SID {
     /** the DC blocker's state */
     this.dcLast = 0;
     this.dcOut = 0;
+    /** samples rendered with the volume at 0 — a frame of them and the next volume write charges the blocker (level) */
+    this.silentSamples = this.sampleRate;
+    this.primeDC = false;
     /** the fraction of a chip clock owed to the sample being rendered */
     this.carry = 0;
     /** the role of each voice (0 music, 1 effects) and the gain of each role (R-055) */
@@ -210,6 +219,9 @@ export class SID {
       case 22: this.cutoff = (this.cutoff & 0x007) | (value << 3); break;
       case 23: this.resonance = value >> 4; this.filtered = value & 0x0F; break;
       case 24:
+        if (this.volume === 0 && (value & 0x0F) !== 0 && this.silentSamples >= this.sampleRate/50) {
+          this.primeDC = true;
+        }
         this.volume = value & 0x0F;
         this.mode = (value >> 4) & 0x07;
         this.voice3off = (value & 0x80) !== 0;
@@ -265,6 +277,8 @@ export class SID {
     this.lowpass = 0;
     this.dcLast = 0;
     this.dcOut = 0;
+    this.silentSamples = this.sampleRate;
+    this.primeDC = false;
     this.roles = [0, 0, 0];
   } // reset
 
@@ -517,8 +531,14 @@ export class SID {
   level() {
     var m = this.mix();
     var raw = (m.direct+this.filter(m.filter))*this.volume/15;
+    if (this.primeDC) {
+      // the volume came up out of a silence: the blocker takes the new level as its baseline, no step
+      this.dcLast = raw;
+      this.primeDC = false;
+    }
     this.dcOut = raw-this.dcLast+0.999*this.dcOut;
     this.dcLast = raw;
+    this.silentSamples = this.volume === 0 ? this.silentSamples+1 : 0;
     return this.dcOut/3;
   } // level
 
