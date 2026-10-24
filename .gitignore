@@ -4,3 +4,8 @@ sources/
 __pycache__/
 *.pyc
 CHAT.md
+CLAUDE.md
+.claude/
+MILNIKY.md
+ZADANI.md
+*.log
