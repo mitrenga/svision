@@ -102,6 +102,7 @@ export class C64ScreenCodes {
       }
       map[0x20] = 0x20;
       map[0xA0] = 0x60;   // the shifted space is a separate glyph
+      map[0x2588] = 0xA0;   // the full block is the space in reverse video (the cursor of the machine)
       C64ScreenCodes.reverseTables[set] = map;
     }
     return C64ScreenCodes.reverseTables[set];

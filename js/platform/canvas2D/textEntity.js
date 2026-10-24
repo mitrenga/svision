@@ -47,7 +47,8 @@ export class TextEntity extends RasterEntity {
       animationMode: false,   // flashReverseColors, flashPenColor
       flashColor: false,      // for flashPenColor
       flashMask: false,       // like '   ##   '
-      penColorsMap: false     // like {0: color, 1: color, ...}
+      penColorsMap: false,    // like {0: color, 1: color, ...}
+      bkColorsMap: false,     // like {0: color, ...}: a cell painted behind the glyph — with the pen swapped in penColorsMap, the character in reverse (the C64's cursor)
     };
     Object.keys(options).forEach(key => {
       if (key in this.options) {
@@ -316,6 +317,9 @@ export class TextEntity extends RasterEntity {
 
             for (var ch = 0; ch < partText.length; ch++) {
               var charData = this.fonts.getCharData(partText[ch], this.glyphMask(lineOffset+ch), this.options.scale);
+              if (this.options.bkColorsMap !== false && ((lineOffset+ch) in this.options.bkColorsMap)) {
+                this.paintRect(this.cursorX+this.options.leftMargin, this.cursorY, charData.width, this.fonts.charsHeight*this.options.scale, this.options.bkColorsMap[lineOffset+ch]);
+              }
               this.paintGlyph(charData, this.cursorX+this.options.leftMargin, this.glyphColor(lineOffset+ch));
               this.cursorX += charData.width+this.fonts.charsSpacing;
 
