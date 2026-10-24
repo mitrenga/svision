@@ -97,6 +97,14 @@ export class ChipStream {
     this.reanchors = 0;
     /** the frame counter of a script */
     this.scriptFrame = 0;
+    /**
+     * ★ The script playing with `repeat`: its frames, the sample where the
+     * current pass ends and how many passes are still to come (Infinity for
+     * ever). {@link #render} queues the next pass a second before the end,
+     * so the passes join without a gap — R-Type's title tune goes round
+     * under ABOUT the way the original's does.
+     */
+    this.script = null;
   } // constructor
 
   /**
@@ -255,15 +263,37 @@ export class ChipStream {
 
   /**
    * Plays a script from now: frames at `rate` a second, each a list of
-   * `[line, register, value]`.
+   * `[line, register, value]`. With `options.repeat` the script goes round:
+   * true for ever, a number for that many plays in all, false (the default)
+   * once — the form of the other handlers' `repeat`. ★ A new script
+   * **replaces** the one playing: its queued writes are dropped and the chip
+   * reset, so the two never sound over each other (the volume dialog's
+   * sample started again, 2026-10-21); `stop()` ends it.
    * @param {Array} frames - `[[[line, register, value], …], …]`.
+   * @param {Object} [options] - `repeat`.
    */
-  play(frames) {
+  play(frames, options) {
+    this.queue.length = 0;
+    this.script = null;
+    this.chip.reset();
     // ★ The script is placed **directly**, frame `f` at `latency` + f frames from now — not through
     // `frame()`, whose anchor is for a live stream and moves whenever a frame comes more than
     // `maxLead` ahead: a script is seconds ahead by nature (R-Type's title tune is 130 s), and
     // through `frame()` everything past `maxLead` collapsed onto one spot (2026-10-20).
     var start = this.samples+this.latency*this.sampleRate;
+    var end = this.place(frames, start);
+    var repeat = (options && 'repeat' in options) ? options.repeat : false;
+    var plays = (typeof repeat === 'number') ? repeat : (repeat ? Infinity : 1);
+    this.script = (plays > 1 && frames.length) ? {frames: frames, end: end, playsLeft: plays-1} : null;
+  } // play
+
+  /**
+   * Queues a script's frames from a sample position.
+   * @param {Array} frames - `[[[line, register, value], …], …]`.
+   * @param {number} start - The sample the first frame starts at.
+   * @returns {number} The sample the script ends at: where the next pass starts.
+   */
+  place(frames, start) {
     var perLine = this.samplesPerFrame/this.lines;
     for (var f = 0; f < frames.length; f++) {
       var writes = frames[f];
@@ -272,7 +302,23 @@ export class ChipStream {
       }
     }
     this.scriptFrame += frames.length;
-  } // play
+    return start+frames.length*this.samplesPerFrame;
+  } // place
+
+  /**
+   * The next pass of a repeating script, queued when the current one ends
+   * within a second: placed exactly at its end, so the passes join.
+   */
+  repeatScript() {
+    var sc = this.script;
+    if (!sc || sc.end-this.samples > this.sampleRate) {
+      return;
+    }
+    sc.end = this.place(sc.frames, sc.end);
+    if (--sc.playsLeft <= 0) {
+      this.script = null;
+    }
+  } // repeatScript
 
   /**
    * Silence: the queue dropped, the chip reset, the anchor forgotten (the
@@ -280,6 +326,7 @@ export class ChipStream {
    */
   stop() {
     this.queue.length = 0;
+    this.script = null;
     // ★ Dropped blocks **are still reported**: whoever waits for them would
     // otherwise wait forever (`stop` is silence, not a pause).
     for (var s = 0; s < this.blocks.length; s++) {
@@ -299,6 +346,9 @@ export class ChipStream {
    * @param {number} count - How many samples.
    */
   render(out, offset, count) {
+    if (this.script) {
+      this.repeatScript();
+    }
     var q = this.queue;
     var end = this.samples+count;
     var i = offset;

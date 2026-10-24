@@ -27,7 +27,8 @@
  *   ★ A game may have to **wait** for a digitised sound: Impossible
  *   Mission's `$BF51` polls its speech player before the world goes on,
  *   so the world is held until this arrives.
- *   {id:'play', audioData:{script: [[…writes], …]}}   a script from now (the volume dialogs' sample)
+ *   {id:'play', audioData:{script: [[…writes], …]}, options:{repeat}}   a script from now (the volume dialogs'
+ *                 sample; `repeat` true / a count goes round, R-Type's title tune)
  *   {id:'stop'}    silence: the queue dropped, the chip reset
  *   {id:'pause'} / {id:'continue'} / {id:'mute'} / {id:'unmute'}
  *
@@ -76,7 +77,7 @@ class ChipProcessor extends AudioWorkletProcessor {
           break;
         case 'play':
           if (m.audioData && m.audioData.script) {
-            this.stream.play(m.audioData.script);
+            this.stream.play(m.audioData.script, m.options || {});
           }
           break;
         case 'stop':
