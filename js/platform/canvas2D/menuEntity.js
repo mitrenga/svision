@@ -238,14 +238,19 @@ export class MenuEntity extends AbstractEntity {
 
   /**
    * Re-reads the primary and secondary text of every menu item from the data source
-   * and updates the corresponding text entities.
+   * and updates the corresponding text entities — and their colour, so a row whose
+   * `penColor` changed with its text (a label turned into a warning) takes it too.
    */
   refreshMenu() {
     for (var y = 0; y < this.menuEntities.length; y++) {
       this.menuEntities[y][0].setText(this.onGetData(this.dataSender, 't1', y));
       this.placeValue(y);
       this.menuEntities[y][1].setText(this.onGetData(this.dataSender, 't2', y));
+      var penColor = y === this.selection ? this.selectedColor(y) : this.itemColor(y);
+      this.menuEntities[y][0].setPenColor(penColor);
+      this.menuEntities[y][1].setPenColor(penColor);
     }
+    if (this.selectionEntity) { this.selectionEntity.bkColor = this.barColor(this.selection); }
   } // refreshMenu
 
   /**
