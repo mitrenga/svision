@@ -1,14 +1,15 @@
 const { VectorEntity } = await import('./vectorEntity.js?ver='+window.srcVersion);
 const { VectorTextEntity } = await import('./vectorTextEntity.js?ver='+window.srcVersion);
 const { VectorFont } = await import('./vectorFont.js?ver='+window.srcVersion);
-const { Tool } = await import('../../tool.js?ver='+window.srcVersion);
+const { VolumeControl } = await import('../canvas2D/dialogs/volumeControl.js?ver='+window.srcVersion);
 // begin code
 
 /**
- * The volume dialog of the vector platform — what `ZXVolumeEntity` is to the
- * canvas 2D games: a modal box with a slider of eleven steps for the user
- * level of an audio bus, kept in `app.audioManager.volume[bus]` and in a
- * cookie, with a sample sound to judge it by. Drawn as lines: the frame
+ * The volume dialog of the vector platform — what `VolumeEntity` is to the
+ * canvas 2D games, on the same VolumeControl (R-056): a modal box with a
+ * slider of eleven steps for the user level of an audio bus, kept in
+ * `app.audioManager.volume[bus]` and in a cookie, with a sample sound to
+ * judge it by. Drawn as lines: the frame
  * twice like a vector menu's brackets, the slider with its ticks, a
  * triangle for the cursor, the level as text; no filled area but the
  * opaque background of the box (`bkColor`, black unless told otherwise —
@@ -45,8 +46,7 @@ export class VectorVolumeEntity extends VectorEntity {
     this.id = 'VectorVolumeEntity';
     this.options = o;
     this.bus = bus;
-    this.cookie = cookie;
-    this.sampleSound = sampleSound;
+    this.control = new VolumeControl(this, bus, cookie, sampleSound, o.sampleBus);
     this.title = o.title === false ? bus.toUpperCase()+' VOLUME' : o.title;
     this.clipsList = false;
     this.levelEntity = null;
@@ -76,8 +76,7 @@ export class VectorVolumeEntity extends VectorEntity {
    * @returns {number}
    */
   level() {
-    var v = this.app.audioManager ? this.app.audioManager.volume[this.bus] : 0;
-    return Math.min(10, Math.max(0, Math.round(Number(v) || 0)));
+    return this.control.level();
   } // level
 
   /**
@@ -95,18 +94,12 @@ export class VectorVolumeEntity extends VectorEntity {
   } // init
 
   /**
-   * The level as the menu shows it.
+   * The level as the menu shows it (VolumeControl.levelText).
    * @param {number} level - 0..10
    * @returns {string}
    */
   static levelText(level) {
-    if (level <= 0) {
-      return 'OFF';
-    }
-    if (level >= 10) {
-      return 'MAX';
-    }
-    return (level*10)+'%';
+    return VolumeControl.levelText(level);
   } // levelText
 
   /**
@@ -136,34 +129,26 @@ export class VectorVolumeEntity extends VectorEntity {
    * @param {number} level - 0..10
    */
   changeVolume(level) {
-    level = Math.min(10, Math.max(0, Math.round(level)));
-    var manager = this.app.audioManager;
-    if (!manager) {
+    if (!this.app.audioManager) {
       return;
     }
-    manager.volume[this.bus] = level;
-    Tool.writeCookie(this.cookie, level);
-    this.levelEntity.setText(VectorVolumeEntity.levelText(level));
+    level = this.control.set(level);
+    this.levelEntity.setText(VolumeControl.levelText(level));
     this.drawBox();
-    if (typeof manager.refreshVolume === 'function') {
-      manager.refreshVolume(this.options.sampleBus);
-    }
   } // changeVolume
 
   /**
    * Plays the sample: opens its bus and sends the sound.
    */
   playSample() {
-    this.sendEvent(0, 0, {id: 'openAudioBus', bus: this.options.sampleBus, options: {}});
-    this.sendEvent(0, 0, {id: 'playSound', bus: this.options.sampleBus, sound: this.sampleSound, options: false});
+    this.control.playSample();
   } // playSample
 
   /**
    * Closes the dialog: the sample's bus goes with it, the menu is told.
    */
   close() {
-    this.sendEvent(0, 0, {id: 'closeAudioBus', bus: this.options.sampleBus});
-    this.sendEvent(0, 0, {id: 'refreshMenu'});
+    this.control.close();
     this.destroy();
     this.sendEvent(-1, 0, {id: 'contentClosed', entity: this});
   } // close

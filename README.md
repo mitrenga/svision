@@ -46,7 +46,8 @@ send-up / send-down / send-to-model event system.
 | Platform | Status | Description |
 |---|---|---|
 | **canvas2D** | stable | The main 2D renderer. Draws entities onto an HTML `<canvas>`. |
-| **canvas2D / zxSpectrum** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. The ZX dialogs (`ZXSettingsEntity`, `ZXVolumeEntity`, `ZXPlayerNameEntity`, `ZXRemapKeysEntity`, `ZXSelectingGamepadEntity`, `ZXWaitForAudioEventEntity`) are now **contents only** — no frame, no title of their own: they are coloured through `ZXDialogProperties`/`ZXDialogTheme`, placed on the panel of a `ZXDialogEntity` window and send `'contentClosed'` up when they close. Their constructors take a `properties` object and no colour arguments any more (R-027/R-028). |
+| **canvas2D / dialogs** | stable | The dialogs of the canvas 2D games as generic classes (R-056): `DialogTheme` (neutral hex defaults; the fonts `labelFont`, `buttonFont`, `stepFont` by name in `app.fonts`), `DialogProperties` (window geometry, colours, nested dialogs; `platformDefaults` for a platform wrapper), `DialogEntity` (the window), `WaitForAudioEventEntity`, `VolumeEntity` and `VolumeControl` (the volume logic without drawing, shared with `VectorVolumeEntity`), `SettingsEntity` with its nested `RemapKeysEntity` and `SelectingGamepadEntity`, `PlayerNameEntity` with a plain on-screen keyboard that a wrapper replaces with its machine's. The contents lay themselves out from the entity's size and the fonts — nothing scales — with the slider as a `SliderEntity` (`canvas2D/sliderEntity.js`, drawn at any width, click and drag). The platform wrappers are thin: `zx/ZX*` (Manic Miner colours, 5×5 labels, `zxFonts8x8` steps, the Spectrum's keyboard, the 202×134 window as it was), `c64/C64DialogProperties` + `C64VolumeEntity` + `C64SettingsEntity` + `C64PlayerNameEntity` (the C64's own keyboard) and `atari8/Atari8DialogProperties` + `Atari8VolumeEntity` + `Atari8SettingsEntity` + `Atari8PlayerNameEntity` (the machine's 8×8 font, 3×3 key labels, a 288×176 window the game may override). |
+| **canvas2D / zx** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. The ZX dialogs are **contents only** — no frame, no title of their own: `ZXDialogProperties`/`ZXDialogTheme`, `ZXDialogEntity`, `ZXVolumeEntity`, `ZXSettingsEntity`, `ZXRemapKeysEntity`, `ZXSelectingGamepadEntity`, `ZXPlayerNameEntity` (the Spectrum's keyboard) and `ZXWaitForAudioEventEntity` are thin wrappers over `canvas2D/dialogs` (R-056) that put the Manic Miner colours and `zxFonts8x8` over the neutral defaults. The contents send `'contentClosed'` up when they close (R-027/R-028). |
 | **canvas2D / arcade** | stable | Fixed-size raster arcade monitor (e.g. 224×256 portrait) with integer pixel-perfect scaling, bezel and optional colour overlay; configured per game (`new ArcadePlatform({width, height, overlay, …})`). Used by the arcade remakes. |
 | **canvas2D / adaptive** | stable | Layout that adapts the model grid to the available element size. |
 | **canvas2D / vga** | in progress | VGA / MS-DOS platform (R-029): 256-colour palette, mode 13h video RAM, 80×25 text mode, DOS boot model, the 8×16 Uni-VGA font set, `VGAControls` (the control tables of the era's games built from one action list) and `VGALayout` — the 4:3 monitor with a 1.2 pixel aspect. `VGALayout`, `C64Layout` and `Atari8Layout` all extend `AspectLayout` (`canvas2D/aspectLayout.js`): an integer horizontal ratio, the rows stretched by `pixelAspect`. |
@@ -79,7 +80,7 @@ send-up / send-down / send-to-model event system.
   another colour for one frame.
 
 ### ZX Spectrum video memory
-- **`ZXVideoRAM`** (canvas2D / zxSpectrum) is the **model of the machine's
+- **`ZXVideoRAM`** (canvas2D / zx) is the **model of the machine's
   screen**, not of any game: the 6912 bytes of `$4000-$5AFF`, the ULA's
   interleaved line addressing (`lineOffset`, `addressOf`,
   `attributeAddressOf`), `peek`/`poke` with the write operation the original
@@ -199,9 +200,14 @@ send-up / send-down / send-to-model event system.
   transformation, so the chip stays single-sourced for the browser and
   Node), forwards the frames (`AbstractAudioManager.writeChip(bus, {frame,
   writes})`) and plays a script of frames as a `playSound` (the sample of a
-  volume dialog). POKEY (Boulder Dash) and SID (Impossible Mission) run on
-  it.
-- **`ZXMachineSounds`** (canvas2D / zxSpectrum) holds the sounds of the
+  volume dialog; `repeat` true or a count makes the script go round without
+  a gap — R-Type's title tune — and a new script replaces the one playing).
+  The bus closes with a short `fadeOut` of its gain (the manager keeps the
+  AudioContext open that long), and the SID model swallows the step of the
+  first volume write after a silence, so the chip's DC neither thumps on nor
+  clicks off. POKEY (Boulder Dash) and SID (Impossible Mission, R-Type) run
+  on it.
+- **`ZXMachineSounds`** (canvas2D / zx) holds the sounds of the
   **machine** rather than of any game: the pulse format of the tape
   (`tapePilotTone`, `tapeRndData`, `tapeData`) and the ROM's key click and
   rising scale (`keyClick`, `basicBeeps`). Every ZX remake shares them, so
@@ -209,13 +215,13 @@ send-up / send-down / send-to-model event system.
   own timing — pilot pulse count, sync, bit lengths — with events at the
   end of the pilot, after every byte and at the end of the block, for tapes
   with turbo blocks (Booty).
-- **`ZXRomPrint`** (canvas2D / zxSpectrum) is the ROM's printing to the
+- **`ZXRomPrint`** (canvas2D / zx) is the ROM's printing to the
   upper screen (`RST $10`) into a `ZXVideoRAM`: characters 32-127 of the
   ROM font and the control codes INK, PAPER, FLASH, BRIGHT, INVERSE, OVER,
   AT and CR, a stream ending at `$FF` the way games end theirs. What it
   does not do (INK 8/9, TAB, block graphics, UDGs, scrolling) it refuses
   rather than prints differently; checked by `tools/checkzx.mjs`.
-- **`ZXRomDraw`** (canvas2D / zxSpectrum) is the ROM's plotting and line
+- **`ZXRomDraw`** (canvas2D / zx) is the ROM's plotting and line
   drawing — PIXEL-ADD `$22AA`, PLOT-SUB `$22E5`, PO-ATTR `$0BDB` and
   DRAW-LINE `$24BA` — instruction for instruction on a game's memory
   (`{rd, wr}`), with COORDS, ATTR-T, MASK-T and P-FLAG (OVER, INVERSE,
@@ -333,6 +339,12 @@ Two settings in your project's `config/config.php` drive development behaviour:
     registered and asset versions become **stable** (read from `app/version.js`)
     so the cache holds until you bump the version. Using an array also keeps the
     door open for further per-feature dev switches in the future.
+  - **Developer parameters** (`Tool.devParam(name, default)`): a knob the
+    game reads from the address, `?devLevel=2`, or from the array,
+    `$devMode = ['level' => 2]`; the address wins. The name must start with
+    `dev`, and outside dev mode the address is never read, so a player on a
+    production server cannot reach the knob. The games use `devLevel`,
+    `devSeed` (a pinned seed makes a run repeatable) and `devImmortal`.
 - **`$devModeName`** is an optional dev-mode banner text. The server
   (`php/appPage.php`, `devModeName()`) now composes the banner itself and
   exposes it to the client as `window.devModeName`:
