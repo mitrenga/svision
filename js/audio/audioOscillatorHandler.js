@@ -156,7 +156,7 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
    * playback, reads tempo/volume/repeat, builds the score's instruments, and
    * starts the look-ahead scheduler.
    * @param {Object|boolean} audioData - The score to play, or false to stop.
-   * @param {Object|boolean} options - Playback options; may include `repeat` (true = loop forever, number = total play count). False when none.
+   * @param {Object|boolean} options - Playback options; may include `repeat` (true = loop forever, number = total play count) and `preroll` (seconds from now to the first bar, 0.1 by default — a short one for a sound retriggered faster than that, e.g. a key click, which would otherwise be cut before it starts). False when none.
    * @returns {void}
    */
   playSound(audioData, options) {
@@ -209,7 +209,8 @@ export class AudioOscillatorHandler extends AbstractAudioHandler {
     this.nextBar = 0;
     // an upbeat backdates bar 0 so its first sounding note (the anacrusis)
     // lands on the pre-roll instant instead of after the bar's leading rest
-    this.nextBarTime = this.ctx.currentTime + 0.1 - (audioData.upbeat || 0) * this.secondsPerTick;
+    var preroll = (options !== false && options && 'preroll' in options) ? options.preroll : 0.1;
+    this.nextBarTime = this.ctx.currentTime + preroll - (audioData.upbeat || 0) * this.secondsPerTick;
     this.pendingNotes = [];
     this.diagStartTime = this.ctx.currentTime;
     this.diagStartPerf = performance.now();
