@@ -15,6 +15,7 @@ body {
 
   -webkit-tap-highlight-color: transparent; /* disable blue box when clicking in chrome mobile */
   overscroll-behavior: none; /* disable pull-to-refresh */
+  touch-action: none; /* no browser touch gestures (edge swipe back, pinch zoom); the app handles touches itself */
 }
 
 .canvasApp {
