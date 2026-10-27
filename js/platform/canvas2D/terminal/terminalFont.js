@@ -20,7 +20,8 @@ const { AbstractFonts } = await import('../../../abstractFonts.js?ver='+window.s
  *   cellHeight: 11,
  *   glyphX: 0,            // where in the cell
  *   glyphY: 0,
- *   chars: {'A': 0x41}    // optional: character -> glyph, for TextEntity
+ *   chars: {'A': 0x41},   // optional: character -> glyph, for TextEntity
+ *   fallbacks: {'←': '<'} // optional: a character the font lacks -> one it has
  * });
  * ```
  *
@@ -58,7 +59,8 @@ export class TerminalFont extends AbstractFonts {
       cellHeight: config.glyphHeight,
       glyphX: 0,
       glyphY: 0,
-      chars: {}
+      chars: {},
+      fallbacks: {}
     }, config);
     if (!(c.glyphWidth >= 1 && c.glyphWidth <= 8) || c.firstBit-c.glyphWidth+1 < 0) {
       throw new Error('TerminalFont: a glyph row is one byte, at most 8 pixels');
@@ -77,6 +79,12 @@ export class TerminalFont extends AbstractFonts {
     this.count = c.count === undefined ? Math.floor(c.data.length/c.bytesPerGlyph) : c.count;
     /** character -> glyph index, for getCharData() */
     this.chars = c.chars;
+    /**
+     * a character the font has no glyph for -> one it has: what the library's
+     * texts write that a character ROM of the era did not have — the arrows
+     * of the key names (`Tool.prettyKey`) by default, as ASCII
+     */
+    this.fallbacks = Object.assign({'←': '<', '→': '>', '↑': '^', '↓': 'v', '‗': '_'}, c.fallbacks);
 
     /**
      * the rows normalised: `glyphHeight` bytes a glyph, bit (glyphWidth-1)
@@ -160,7 +168,7 @@ export class TerminalFont extends AbstractFonts {
    * Rendering data of a character for a `TextEntity`: a rectangle for every
    * pixel of the cell that equals `bitMask` — the lit ones for '1', the dark
    * ones for '0' (reverse video). A character the font has no glyph for
-   * prints as '?', or blank when there is no '?' either.
+   * prints as its fallback, else as '?', or blank when there is no '?' either.
    * @param {string} char - The character.
    * @param {string} bitMask - '1' or '0'.
    * @param {number} scale - The scale of the rectangles.
@@ -170,6 +178,9 @@ export class TerminalFont extends AbstractFonts {
     var spaceData = this.spaceCharData(char, bitMask, scale);
     if (spaceData !== null) {
       return spaceData;
+    }
+    if (!(char in this.chars) && (this.fallbacks[char] in this.chars)) {
+      char = this.fallbacks[char];
     }
     var index = char in this.chars ? this.chars[char] : ('?' in this.chars ? this.chars['?'] : -1);
     var data = [];
@@ -189,7 +200,7 @@ export class TerminalFont extends AbstractFonts {
    * @returns {boolean} True when it prints as itself.
    */
   validChar(char) {
-    return (char in this.spaces) || (char in this.chars);
+    return (char in this.spaces) || (char in this.chars) || (this.fallbacks[char] in this.chars);
   } // validChar
 
 } // TerminalFont
