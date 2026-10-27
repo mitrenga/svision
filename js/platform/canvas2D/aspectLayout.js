@@ -5,9 +5,10 @@ const { Canvas2DLayout } = await import('./canvas2DLayout.js?ver='+window.srcVer
  * Layout of a raster on a 4:3 monitor whose pixels need not be square: the
  * picture scaled by a whole number horizontally and by that number times the
  * pixel aspect vertically, centred in the element, the border around it.
- * {@link VGALayout} (aspect 1.2), {@link C64Layout} and {@link Atari8Layout}
- * (aspect 1 by default) are this class under the platform's name; a
- * platform's config carries `pixelAspect`.
+ * {@link VGALayout} (aspect 1.2), {@link C64Layout}, {@link Atari8Layout},
+ * {@link SNESLayout} and {@link TerminalLayout} (aspect 1 by default) are this
+ * class under the platform's name; a platform's config carries `pixelAspect`,
+ * and a layout that wants whole ratios only overrides {@link AspectLayout#fitRatio}.
  *
  * ## Why two ratios
  *

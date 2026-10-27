@@ -28,7 +28,7 @@ the way down from a single `index.php` entry point.
 - **A ZX Spectrum flavoured platform** with the authentic palette, fonts and
   helper screens (volume, controls, key remapping, reset, …).
 - **Models of other machines** as platforms: VGA / MS-DOS, Commodore 64,
-  Atari 8-bit, the XY monitor of the vector arcades and a 3D scene rendered
+  Atari 8-bit, Super Nintendo, a text terminal on a serial line, the XY monitor of the vector arcades and a 3D scene rendered
   through WebGL2 — plus their sound chips (OPL2, POKEY, SID, discrete arcade
   boards) and DOM-free halves that run unchanged under Node.
 
@@ -41,6 +41,16 @@ a tree of entities (`AbstractEntity` and its subclasses). A **platform**
 Input and lifecycle events flow through the entity tree via a small
 send-up / send-down / send-to-model event system.
 
+A project's `app/main.js` only constructs its app and hands it to
+**`bootstrapApp(app, options)`** (`js/appBootstrap.js`, R-002), which hooks
+every window event up to the `InputEventsManager`, runs the
+`requestAnimationFrame` loop, detects gamepads and touchscreens, blocks the
+Safari gesture events, guards against accidental back navigation (the model
+gets a `browserBack` event first; only an unhandled back asks about leaving)
+and registers the service worker. `options.listeners` replaces a default
+window listener (a game that needs `preventDefault()` on its own keys) and
+`options.leaveConfirm` is the question asked before leaving.
+
 ## Platforms
 
 | Platform | Status | Description |
@@ -50,7 +60,7 @@ send-up / send-down / send-to-model event system.
 | **canvas2D / zx** | stable | ZX Spectrum themed platform on top of canvas2D: authentic colours, 8×8 fonts and Spectrum-style helper entities. The ZX dialogs are **contents only** — no frame, no title of their own: `ZXDialogProperties`/`ZXDialogTheme`, `ZXDialogEntity`, `ZXVolumeEntity`, `ZXSettingsEntity`, `ZXRemapKeysEntity`, `ZXSelectingGamepadEntity`, `ZXPlayerNameEntity` (the Spectrum's keyboard) and `ZXWaitForAudioEventEntity` are thin wrappers over `canvas2D/dialogs` (R-056) that put the Manic Miner colours and `zxFonts8x8` over the neutral defaults. The contents send `'contentClosed'` up when they close (R-027/R-028). |
 | **canvas2D / arcade** | stable | Fixed-size raster arcade monitor (e.g. 224×256 portrait) with integer pixel-perfect scaling, bezel and optional colour overlay; configured per game (`new ArcadePlatform({width, height, overlay, …})`). Used by the arcade remakes. |
 | **canvas2D / adaptive** | stable | Layout that adapts the model grid to the available element size. |
-| **canvas2D / vga** | in progress | VGA / MS-DOS platform (R-029): 256-colour palette, mode 13h video RAM, 80×25 text mode, DOS boot model, the 8×16 Uni-VGA font set, `VGAControls` (the control tables of the era's games built from one action list) and `VGALayout` — the 4:3 monitor with a 1.2 pixel aspect. `VGALayout`, `C64Layout` and `Atari8Layout` all extend `AspectLayout` (`canvas2D/aspectLayout.js`): an integer horizontal ratio, the rows stretched by `pixelAspect`. |
+| **canvas2D / vga** | in progress | VGA / MS-DOS platform (R-029): 256-colour palette, mode 13h video RAM, 80×25 text mode, DOS boot model, the 8×16 Uni-VGA font set, `VGAControls` (the control tables of the era's games built from one action list) and `VGALayout` — the 4:3 monitor with a 1.2 pixel aspect. `VGALayout`, `C64Layout`, `Atari8Layout`, `SNESLayout` and `TerminalLayout` all extend `AspectLayout` (`canvas2D/aspectLayout.js`): a whole horizontal ratio from 2x up and a fractional one between 1x and 2x (`fitRatio()`, which `TerminalLayout` overrides to whole numbers only), the rows stretched by `pixelAspect`. |
 | **canvas2D / c64** | in progress | Commodore 64 platform (R-038): 40×25 text mode with screen codes and the character ROM, colour RAM plus one background register, a recolourable border, hardware sprites (hires/multicolour/expanded) on `SpriteEntity`, power-on/LOAD boot model. |
 | **canvas2D / atari8** | in progress | Atari 8-bit platform (400/800/XL/XE, R-039): ANTIC display list over 64 KB of memory, GTIA colour registers with a computed PAL palette, text mode 2 and tile mode 4, players and missiles, the OS character sets, power-on/READY boot model. |
 | **canvas2D / snes** | in progress | Super Nintendo platform (R-050): the PPU over its own VRAM, CGRAM and OAM (`SNESPPU`, no DOM, `paint32` line by line) in mode 1 with the sprites' limits per line (32 / 34, STAT77) and the master brightness changed inside the frame as data (`setLineWrites`), `SNESColor` (BGR555 and brightness converted as MesenCE does), `SNESTiles` (planar 2/4/8 bpp), `SNESPPUEntity`, `SNESPlatform` 256×224 in a black surround, `SNESLayout` (`AspectLayout`, 8:7), `SNESJoypad`; no boot model (the console has no BIOS). What the first game does not use — HDMA, windows, colour math, mode 7 — is counted, not drawn. Demo: `snesdemo`, check: `tools/checksnes.mjs`; measured against the emulator by `super-r-type/tools/matchscreen.mjs`. |
@@ -182,6 +192,11 @@ send-up / send-down / send-to-model event system.
   with `control('rev', 0|1)`.
 - Handlers **borrow** the shared context from the manager to build their nodes;
   the manager alone creates and discards the context.
+- **`AudioOscillatorHandler`** plays a score (tempo, volume, instruments,
+  bars) through a look-ahead scheduler. `playSound` options: `repeat` (true
+  loops forever, a number is the total play count) and `preroll`, the
+  seconds from now to the first bar (0.1 by default; a short one for a sound
+  retriggered faster than that, such as a key click or a terminal's bell).
 - **`AudioSilentHandler`** needs no context: it produces no sound but still
   walks the sound data to fire timed events, so game logic keeps running on
   devices with no audio support or when everything is muted.
@@ -250,6 +265,9 @@ delivered to the model:
   `touchscreen.types`, kept in a cookie).
 - **Touch** — multi-touch press handling and gestures, plus the groundwork for
   an on-screen software joystick for controlling games on touch displays.
+  The page has `touch-action: none` (`css/main.css`), so the browser makes no
+  gestures of its own (edge swipe back, pinch zoom); the app handles every
+  touch, including scrolling in `ScrollViewEntity`.
 
 ### UI entities
 - **`ButtonEntity`**, **`MenuEntity`**, **`InputEntity`**, **`KeyboardEntity`**
@@ -503,6 +521,8 @@ Full, working projects built with svision:
 | **Hello World** | The smallest possible svision app — start here. | https://github.com/mitrenga/helloworld |
 | **Manic Miner** | A complete remake of the classic ZX Spectrum game. | https://github.com/mitrenga/manicminer |
 | **Jet Set Willy** | A complete remake of the classic ZX Spectrum game. | https://github.com/mitrenga/jetsetwilly |
+| **Booty** | A remake of the ZX Spectrum game, its rules measured against the original. | https://github.com/mitrenga/booty |
+| **R-Type** | A remake of the Commodore 64 conversion, on the C64 platform with the SID. | https://github.com/mitrenga/r-type |
 
 ## Documentation
 
