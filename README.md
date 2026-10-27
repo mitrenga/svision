@@ -438,7 +438,10 @@ keeps what the offline tools of several projects share: `png.mjs` (indexed
 and RGBA PNG encoder and decoder on `node:zlib`), `scr2png.py` (ZX Spectrum
 `.scr` to PNG), `pngread.py` (a minimal PNG reader for comparing maps by
 machine), `dis6502.py` (a tracing 6502 disassembler over a memory image,
-with Atari 8-bit and C64 symbols), `romdrawref.py` (the reference values of
+with Atari 8-bit and C64 symbols), `disPDP11.py` (a tracing PDP-11
+disassembler over an RT-11 `.SAV` image, octal MACRO-11 listing with RT-11
+programmed requests, inline call arguments and jump tables from hints, and a
+cross-check of every instruction against SIMH), `romdrawref.py` (the reference values of
 `ZXRomDraw` from the real ROM), `fetchroms.py` (machine ROMs for the tracing
 emulators, into a project's `sources/rom/`) and `fetchsources.py`.
 What those tools need but the library does not carry — whole machine ROMs,
