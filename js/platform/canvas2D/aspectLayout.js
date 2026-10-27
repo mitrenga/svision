@@ -79,13 +79,9 @@ export class AspectLayout extends Canvas2DLayout {
     // larger than the element — and the browser shrinks it by CSS, as the ZX
     // Spectrum layout does; the borders come from the fractional fit, so the
     // canvas keeps the element's shape and shrinks the same in both directions.
-    if (fit >= 2) {
-      this.ratio = Math.floor(fit);
+    this.ratio = this.fitRatio(fit);
+    if (fit >= 1) {
       fit = this.ratio;
-    } else if (fit >= 1) {
-      this.ratio = fit;
-    } else {
-      this.ratio = 1;
     }
     this.ratioY = this.ratio*aspect;
 
@@ -121,6 +117,20 @@ export class AspectLayout extends Canvas2DLayout {
     model.desktopEntity.parentWidth = model.desktopWidth+2*model.borderWidth;
     model.desktopEntity.parentHeight = model.desktopHeight+2*model.borderHeight;
   } // resizeModel
+
+  /**
+   * The horizontal ratio for a fractional fit: a whole number from 2x up,
+   * the fit itself between 1x and 2x, 1 below. A subclass that wants whole
+   * numbers only overrides it ({@link TerminalLayout}).
+   * @param {number} fit - How many times the desktop with its minimal border fits the element.
+   * @returns {number} The horizontal ratio.
+   */
+  fitRatio(fit) {
+    if (fit >= 2) {
+      return Math.floor(fit);
+    }
+    return fit >= 1 ? fit : 1;
+  } // fitRatio
 
   /**
    * Clears the canvas — the whole of it, which under the vertical stretch
