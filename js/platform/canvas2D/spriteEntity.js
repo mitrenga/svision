@@ -28,6 +28,19 @@ const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion
  * and stay so in the palettes; `RasterEntity.colorValue()` turns each into a
  * packed pixel once and remembers it.
  *
+ * ## Repeat and scale
+ *
+ * `repeatX` / `repeatY` tile the sprite: copies side by side, each the size
+ * of the grid. `scaleX` / `scaleY` ({@link SpriteEntity#setScale}) magnify
+ * it: every pixel of the grid is painted as a block of `scaleX` × `scaleY`
+ * pixels of the entity, so the entity is `spriteWidth*repeatX*scaleX` wide.
+ * That is for a screen whose pixel is not square — the dots of a terminal
+ * twice as tall as wide make a pictogram drawn for square pixels tall and
+ * thin, and `scaleX` 2 gives it back its shape. The grid, the decoded pixel
+ * lists and `spriteWidth` / `spriteHeight` stay unscaled; only the cache is
+ * bigger. `setFixSize()` is in pixels of the grid, the tints in pixels of
+ * the entity, as before; both factors are 1 by default.
+ *
  * Until 2026-09-06 this class painted through `DrawingCache.paint()`, one
  * `fillRect` per pixel with the colour parsed from its CSS string on every
  * change. That was the library's second way to the pixels next to
@@ -62,6 +75,9 @@ export class SpriteEntity extends RasterEntity {
     this.spriteHeight = 0;
     this.repeatX = 1;
     this.repeatY = 1;
+    /** how many pixels of the entity one pixel of the grid is, see setScale() */
+    this.scaleX = 1;
+    this.scaleY = 1;
     this.fixWidth = 0;
     this.fixHeight = 0;
     this.sharedPalette = false;
@@ -130,15 +146,15 @@ export class SpriteEntity extends RasterEntity {
 
   /**
    * Forces a fixed sprite cell size, updating the entity dimensions according to the
-   * current repeat factors.
+   * current repeat and scale factors.
    * @param {number} width - Fixed sprite cell width.
    * @param {number} height - Fixed sprite cell height.
    */
   setFixSize(width, height) {
     this.fixWidth = width;
     this.fixHeight = height;
-    this.width = width*this.repeatX;
-    this.height = height*this.repeatY;
+    this.width = width*this.repeatX*this.scaleX;
+    this.height = height*this.repeatY*this.scaleY;
     this.spriteWidth = width;
     this.spriteHeight = height;
   } // setFixSize
@@ -149,7 +165,7 @@ export class SpriteEntity extends RasterEntity {
    */
   setRepeatX(value) {
     this.repeatX = value;
-    this.width = this.spriteWidth*value;
+    this.width = this.spriteWidth*value*this.scaleX;
   } // setRepeatX
 
   /**
@@ -158,8 +174,24 @@ export class SpriteEntity extends RasterEntity {
    */
   setRepeatY(value) {
     this.repeatY = value;
-    this.height = this.spriteHeight*value;
+    this.height = this.spriteHeight*value*this.scaleY;
   } // setRepeatY
+
+  /**
+   * Magnifies the sprite: every pixel of the grid becomes a block of
+   * `x` × `y` pixels of the entity. Updates the dimensions and clears the
+   * cache; see the class notes.
+   * @param {number} x - The horizontal factor, a whole number, 1 for none.
+   * @param {number} [y] - The vertical factor; `x` when not given.
+   */
+  setScale(x, y) {
+    this.scaleX = x;
+    this.scaleY = (y === undefined) ? x : y;
+    if (this.spriteData !== null) {
+      this.setDimensions();
+      this.cleanCache();
+    }
+  } // setScale
 
   /**
    * Sets the mono pen color, disables any shared palette, and clears the cache.
@@ -345,21 +377,21 @@ export class SpriteEntity extends RasterEntity {
   } // addFrameData
 
   /**
-   * Recomputes the entity width and height from the sprite size (or fixed size) and
-   * the horizontal/vertical repeat factors.
+   * Recomputes the entity width and height from the sprite size (or fixed size),
+   * the horizontal/vertical repeat factors and the scale.
    */
   setDimensions() {
     if (this.fixWidth > 0) {
-      this.width = this.fixWidth*this.repeatX;
+      this.width = this.fixWidth*this.repeatX*this.scaleX;
       this.spriteWidth = this.fixWidth;
     } else {
-      this.width = this.spriteWidth*this.repeatX;
+      this.width = this.spriteWidth*this.repeatX*this.scaleX;
     }
     if (this.fixHeight > 0) {
-      this.height = this.fixHeight*this.repeatY;
+      this.height = this.fixHeight*this.repeatY*this.scaleY;
       this.spriteHeight = this.fixHeight;
     } else {
-      this.height = this.spriteHeight*this.repeatY;
+      this.height = this.spriteHeight*this.repeatY*this.scaleY;
     }
   } // setDimensions
 
@@ -401,8 +433,9 @@ export class SpriteEntity extends RasterEntity {
 
   /**
    * Paints one frame into its cache: the background in a single fill, then
-   * every pixel of the frame — repeated `repeatX` × `repeatY` times — written
-   * into the `Uint32Array` view, and one `putImageData`. RasterEntity's frame
+   * every pixel of the frame — repeated `repeatX` × `repeatY` times, each a
+   * block of `scaleX` × `scaleY` — written into the `Uint32Array` view, and
+   * one `putImageData`. RasterEntity's frame
    * buffer is shared by all the caches of this sprite, since they are all the
    * same size and `putImageData` copies.
    * @param {number} index - The frame/direction index being painted.
@@ -412,6 +445,7 @@ export class SpriteEntity extends RasterEntity {
     var frame = this.frameBytes(cache);
     var px = this.pixels;
     var width = this.width, height = this.height;
+    var scaleX = this.scaleX, scaleY = this.scaleY;
     px.fill(this.bkColor ? RasterEntity.colorValue(this.bkColor) : 0);
 
     var palette = this.framePalettes[index] || this.sharedPalette;
@@ -426,14 +460,18 @@ export class SpriteEntity extends RasterEntity {
       // a pixel past the entity's edge is dropped, the way the canvas used to
       // clip it — setFixSize() can make the cell smaller than the grid
       for (var rx = 0; rx < this.repeatX; rx++) {
-        var col = pixel.x+rx*this.spriteWidth;
+        var col = (pixel.x+rx*this.spriteWidth)*scaleX;
         if (col >= width) {
           continue;
         }
+        var colEnd = Math.min(col+scaleX, width);
         for (var ry = 0; ry < this.repeatY; ry++) {
-          var row = pixel.y+ry*this.spriteHeight;
-          if (row < height) {
-            px[row*width+col] = value;
+          var row = (pixel.y+ry*this.spriteHeight)*scaleY;
+          var rowEnd = Math.min(row+scaleY, height);
+          for (; row < rowEnd; row++) {
+            for (var c = col; c < colEnd; c++) {
+              px[row*width+c] = value;
+            }
           }
         }
       }

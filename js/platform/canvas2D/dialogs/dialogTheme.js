@@ -29,6 +29,7 @@
  * - `separatorColor` — the line between the list and the options
  * - `iconColor` — the device pictograms
  * - `touchIconColor`, `touchIconBkColor` — the stick and button pictograms on the touchscreen's picture (false: `iconColor` / transparent)
+ * - `iconScaleX`, `iconScaleY` — how many pixels wide and tall one pixel of every pictogram is (1); for a screen whose pixel is not square, see SpriteEntity#setScale
  * - `dropdownArrowColor` — the arrow at the right of the selected gamepad's name, the one that opens the list (false: `penColor`)
  * - `sliderColor`, `cursorColor` — the volume slider and its cursor
  * - `warningColor` — the audio driver note in the volume panel
@@ -41,7 +42,8 @@
  *   false the app's `fonts5x5`. The ZX wrapper keeps 5x5 for labels and
  *   buttons and the Spectrum's 8x8 for the steps; the C64 and Atari wrappers
  *   put their 8x8 everywhere, with a bigger window (R-056). The layout is
- *   computed from the fonts and the entity's size, nothing scales.
+ *   computed from the fonts and the entity's size, nothing scales but the
+ *   pictograms (`iconScaleX`, `iconScaleY`).
  * - `buttonsBottomMargin` — pixels between CANCEL / OK of the name dialog and
  *   the bottom edge (2; the C64's dialog 0, on the edge)
  * - `inputBlockShift` — pixels the centred block of prompt, input and keyboard
@@ -99,6 +101,8 @@ const DIALOG_THEME_DEFAULTS = {
   iconColor: '#404040ff',
   touchIconColor: false,
   touchIconBkColor: false,
+  iconScaleX: 1,
+  iconScaleY: 1,
   dropdownArrowColor: false,
   sliderColor: '#000000ff',
   cursorColor: '#404040ff',

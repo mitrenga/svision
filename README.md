@@ -88,7 +88,9 @@ window listener (a game that needs `preventDefault()` on its own keys) and
   `SpriteEntity`, `TextEntity` and `SlidingTextEntity`.
 - **`SpriteEntity`** — draws a sprite with frames/directions, mono (`penChar`)
   or palette-based colours, with caching; `setTints()` lights parts of it in
-  another colour for one frame.
+  another colour for one frame. `repeatX` / `repeatY` tile it, `setScale(x, y)`
+  magnifies it per axis (one pixel of the grid a block of `x` × `y`) — for a
+  screen whose pixel is not square.
 
 ### ZX Spectrum video memory
 - **`ZXVideoRAM`** (canvas2D / zx) is the **model of the machine's

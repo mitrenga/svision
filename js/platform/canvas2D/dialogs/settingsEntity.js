@@ -30,7 +30,9 @@ const { DialogTheme } = await import('./dialogTheme.js?ver='+window.srcVersion);
  * bottom buttons), the bottom buttons the button font's height plus 8 and
  * as wide as their text;
  * the device pictograms are the panel's own sprites, centred in the
- * right-hand area. In 200 x 124 with the 5x5 fonts it is the ZX Spectrum
+ * right-hand area and magnified by the theme's `iconScaleX` / `iconScaleY`
+ * (a terminal whose dot is twice as tall as wide widens them twice, so
+ * they keep their shape). In 200 x 124 with the 5x5 fonts it is the ZX Spectrum
  * panel as it was (the device list three pixels narrower). The dialogs the
  * panel opens on top of itself — RemapKeysEntity (CHANGE, CONFIGURE) and
  * SelectingGamepadEntity — go into windows of their own, placed and coloured
@@ -172,6 +174,7 @@ export class SettingsEntity extends AbstractEntity {
     var entity = new SpriteEntity(this, m.keysX, m.top, this.theme.iconColor, false, 0, 0);
     entity.group = group;
     entity.hide = true;
+    entity.setScale(this.theme.iconScaleX, this.theme.iconScaleY);
     entity.setGraphicsData(SpriteTool.decode(compressed));
     entity.x = m.centerX-Math.floor(entity.width/2);
     this.addEntity(entity);
@@ -224,6 +227,7 @@ export class SettingsEntity extends AbstractEntity {
       var spriteEntity = new SpriteEntity(this, m.keysX, m.top, this.theme.iconColor, false, 0, 0);
       spriteEntity.group = 'mouse.disable';
       spriteEntity.hide = true;
+      spriteEntity.setScale(this.theme.iconScaleX, this.theme.iconScaleY);
       spriteEntity.setGraphicsData(SpriteTool.decode(
         'hR200290049050F010F081101110512011203130113021301130114012801260523072' +
         '2072207220722072207220722072207220722072207220722072207230526012801280' +
@@ -285,15 +289,17 @@ export class SettingsEntity extends AbstractEntity {
     this.infoText(touchBottom+4, ['DEVICE'], 'touchscreen.notFound');
     this.infoText(touchBottom+4+m.linePitch, ['DOES NOT HAVE', 'A TOUCHSCREEN'], 'touchscreen.notFound');
 
-    // the stick and the button on the screen of the pictogram: at its own places (7, 30) and (48, 30)
+    // the stick and the button on the screen of the pictogram: at its own places (7, 30) and (48, 30), in its pixels
     var ts = this.options.touchscreen;
     var touchIconColor = this.theme.touchIconColor || this.theme.iconColor;
+    var scaleX = this.theme.iconScaleX, scaleY = this.theme.iconScaleY;
     ts.types.keys.forEach((key) => {
       ['left', 'right'].forEach((side) => {
-        var x = {left: touchIcon.x+7, right: touchIcon.x+48};
-        var spriteEntity = new SpriteEntity(this, x[side], touchIcon.y+30, touchIconColor, this.theme.touchIconBkColor, 0, 0);
+        var x = {left: touchIcon.x+7*scaleX, right: touchIcon.x+48*scaleX};
+        var spriteEntity = new SpriteEntity(this, x[side], touchIcon.y+30*scaleY, touchIconColor, this.theme.touchIconBkColor, 0, 0);
         spriteEntity.group = 'touchscreen.supported.'+key;
         spriteEntity.hide = true;
+        spriteEntity.setScale(scaleX, scaleY);
         if ('compressedSpriteData' in ts.icons[ts.types[key][side].sprite]) {
           spriteEntity.setGraphicsData(SpriteTool.decode(ts.icons[ts.types[key][side].sprite].compressedSpriteData));
         } else {
