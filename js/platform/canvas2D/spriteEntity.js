@@ -36,7 +36,8 @@ const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion
  * pixels of the entity, so the entity is `spriteWidth*repeatX*scaleX` wide.
  * That is for a screen whose pixel is not square — the dots of a terminal
  * twice as tall as wide make a pictogram drawn for square pixels tall and
- * thin, and `scaleX` 2 gives it back its shape. The grid, the decoded pixel
+ * thin, and `scaleX` 2 gives it back its shape — and for a chip that
+ * magnifies its sprites, as the VIC-II's expansions do (C64SpriteEntity). The grid, the decoded pixel
  * lists and `spriteWidth` / `spriteHeight` stay unscaled; only the cache is
  * bigger. `setFixSize()` is in pixels of the grid, the tints in pixels of
  * the entity, as before; both factors are 1 by default.

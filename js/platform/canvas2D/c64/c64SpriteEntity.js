@@ -89,15 +89,19 @@ export class C64SpriteEntity extends SpriteEntity {
 
   /**
    * Decodes the kept blocks in the current mode into the sprite's frames.
+   * The grid is always the chip's 24 x 21; the expansions are the sprite's
+   * scale (SpriteEntity#setScale), so a pixel of an expanded sprite is
+   * painted as a block of 2 x 1, 1 x 2 or 2 x 2.
    */
   decodeShapes() {
     if (this.blocks.length == 0) {
       return;
     }
-    var options = {multicolor: this.multicolor, expandX: this.expandX, expandY: this.expandY};
+    var options = {multicolor: this.multicolor};
     var grids = this.blocks.map((block) => C64SpriteData.decode(block, options));
     this.frames = 0;
-    this.setFixSize(C64SpriteData.WIDTH*(this.expandX ? 2 : 1), C64SpriteData.HEIGHT*(this.expandY ? 2 : 1));
+    this.setScale(this.expandX ? 2 : 1, this.expandY ? 2 : 1);
+    this.setFixSize(C64SpriteData.WIDTH, C64SpriteData.HEIGHT);
     if (grids.length == 1) {
       this.setGraphicsData({sprite: grids[0], colors: this.sharedPalette});
     } else {
@@ -120,7 +124,9 @@ export class C64SpriteEntity extends SpriteEntity {
   } // setMulticolor
 
   /**
-   * Doubles the sprite in width and/or height, as $D01D and $D017 do.
+   * Doubles the sprite in width and/or height, as $D01D and $D017 do: the
+   * pixels get bigger, the shape stays as it is decoded, only the scale and
+   * the cache change.
    * @param {boolean} x - Twice as wide.
    * @param {boolean} y - Twice as tall.
    * @returns {C64SpriteEntity} This.
@@ -128,7 +134,7 @@ export class C64SpriteEntity extends SpriteEntity {
   setExpand(x, y) {
     this.expandX = !!x;
     this.expandY = !!y;
-    this.decodeShapes();
+    this.setScale(this.expandX ? 2 : 1, this.expandY ? 2 : 1);
     this.setSpritePosition(this.spriteX, this.spriteY);
     return this;
   } // setExpand

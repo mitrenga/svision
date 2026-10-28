@@ -445,7 +445,12 @@ function hex(bytes) {
   check('sprite: pixel colour', sprite.pixelColor(sprite.spriteData[0][0], sprite.sharedPalette, 0), C64Color.yellow);
   sprite.setExpand(true, true);
   check('sprite: expanded 48x42', [sprite.width, sprite.height], [48, 42]);
-  check('sprite: expanded pixels', sprite.spriteData[0].length, 504*4);
+  // the expansions are the scale: the shape stays 24 x 21, the pixels get bigger
+  check('sprite: expanded is the scale', [sprite.scaleX, sprite.scaleY], [2, 2]);
+  check('sprite: expanded keeps the shape', sprite.spriteData[0].length, 504);
+  sprite.setExpand(false, false);
+  check('sprite: expansion off again', [sprite.width, sprite.height, sprite.scaleX, sprite.scaleY], [24, 21, 1, 1]);
+  sprite.setExpand(true, true);
   sprite.setSpritePosition(24, 50);
   check('sprite: position origin', [sprite.x, sprite.y], [0, 0]);
   sprite.setSpritePosition(200, 100);
