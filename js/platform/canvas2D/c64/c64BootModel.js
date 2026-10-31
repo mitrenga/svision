@@ -275,7 +275,11 @@ export class C64BootModel extends AbstractModel {
     this.screen.loopEntity(timestamp);
     this.drawModel();
 
-    if (this.finished && this.handoverAt !== false && timestamp >= this.handoverAt) {
+    // not before the application data has come or failed
+    // (AbstractApp.appDataPending): a skip or a slow line would otherwise
+    // reach the game's first model without its data
+    if (this.finished && this.handoverAt !== false && timestamp >= this.handoverAt
+        && !this.app.appDataPending()) {
       this.handoverAt = false;
       this.handOver();
     }

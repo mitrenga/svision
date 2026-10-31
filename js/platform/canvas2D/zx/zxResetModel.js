@@ -10,6 +10,11 @@ const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
  * application data and finally hands over to the menu model. Any of the
  * {@link ZXResetModel.SKIP_KEYS} cuts it short and hands over at once, the
  * way the C64 and Atari boot models do (`C64BootModel.skipKeys`).
+ *
+ * The hand-over waits for the application data: while `appData.db` is
+ * still on its way ({@link AbstractApp#appDataPending}) the copyright line
+ * stays and the menu comes as soon as the data has come or failed — a skip
+ * or a slow line never reaches the menu before its data.
  */
 export class ZXResetModel extends AbstractModel {
 
@@ -28,6 +33,8 @@ export class ZXResetModel extends AbstractModel {
     this.inputLineEntity = null;
     /** the hand-over has happened (by the sequence or by a skip) */
     this.finished = false;
+    /** the hand-over is due, waiting for the application data */
+    this.awaitingData = false;
   } // constructor
 
   /**
@@ -75,16 +82,18 @@ export class ZXResetModel extends AbstractModel {
         return true;
       case 'keyPress':
         if (ZXResetModel.SKIP_KEYS.indexOf(event.key) >= 0) {
+          // the sequence goes on while the hand-over waits for the data
           this.handOver();
           return true;
         }
         break;
       case 'retryLoadAppData':
         // sent by the error panel's RETRY button: reload the application data
-        // and retry the menu handover after the fetch timeout has passed, so
-        // the request has either delivered data or fallen back to storage
+        // and hand over once the request has delivered or failed (handOver
+        // waits for it; offline there is no request and the app falls back
+        // to storage at once)
         this.app.loadAppData();
-        this.sendEvent(2500, {id: 'setMenuModel'});
+        this.handOver();
         return true;
     }
 
@@ -94,14 +103,25 @@ export class ZXResetModel extends AbstractModel {
   /**
    * Hands over to the menu, once: the sequence's end and a skip key both come
    * here, and the queued events of this model go with it (a model's queue is
-   * its own).
+   * its own). While the application data is still on its way it only marks
+   * the hand-over as due; loopModel makes it when the request is over. When
+   * the menu refuses (no data: the app shows its error panel and the model
+   * stays) the hand-over is open again for RETRY.
    */
   handOver() {
     if (this.finished) {
       return;
     }
+    if (this.app.appDataPending()) {
+      this.awaitingData = true;
+      return;
+    }
+    this.awaitingData = false;
     this.finished = true;
     this.app.setModel('MenuModel');
+    if (this.app.model === this) {
+      this.finished = false;
+    }
   } // handOver
 
   /**
@@ -113,6 +133,10 @@ export class ZXResetModel extends AbstractModel {
 
     this.resetEntity.loopEntity(timestamp);
     this.drawModel();
+
+    if (this.awaitingData && !this.app.appDataPending()) {
+      this.handOver();
+    }
   } // loopModel
 
 } // ZXResetModel

@@ -49,6 +49,9 @@ export class AbstractApp {
     this.layout = platform.newLayout(this);
     this.wsURL = wsURL;
     this.webSocket = false;
+    // the requests of fetchData still running, by URL: {url: count}
+    // (isFetching, appDataPending)
+    this.pendingFetches = {};
 
     this.controls = {
       keyboard: {
@@ -122,6 +125,10 @@ export class AbstractApp {
    * @param {Object} receiver - Object that receives results via setData/errorData and carries an id/fetchDataId.
    * @param {number} [timeout] - Optional timeout in ms; when the server does not respond in time the request is aborted and errorData is called. Without it a request to an unreachable server may hang for tens of seconds before failing.
    * @returns {string|undefined} The generated fetchDataId, or undefined when served from storage or skipped while offline.
+   *
+   * A request counts as running ({@link AbstractApp#isFetching}) from here
+   * until the receiver's setData or errorData has returned — so whatever
+   * they store is there once it stops running.
    */
   fetchData(url, storage, data, receiver, timeout) {
     var connectionStatus = 'offline';
@@ -174,6 +181,7 @@ export class AbstractApp {
       options.signal = abortController.signal;
       abortTimer = setTimeout(() => abortController.abort(), timeout);
     }
+    this.pendingFetches[url] = (this.pendingFetches[url] || 0)+1;
     fetch(url, options)
       .then((response) => {
         // headers arrived, so the server is alive: let the body download
@@ -195,10 +203,40 @@ export class AbstractApp {
           }
         }
       })
-      .catch((error) => receiver.errorData(error));
-      
+      .catch((error) => receiver.errorData(error))
+      // an error thrown by errorData itself must not leave the request
+      // running for ever (a boot model would wait on it)
+      .catch((error) => console.error(error))
+      .then(() => {
+        this.pendingFetches[url]--;
+        if (this.pendingFetches[url] <= 0) {
+          delete this.pendingFetches[url];
+        }
+      });
+
     return fetchDataId;
   } // fetchData
+
+  /**
+   * Whether a request of fetchData to the URL is still running (its receiver
+   * has not had setData or errorData yet).
+   * @param {string} url - The endpoint as given to fetchData.
+   * @returns {boolean} True while one is running.
+   */
+  isFetching(url) {
+    return url in this.pendingFetches;
+  } // isFetching
+
+  /**
+   * Whether the application data (`appData.db`, which every game loads at
+   * start into localStorage) is still on its way: the boot models hand over
+   * to the game only after it has come or failed, so a skip or a slow line
+   * never reaches the menu before its data.
+   * @returns {boolean} True while the request is running.
+   */
+  appDataPending() {
+    return this.isFetching(AbstractApp.APP_DATA_URL);
+  } // appDataPending
 
   /**
    * Forces an application upgrade: unregisters every service worker and deletes
@@ -225,6 +263,94 @@ export class AbstractApp {
   saveDataToStorage(key, data) {
     localStorage.setItem(window.appPrefix+'.'+key, JSON.stringify(data));
   } // saveDataToStorage
+
+  /**
+   * Saves the data files of appData to localStorage, `global` last: its
+   * presence marks the whole save as complete, which the offline fallback
+   * relies on. localStorage is only a cache of the server's data (R-062), so
+   * when a write fails (the quota is exceeded — on a dev origin shared by
+   * several games, or with storage blocked) the whole localStorage is cleared
+   * and the save runs once more from the start. There is no third attempt:
+   * the game then runs on, and {@link AbstractApp#loadDataFiles} downloads
+   * what is missing.
+   * @param {Object} files - The data files keyed by name.
+   * @param {*} [global] - The `global` entry of appData; a game without one
+   *   leaves it out.
+   * @returns {boolean} True when everything was saved.
+   */
+  saveAppDataToStorage(files, global) {
+    for (var attempt = 1; attempt <= 2; attempt++) {
+      try {
+        Object.keys(files).forEach((key) => this.saveDataToStorage(key, files[key]));
+        if (global !== undefined) {
+          this.saveDataToStorage('global', global);
+        }
+        return true;
+      } catch (error) {
+        if (attempt == 1) {
+          console.warn('localStorage: '+error.message+' - clearing it and saving the application data once more (R-062)');
+          try {
+            localStorage.clear();
+          } catch (clearError) {
+            console.warn('localStorage: '+clearError.message);
+          }
+        } else {
+          console.warn('localStorage: '+error.message+' - the application data stay unsaved, they will be downloaded when needed (R-062)');
+        }
+      }
+    }
+    return false;
+  } // saveAppDataToStorage
+
+  /**
+   * Reads a group of data files that came with appData. When all of them are
+   * in localStorage, the callback runs at once, synchronously — so a model
+   * can call this from init() just like {@link Tool.loadDataFile}. When any is
+   * missing (localStorage was cleared, full or blocked), the whole group comes
+   * from the server in one request (`dataFiles.data`) and the callback runs
+   * when it arrives. What comes from the server is not saved: data missing
+   * from localStorage means a problem the next appData load deals with.
+   * @param {string[]} keys - The data file names without their extension.
+   * @param {function(Object|null, Error=, string=)} callback - Gets the files
+   *   keyed by name (a file the server does not have is null), or null and the
+   *   error; the third argument says where they came from ('storage' or
+   *   'server').
+   * @param {number} [timeout] - Request timeout in ms
+   *   ({@link AbstractApp.DATA_FILES_TIMEOUT} by default).
+   */
+  loadDataFiles(keys, callback, timeout) {
+    var files = {};
+    var missing = false;
+    keys.forEach((key) => {
+      var stored = null;
+      try {
+        stored = localStorage.getItem(window.appPrefix+'.'+key);
+        if (stored !== null) {
+          files[key] = JSON.parse(stored);
+        }
+      } catch (error) {
+        stored = null;
+      }
+      if (stored === null) {
+        missing = true;
+      }
+    });
+    if (!missing) {
+      callback(files, undefined, 'storage');
+      return;
+    }
+    if (!navigator.onLine) {
+      callback(null, new Error('offline, data files missing: '+keys.join(', ')));
+      return;
+    }
+    var receiver = {
+      id: 'dataFiles',
+      fetchDataId: '',
+      setData: (data) => callback(data.data, undefined, 'server'),
+      errorData: (error) => callback(null, error instanceof Error ? error : new Error(error.message || String(error)))
+    };
+    receiver.fetchDataId = this.fetchData(AbstractApp.DATA_FILES_URL, false, {keys: keys}, receiver, timeout === undefined ? AbstractApp.DATA_FILES_TIMEOUT : timeout);
+  } // loadDataFiles
 
   /**
    * Installs the localization dictionary used by text().
@@ -285,3 +411,10 @@ export class AbstractApp {
   } // showErrorMessage
 
 } // AbstractApp
+
+/** the application data every game loads at start (appDataPending) */
+AbstractApp.APP_DATA_URL = 'appData.db';
+/** a group of data files from data/ in one request (loadDataFiles) */
+AbstractApp.DATA_FILES_URL = 'dataFiles.data';
+/** how long loadDataFiles waits for the server's response headers, in ms */
+AbstractApp.DATA_FILES_TIMEOUT = 10000;

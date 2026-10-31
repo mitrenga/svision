@@ -373,7 +373,10 @@ function hex(bytes) {
     inputEventsManager: {updateGamepadsStates() {}},
     audioManager: false,
     switchedTo: null,
-    setModel(name) { this.switchedTo = name; }
+    setModel(name) { this.switchedTo = name; },
+    // the application data on its way (AbstractApp.appDataPending)
+    dataPending: false,
+    appDataPending() { return this.dataPending; }
   };
   const model = new C64BootModel(app, {
     nextModel: 'DemoModel',
@@ -429,6 +432,19 @@ function hex(bytes) {
   check('skip: everything printed', skipped.screen.textRAM.rowText(11).trimEnd(), 'RUN');
   skipped.loopModel(1);
   check('skip: handed over', app.switchedTo, 'DemoModel');
+
+  // a skip while the application data is on its way: the hand-over waits for it
+  app.switchedTo = null;
+  app.dataPending = true;
+  const waiting = new C64BootModel(app, {nextModel: 'DemoModel'});
+  waiting.init();
+  waiting.loopModel(0);
+  waiting.handleEvent({id: 'keyPress', key: 'Escape'});
+  waiting.loopModel(300);
+  check('skip: waits for the application data', app.switchedTo, null);
+  app.dataPending = false;
+  waiting.loopModel(301);
+  check('skip: hands over once the data is there', app.switchedTo, 'DemoModel');
 
   // a sprite entity on the desktop of the stand-in
   const grid = [];

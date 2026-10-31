@@ -4,7 +4,8 @@ const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion
 /**
  * A multi-line text rendering entity. It lays out and draws bitmap-font text with
  * support for alignment (left/right/center/justify), word wrapping, per-glyph colors,
- * flashing animation, caching, and optional crop-to-parent clipping.
+ * flashing animation, caching, optional crop-to-parent clipping and rotation by
+ * quarter turns.
  *
  * It is a {@link RasterEntity}: the glyphs — lists of rectangles out of the
  * font — are painted into the frame with {@link RasterEntity#paintRect} on a
@@ -12,6 +13,18 @@ const { RasterEntity } = await import('./rasterEntity.js?ver='+window.srcVersion
  * parent when asked to) on every draw. The background, hover and click colours
  * are painted under it on the main canvas, as for every entity, so a hover
  * never has to repaint the text.
+ *
+ * ## Rotation
+ *
+ * `options.rotation` turns the text by 90, 180 or 270 degrees anticlockwise
+ * inside the entity's rectangle: 90 reads bottom to top (the tops of the
+ * glyphs to the left), 270 top to bottom (the tops to the right), 180 upside
+ * down. The rectangle is the one on the screen; the text is laid out in it as
+ * if it were turned with the text — for 90 and 270 a line runs along the
+ * height, so `align`, `textWrap`, the margins and `usedHeight` are along and
+ * across the line, not along x and y. Only the rectangles of the glyphs are
+ * turned, as they are painted ({@link TextEntity#paintRect}), so the font,
+ * the per-glyph colours and the cache stay as they are.
  */
 export class TextEntity extends RasterEntity {
 
@@ -49,6 +62,7 @@ export class TextEntity extends RasterEntity {
       flashMask: false,       // like '   ##   '
       penColorsMap: false,    // like {0: color, 1: color, ...}
       bkColorsMap: false,     // like {0: color, ...}: a cell painted behind the glyph — with the pen swapped in penColorsMap, the character in reverse (the C64's cursor)
+      rotation: 0,            // 0, 90 (bottom to top), 180 (upside down), 270 (top to bottom), anticlockwise
     };
     Object.keys(options).forEach(key => {
       if (key in this.options) {
@@ -113,6 +127,59 @@ export class TextEntity extends RasterEntity {
   } // init
 
   /**
+   * The width the text is laid out in: along the line, so the height of the
+   * entity when the text is turned by a quarter (options.rotation 90 or 270).
+   * @returns {number} The width of the layout in pixels.
+   */
+  layoutWidth() {
+    return this.options.rotation % 180 ? this.height : this.width;
+  } // layoutWidth
+
+  /**
+   * The height the text is laid out in: across the line (see layoutWidth).
+   * @returns {number} The height of the layout in pixels.
+   */
+  layoutHeight() {
+    return this.options.rotation % 180 ? this.width : this.height;
+  } // layoutHeight
+
+  /**
+   * Fills a rectangle given in the coordinates of the layout, turned into the
+   * frame by options.rotation (see the class comment); unturned it is
+   * {@link RasterEntity#paintRect}.
+   * @param {number} x - Left edge in the layout, may be negative.
+   * @param {number} y - Top edge in the layout, may be negative.
+   * @param {number} width - Width in pixels.
+   * @param {number} height - Height in pixels.
+   * @param {string|false} color - Any CSS colour; false paints nothing.
+   */
+  paintRect(x, y, width, height, color) {
+    if (!this.options.rotation) {
+      super.paintRect(x, y, width, height, color);
+      return;
+    }
+    if (width < 0) {
+      x += width;
+      width = -width;
+    }
+    if (height < 0) {
+      y += height;
+      height = -height;
+    }
+    switch (this.options.rotation) {
+      case 90:
+        super.paintRect(y, this.layoutWidth()-x-width, height, width, color);
+        break;
+      case 180:
+        super.paintRect(this.width-x-width, this.height-y-height, width, height, color);
+        break;
+      case 270:
+        super.paintRect(this.layoutHeight()-y-height, x, height, width, color);
+        break;
+    }
+  } // paintRect
+
+  /**
    * Returns the rendered width of a single character at the current scale.
    * @param {string} char - The character to measure.
    * @returns {number} The character width in pixels.
@@ -155,7 +222,7 @@ export class TextEntity extends RasterEntity {
           lastSpacePos = pos;
         }
         var w = this.charWidth(text[pos]);
-        if (lineW+w > this.width-this.options.leftMargin-this.options.rightMargin) {
+        if (lineW+w > this.layoutWidth()-this.options.leftMargin-this.options.rightMargin) {
           break;
         }
         lineW += w+this.fonts.charsSpacing;
@@ -297,8 +364,8 @@ export class TextEntity extends RasterEntity {
             var textWidth = 0;
             if (this.options.align == 'center' || this.options.align == 'justify') {
               textWidth = this.lineWidth(partText);
-              if (this.options.align == 'center' && textWidth < this.width) {
-                this.cursorX = Math.floor(this.width/2)-Math.floor(textWidth/2)-this.options.leftMargin;
+              if (this.options.align == 'center' && textWidth < this.layoutWidth()) {
+                this.cursorX = Math.floor(this.layoutWidth()/2)-Math.floor(textWidth/2)-this.options.leftMargin;
               }
             }
 
@@ -306,7 +373,7 @@ export class TextEntity extends RasterEntity {
             var spaces = 0;
             if (this.options.align == 'justify') {
               if (formattedText.length > textPos && formattedText[textPos] != '\n') {
-                filling = this.width-this.options.leftMargin-this.options.rightMargin-textWidth;
+                filling = this.layoutWidth()-this.options.leftMargin-this.options.rightMargin-textWidth;
                 for (var s = 0; s < partText.length; s++) {
                   if (this.fonts.isStretchSpace(partText[s])) {
                     spaces++;
@@ -340,7 +407,7 @@ export class TextEntity extends RasterEntity {
 
         case 'right': 
           while (partText.length > 0) {
-            this.cursorX = this.width;
+            this.cursorX = this.layoutWidth();
             for (var ch = partText.length-1; ch >= 0; ch--) {
               var charData = this.fonts.getCharData(partText[ch], this.glyphMask(lineOffset+ch), this.options.scale);
               this.cursorX -= charData.width;

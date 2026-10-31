@@ -285,7 +285,10 @@ function check(name, actual, expected) {
     inputEventsManager: {updateGamepadsStates() {}},
     audioManager: false,
     switchedTo: null,
-    setModel(name) { this.switchedTo = name; }
+    setModel(name) { this.switchedTo = name; },
+    // the application data on its way (AbstractApp.appDataPending)
+    dataPending: false,
+    appDataPending() { return this.dataPending; }
   };
   const model = new DOSBootModel(app, {
     nextModel: 'DemoModel',
@@ -333,6 +336,19 @@ function check(name, actual, expected) {
   check('skip runs everything', [quick.stepIndex, quick.finished], [quick.steps.length, true]);
   quick.loopModel(1300);
   check('skip hands over on the next loop', app.switchedTo, 'DemoModel');
+
+  // a skip while the application data is on its way: the hand-over waits for it
+  app.switchedTo = null;
+  app.dataPending = true;
+  const waiting = new DOSBootModel(app, {nextModel: 'DemoModel'});
+  waiting.init();
+  waiting.loopModel(2000);
+  waiting.handleEvent({id: 'keyPress', key: 'Escape'});
+  waiting.loopModel(2300);
+  check('skip: waits for the application data', app.switchedTo, null);
+  app.dataPending = false;
+  waiting.loopModel(2301);
+  check('skip: hands over once the data is there', app.switchedTo, 'DemoModel');
 }
 
 console.log(`checkvga: ${checks} checks, ${differences} differences`);

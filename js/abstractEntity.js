@@ -297,6 +297,23 @@ export class AbstractEntity {
   } // fetchData
 
   /**
+   * Reads a group of data files that came with appData; see
+   * {@link AbstractApp#loadDataFiles}. The callback runs synchronously when
+   * all of them are in localStorage, otherwise once the server has sent them.
+   * @param {string[]} keys - The data file names without their extension.
+   * @param {function(Object|null, Error=)} callback - Gets the files keyed by
+   *   name, or null and the error.
+   */
+  loadDataFiles(keys, callback) {
+    var model = this.app.model;
+    if (model && model.loadDataFiles) {
+      model.loadDataFiles(keys, callback);
+    } else {
+      this.app.loadDataFiles(keys, callback);
+    }
+  } // loadDataFiles
+
+  /**
    * Distributes fetched data to all child entities.
    * @param {Object} data - The received data payload.
    */

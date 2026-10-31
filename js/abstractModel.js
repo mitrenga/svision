@@ -37,6 +37,8 @@ export class AbstractModel {
     this.timer = false;
 
     this.fetchDataId = '';
+    // data files loadDataFiles() got from the server (loadDataFile)
+    this.dataFiles = null;
   } // constructor
 
   /**
@@ -205,13 +207,37 @@ export class AbstractModel {
   } // fetchData
 
   /**
+   * Reads a group of data files that came with appData; see
+   * {@link AbstractApp#loadDataFiles}. The callback runs synchronously when
+   * all of them are in localStorage, otherwise once the server has sent them.
+   * @param {string[]} keys - The data file names without their extension.
+   * @param {function(Object|null, Error=, string=)} callback - Gets the files
+   *   keyed by name, or null and the error.
+   */
+  loadDataFiles(keys, callback) {
+    this.app.loadDataFiles(keys, (files, error, source) => {
+      if (source == 'server') {
+        // what came from the server is not in localStorage: the model keeps
+        // it, so that loadDataFile() — of the model, of its entities, of the
+        // audio manager — finds it there
+        this.dataFiles = Object.assign(this.dataFiles || {}, files);
+      }
+      callback(files, error, source);
+    });
+  } // loadDataFiles
+
+  /**
    * Reads a data file delivered with appData (localStorage '<prefix>.<key>');
-   * see {@link Tool.loadDataFile}. Models read their data this way in init(),
+   * see {@link Tool.loadDataFile}. A file the model's loadDataFiles() had to
+   * get from the server comes from the model. Models read their data this way in init(),
    * synchronously — the rooms, the scenery, the sprites, the sounds.
    * @param {string} key - The data file name without its extension.
    * @returns {Object|null} The parsed content, or null.
    */
   loadDataFile(key) {
+    if (this.dataFiles && key in this.dataFiles) {
+      return this.dataFiles[key];
+    }
     return Tool.loadDataFile(key);
   } // loadDataFile
 
