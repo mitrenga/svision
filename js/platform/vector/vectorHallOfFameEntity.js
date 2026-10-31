@@ -9,7 +9,7 @@ const { VectorFont } = await import('./vectorFont.js?ver='+window.srcVersion);
  * `hallOfFame.db`, the same contract as Manic Miner's: an array of
  * `{name, score}` from best down) and lists the rows — the place, the name,
  * the score — as lines of the vector font; LOADING until the answer comes,
- * SYSTEM OFFLINE - SCORES UNAVAILABLE when there is none. The best score
+ * SYSTEM OFFLINE when there is none. The best score
  * is kept in `app.hiScore`. Enter, Escape (OK, Exit), a click or a tap
  * close it; closing sends `contentClosed` to the parent.
  *
@@ -111,11 +111,11 @@ export class VectorHallOfFameEntity extends VectorEntity {
   } // errorData
 
   /**
-   * Replaces the status lines with SYSTEM OFFLINE / SCORES UNAVAILABLE.
+   * Replaces the status lines with SYSTEM OFFLINE.
    */
   showOfflineNotice() {
     this.statusEntity.setText('SYSTEM OFFLINE');
-    this.statusEntity2.setText('SCORES UNAVAILABLE');
+    this.statusEntity2.setText('');
   } // showOfflineNotice
 
   /**

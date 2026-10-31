@@ -117,7 +117,7 @@ window listener (a game that needs `preventDefault()` on its own keys) and
 
 ### Text & fonts
 - **`TextEntity`** and **`SlidingTextEntity`** (scrolling text).
-- **`AbstractFonts`** plus built-in bitmap fonts: `Fonts3x3`, `Fonts5x5`,
+- **`AbstractFonts`** plus built-in bitmap fonts: `Fonts3x3`, `Fonts5x5`, `Fonts4x6`,
   the ZX `ZXFonts8x8`, `VGAFonts8x16`, `C64Fonts8x8` (the character ROM
   901225-01, two sets of 256 glyphs by screen code) and `Atari8Fonts8x8`
   (the XL OS ROM's standard and international sets by internal code).

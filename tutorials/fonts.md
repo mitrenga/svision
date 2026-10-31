@@ -14,12 +14,13 @@ into a glyph table you can use.
 |---|---|---|---|---|
 | {@link Fonts3x3} | 3x3 | rectangle table | always | digits and a few symbols |
 | {@link Fonts5x5} | 5x5 | rectangle table | always | printable ASCII |
+| {@link Fonts4x6} | 4x6 | rectangle table | always | printable ASCII with lower case (the Arduino font4x6) |
 | {@link ZXFonts8x8} | 8x8 | hex bitmap | optional | ASCII 32–126 with `£` in place of the backtick, plus `©` (96 glyphs) |
 | {@link VGAFonts8x16} | 8x16 | hex bitmap | optional | Uni-VGA, ~2900 Unicode code points |
 | {@link C64Fonts8x8} | 8x8 | hex bitmap | optional | C64 character ROM 901225-01: 2x256 glyphs by screen code, set 0 uppercase/graphics, set 1 lowercase/uppercase |
 | {@link Atari8Fonts8x8} | 8x8 | hex bitmap | optional | Atari XL OS ROM: 2x128 glyphs by internal code, set 0 standard, set 1 international |
 
-`Fonts3x3` and `Fonts5x5` are platform-neutral canvas2D fonts. `ZXFonts8x8`
+`Fonts3x3`, `Fonts5x5` and `Fonts4x6` are platform-neutral canvas2D fonts. `ZXFonts8x8`
 lives under the **ZX Spectrum** platform and is an authentic 8x8 Spectrum
 character set; `VGAFonts8x16` lives under the **VGA** platform;
 `C64Fonts8x8` under the **C64** platform and `Atari8Fonts8x8` under the
@@ -32,7 +33,7 @@ their own kinds of space; see [Extending a font](#extending-a-font).
 
 ## Two glyph formats
 
-**Rectangle-table fonts** (`Fonts3x3`, `Fonts5x5`) store each glyph as an
+**Rectangle-table fonts** (`Fonts3x3`, `Fonts5x5`, `Fonts4x6`) store each glyph as an
 already-decoded list of filled rectangles, keyed by character:
 
 ```js
