@@ -289,7 +289,7 @@ export class Canvas2DLayout extends AbstractLayout {
    * @param {string} color - Fill color.
    */
   paintWithVisibility(entity, x, y, width, height, color) {
-    this.paintRect(this.app.stack.ctx, entity.parentX+entity.x+x, entity.parentY+entity.y+y, width, height, color);
+    var w = width;
     if (entity.x+x < 0) {
       w = w+entity.x;
       x = -entity.x;
