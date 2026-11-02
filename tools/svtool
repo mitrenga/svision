@@ -344,6 +344,9 @@ function bundleCode($data, $rel) {
   } else {
     $code = substr($data, $pos + strlen($marker));
   }
+  // Drop `export default <name>;` lines: the name is already declared above,
+  // and the concatenated bundle has no module to export from.
+  $code = preg_replace('/^[ \t]*export[ \t]+default[ \t]+[A-Za-z_$][\w$]*[ \t]*;[ \t]*\r?\n?/m', '', $code);
   // Strip the `export ` keyword from declarations (class / const / function / ...).
   $code = preg_replace('/^([ \t]*)export[ \t]+/m', '$1', $code);
   return "// === $rel ===\n" . $code;
