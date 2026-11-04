@@ -729,6 +729,9 @@ export class ZXVideoRAM {
             ink += 8;
             paper += 8;
           }
+          // ★ the cell's own paper, before FLASH swaps it: what an owned pixel
+          // that flashes takes in the on phase, as a lit pixel does on the ULA
+          var cellPaperColor = palette[paper];
           if ((attr & 0x80) && flashState) {
             var swap = ink;
             ink = paper;
@@ -748,7 +751,7 @@ export class ZXVideoRAM {
                 color = inkColor;
               } else {
                 var pen = (own & 0x07) | ((own & 0x08) ? 8 : 0);
-                color = ((own & 0x10) && flashState) ? paperColor : palette[pen];
+                color = ((own & 0x10) && flashState) ? cellPaperColor : palette[pen];
               }
             }
             var offset = (line*width+col*8+bit)*4;
