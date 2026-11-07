@@ -17,7 +17,9 @@
 import './nodeEnv.mjs';   // must come first: the import headers read window.srcVersion
 
 const { VectorDisplayList } = await import('../js/platform/vector/vectorDisplayList.js');
-const { VectorFont } = await import('../js/platform/vector/vectorFont.js');
+const { AbstractVectorFont } = await import('../js/platform/vector/abstractVectorFont.js');
+const { AtariVectorFont } = await import('../js/platform/vector/atari/atariVectorFont.js');
+const { VectorFont4x6 } = await import('../js/platform/vector/vectorFont4x6.js');
 const { VectorPlatform } = await import('../js/platform/vector/vectorPlatform.js');
 const { VectorEntity } = await import('../js/platform/vector/vectorEntity.js');
 const { VectorTextEntity } = await import('../js/platform/vector/vectorTextEntity.js');
@@ -158,21 +160,24 @@ function check(name, actual, expected) {
 // ------------------------------------------------------------------- font
 
 {
-  const f = VectorFont.simple();
-  check('simple font is one instance', VectorFont.simple() === f, true);
-  check('metrics', f.metrics, {width: 4, height: 6, advance: 6, descent: 1});
-  check('capitals, digits, punctuation present', ['A', 'Z', '0', '9', ' ', '.', '©', '?'].every((ch) => f.glyph(ch) !== false), true);
+  const f = new AtariVectorFont();
+  // not instanceof: the header imports abstractVectorFont.js with ?ver, this tool without, two module instances
+  check('a subclass of AbstractVectorFont', Object.getPrototypeOf(AtariVectorFont).name, 'AbstractVectorFont');
+  check('the base class has no glyphs', new AbstractVectorFont().glyph('A'), false);
+  check('no font on the application throws', (() => { try { AbstractVectorFont.ofApp({fonts: {}}); return false; } catch (e) { return true; } })(), true);
+  check('metrics', f.metrics, {width: 8, height: 12, advance: 12, descent: 2});
+  check('capitals, digits, punctuation present', ['A', 'Z', '0', '9', ' ', '.', '©', '℗', '?'].every((ch) => f.glyph(ch) !== false), true);
   check('lower case maps to upper', f.glyph('a'), f.glyph('A'));
   check('unknown glyph is false', f.glyph('ř'), false);
   check('width of empty text', f.textWidth('', 12), 0);
   check('width of one cell: the glyph only', f.textWidth('A', 12), 8);
   check('width of two cells', f.textWidth('AB', 12), 20);
-  check('width with spacing', f.textWidth('AB', 12, 1), 22);
+  check('width with spacing', f.textWidth('AB', 12, 1), 21);
 
   const l = new VectorDisplayList();
   const next = f.draw(l, 10, 20, 'I', {size: 12, intensity: 10});
   check('I is three strokes', l.items.length, 3);
-  check('stroke scaled and placed', l.items[1], {color: '#ffffff', fill: 'none', strokeWidth: 1.2, intensity: 10, opacity: 1, type: 'polyline', points: [14, 20, 14, 32]});
+  check('stroke scaled and placed', l.items[1], {color: '#ffffff', fill: 'none', strokeWidth: 1.2, intensity: 10, opacity: 1, type: 'polyline', points: [14, 32, 14, 20]});
   check('next x after one cell', next, 22);
   l.clear();
   f.draw(l, 100, 0, 'AB', {size: 6, anchor: 'end'});
@@ -182,11 +187,30 @@ function check(name, actual, expected) {
   check('anchor middle: A starts at 100-5', l.items[0].points[0], 95);
   l.clear();
   f.draw(l, 0, 0, '©', {size: 6});
-  check('© is a stroke and a circle', l.items.map((i) => i.type), ['polyline', 'circle']);
+  check('© is two strokes (the ROM has no circles)', l.items.map((i) => i.type), ['polyline', 'polyline']);
   l.clear();
   f.draw(l, 0, 0, 'ř', {size: 6});
   check('unknown glyph draws a box', l.items[0].type, 'polygon');
   check('same markup for the same text', (() => { const a = new VectorDisplayList(), b = new VectorDisplayList(); f.draw(a, 3, 4, 'TEXT 12', {size: 9}); f.draw(b, 3, 4, 'TEXT 12', {size: 9}); return a.markup() === b.markup() && a.differences(b); })(), 0);
+
+  // the library's own font
+  const g = new VectorFont4x6();
+  check('4x6: a subclass of AbstractVectorFont', Object.getPrototypeOf(VectorFont4x6).name, 'AbstractVectorFont');
+  check('4x6: metrics', g.metrics, {width: 4, height: 6, advance: 6, descent: 1});
+  check('4x6: capitals, digits, punctuation present', ['A', 'Z', '0', '9', ' ', '.', '©', '?', '&'].every((ch) => g.glyph(ch) !== false), true);
+  check('4x6: width of two cells with spacing', g.textWidth('AB', 12, 1), 22);
+  l.clear();
+  g.draw(l, 0, 0, '©', {size: 6});
+  check('4x6: © is a stroke and a circle', l.items.map((i) => i.type), ['polyline', 'circle']);
+
+  // a quarter turn in coordinates: an I (its first stroke the bottom bar) in a 20 x 40 frame
+  const turn = (rotation, w, h) => { const src = new VectorDisplayList(), dst = new VectorDisplayList(); f.draw(src, 0, 0, 'I', {size: 12}); dst.appendRotated(src, rotation, w, h); return dst.items[0].points; };
+  check('rotate 0: as laid out', turn(0, 20, 40), [0, 12, 8, 12]);
+  check('rotate 90: bottom to top, the bar on the left', turn(90, 20, 40), [12, 40, 12, 32]);
+  check('rotate 180: upside down', turn(180, 20, 40), [20, 28, 12, 28]);
+  check('rotate 270: top to bottom, the bar on the right', turn(270, 20, 40), [8, 0, 8, 8]);
+  check('rotate a rect', VectorDisplayList.rotate({type: 'rect', x: 1, y: 2, width: 3, height: 4}, 270, 20, 40), {type: 'rect', x: 14, y: 1, width: 4, height: 3});
+  check('rotate a circle', VectorDisplayList.rotate({type: 'circle', cx: 5, cy: 6, r: 1}, 90, 20, 40), {type: 'circle', cx: 6, cy: 35, r: 1});
 }
 
 // --------------------------------------------- entities on the headless layout
@@ -216,7 +240,7 @@ function check(name, actual, expected) {
       return false;
     }
   }
-  const app = headlessVectorApp(new VectorPlatform({width: 400, height: 300, border: {minimal: 0, defaultColor: '#000000'}}), 800, 600, {});
+  const app = headlessVectorApp(new VectorPlatform({width: 400, height: 300, border: {minimal: 0, defaultColor: '#000000'}}), 800, 600, {fonts: {vector: new AtariVectorFont()}});
   const model = new Model(app);
   app.model = model;
   model.init();
@@ -228,11 +252,13 @@ function check(name, actual, expected) {
 
   const markup = app.layout.markup();
   check('frame starts with the border', markup.split('\n')[0], '<rect x="0" y="0" width="400" height="300" stroke="none" stroke-width="0" fill="#000000"/>');
-  check('text placed at the entity', markup.split('\n')[1], '<polyline points="10,20 10,32" stroke="#00ff00" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>');
+  check('text placed at the entity', markup.split('\n')[1], '<polyline points="10,32 10,20" stroke="#00ff00" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>');
   check('text entity rebuilds on setText', (() => { const v = model.text.list.version; model.text.setText('HO'); return model.text.list.version > v; })(), true);
   check('entities draw on the content layer unless told otherwise', model.text.layer, 'content');
   check('text entity: align is the option, anchor its old name', [new VectorTextEntity(model.desktopEntity, 0, 0, 10, 5, false, false, 'A', {align: 'right'}).options.align, new VectorTextEntity(model.desktopEntity, 0, 0, 10, 5, false, false, 'A', {anchor: 'right'}).options.align], ['right', 'right']);
   check('text entity keeps version on same text', (() => { const v = model.text.list.version; model.text.setText('HO'); return model.text.list.version; })(), model.text.list.version);
+  check('text entity: two lines, the second a pitch lower', (() => { const e = new VectorTextEntity(model.desktopEntity, 0, 0, 100, 100, false, false, 'I\nI', {size: 12, lineSpacing: 2}); e.init(); return [e.linePitch(), e.list.items[3].points[1]-e.list.items[0].points[1]]; })(), [16, 16]);
+  check('text entity: rotation 270 lays the line down the height', (() => { const e = new VectorTextEntity(model.desktopEntity, 0, 0, 20, 100, false, false, 'I', {size: 12, align: 'left', rotation: 270}); e.init(); return [e.layoutWidth(), e.list.items[0].points]; })(), [100, [4, 0, 4, 8]]);   // centred across the 20: y 4, the bar at layout y 16 -> x 20-16
   check('same frame twice: 0 differences', (() => { model.drawModel(); const a = app.layout.list; model.drawModel(); return a.differences(app.layout.list); })(), 0);
 
   check('menu: selection 1 bright, others dim', model.menu.menuEntities.map((row) => row[0].options.intensity), [9, 15, 9]);
@@ -298,7 +324,7 @@ function check(name, actual, expected) {
       return true;
     }
   }
-  const app = headlessVectorApp(new VectorPlatform({width: 800, height: 600, border: {minimal: 0, defaultColor: '#000000'}}), 800, 600, {playerName: 'AB'});
+  const app = headlessVectorApp(new VectorPlatform({width: 800, height: 600, border: {minimal: 0, defaultColor: '#000000'}}), 800, 600, {playerName: 'AB', fonts: {vector: new AtariVectorFont()}});
   // the dialogs close through queued events: a model loop or two delivers them
   const settle = () => { model.loopModel(1); model.loopModel(2); return model.desktopEntity.modalEntity == null; };
   const model = new Model(app);

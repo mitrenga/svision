@@ -144,6 +144,84 @@ export class VectorDisplayList {
   } // append
 
   /**
+   * Appends every primitive of another list turned by a quarter, a half or
+   * three quarters anticlockwise — a text laid out along a line and written up
+   * or down the side of the screen, the `rotation` of the canvas 2D
+   * TextEntity. `other` is laid out in a frame `height` wide and `width` high
+   * for 90 and 270, `width` x `height` for 180; the result fills the frame
+   * `width` x `height` of this list's owner.
+   * @param {VectorDisplayList} other
+   * @param {number} rotation - 0, 90 (bottom to top), 180 (upside down), 270 (top to bottom)
+   * @param {number} width - The width of the turned frame.
+   * @param {number} height - The height of the turned frame.
+   * @returns {VectorDisplayList} This
+   */
+  appendRotated(other, rotation, width, height) {
+    if (!rotation) {
+      return this.append(other);
+    }
+    other.items.forEach((item) => this.push(VectorDisplayList.rotate(item, rotation, width, height)));
+    return this;
+  } // appendRotated
+
+  /**
+   * Returns a copy of a primitive turned anticlockwise by `rotation` into a
+   * frame `width` x `height` (see {@link VectorDisplayList#appendRotated}).
+   * Lines, polylines, polygons, rects and circles are turned in their
+   * coordinates; a text or a path keeps its data and is turned by its
+   * transform around its anchor.
+   * @param {Object} item
+   * @param {number} rotation - 90, 180 or 270
+   * @param {number} width
+   * @param {number} height
+   * @returns {Object}
+   */
+  static rotate(item, rotation, width, height) {
+    var n = VectorDisplayList.num;
+    var p = (x, y) => {
+      switch (rotation) {
+        case 90: return [y, height-x];
+        case 180: return [width-x, height-y];
+        case 270: return [width-y, x];
+      }
+      return [x, y];
+    };
+    var t = Object.assign({}, item);
+    switch (item.type) {
+      case 'line':
+        var a = p(item.x1, item.y1), b = p(item.x2, item.y2);
+        t.x1 = a[0]; t.y1 = a[1]; t.x2 = b[0]; t.y2 = b[1];
+        break;
+      case 'polyline':
+      case 'polygon':
+        t.points = [];
+        for (var i = 0; i+1 < item.points.length; i += 2) {
+          t.points.push.apply(t.points, p(item.points[i], item.points[i+1]));
+        }
+        break;
+      case 'rect':
+        var c1 = p(item.x, item.y), c2 = p(item.x+item.width, item.y+item.height);
+        t.x = Math.min(c1[0], c2[0]); t.y = Math.min(c1[1], c2[1]);
+        t.width = Math.abs(c2[0]-c1[0]); t.height = Math.abs(c2[1]-c1[1]);
+        break;
+      case 'circle':
+        var c = p(item.cx, item.cy);
+        t.cx = c[0]; t.cy = c[1];
+        break;
+      case 'text':
+        var q = p(item.x, item.y);
+        t.x = q[0]; t.y = q[1];
+        t.transform = 'rotate('+(-rotation)+' '+n(q[0])+' '+n(q[1])+')'+(item.transform ? ' '+item.transform : '');
+        break;
+      case 'path':
+        var o = p(0, 0);
+        t.transform = 'translate('+n(o[0])+' '+n(o[1])+') rotate('+(-rotation)+')'+(item.transform ? ' '+item.transform : '');
+        break;
+    }
+    return t;
+  } // rotate
+
+  /**
    * Returns a copy of a primitive moved by (dx, dy).
    * @param {Object} item
    * @param {number} dx

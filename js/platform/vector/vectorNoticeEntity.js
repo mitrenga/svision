@@ -1,6 +1,6 @@
 const { VectorEntity } = await import('./vectorEntity.js?ver='+window.srcVersion);
 const { VectorTextEntity } = await import('./vectorTextEntity.js?ver='+window.srcVersion);
-const { VectorFont } = await import('./vectorFont.js?ver='+window.srcVersion);
+const { AbstractVectorFont } = await import('./abstractVectorFont.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -36,8 +36,8 @@ export class VectorNoticeEntity extends VectorEntity {
    * @param {string|false} [bkColor] - Background under the box; black when omitted, false for none.
    * @param {Object} [options] - `escapeCancels`: Escape (Exit) closes without the continue event — the
    *   notice asking for the browser's gesture for audio, where Escape means "not now"; `hint`: the
-   *   bottom line (PRESS ENTER); `font`: the {@link VectorFont} of the texts, else the application's
-   *   `fonts.vector` (BattleZoneFont, AsteroidsFont), else the built-in one.
+   *   bottom line (PRESS ENTER); `font`: the {@link AbstractVectorFont} of the texts, else the application's
+   *   `fonts.vector` (AtariVectorFont in Asteroids and Battlezone), no built-in one (R-063).
    */
   constructor(parentEntity, x, y, width, height, title, lines, continueEvent, color, bkColor, options) {
     super(parentEntity, x, y, width, height, color || '#ffffff', bkColor === undefined ? '#000000' : bkColor);
@@ -51,17 +51,11 @@ export class VectorNoticeEntity extends VectorEntity {
 
   /**
    * The font of the texts: the option, else the application's vector font,
-   * else the built-in one — the same rule as VectorVolumeEntity.
-   * @returns {VectorFont}
+   * no built-in one (R-063) — the same rule as VectorVolumeEntity.
+   * @returns {AbstractVectorFont}
    */
   font() {
-    if (this.options.font) {
-      return this.options.font;
-    }
-    if (this.app.fonts && this.app.fonts.vector) {
-      return this.app.fonts.vector;
-    }
-    return VectorFont.simple();
+    return this.options.font || AbstractVectorFont.ofApp(this.app);
   } // font
 
   /**
