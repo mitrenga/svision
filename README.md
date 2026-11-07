@@ -527,11 +527,13 @@ Full, working projects built with svision:
 
 | Project | What it is | Repository |
 |---|---|---|
-| **svision tutorial** | Tutorial and demos — one example, more platforms: Hello world and the platform demos on every platform the library models. Start here. | https://github.com/mitrenga/svision-tutorial |
-| **Manic Miner** | A complete remake of the classic ZX Spectrum game. | https://github.com/mitrenga/manicminer |
-| **Jet Set Willy** | A complete remake of the classic ZX Spectrum game. | https://github.com/mitrenga/jetsetwilly |
-| **Booty** | A remake of the ZX Spectrum game, its rules measured against the original. | https://github.com/mitrenga/booty |
-| **R-Type** | A remake of the Commodore 64 conversion, on the C64 platform with the SID. | https://github.com/mitrenga/r-type |
+| **svision tutorial** | Tutorial and demos — one example, more platforms. | https://github.com/mitrenga/svision-tutorial |
+| **Manic Miner** | Online remake of the classic ZX Spectrum game Manic Miner. | https://github.com/mitrenga/manicminer |
+| **Jet Set Willy** | Online remake of the classic ZX Spectrum game Jet Set Willy. | https://github.com/mitrenga/jetsetwilly |
+| **Booty** | Online remake of the classic ZX Spectrum game Booty. | https://github.com/mitrenga/booty |
+| **R-Type** | Online remake of the classic Commodore 64 game R-Type. | https://github.com/mitrenga/r-type |
+| **Bobby Bearing** | Online remake of the classic ZX Spectrum game Bobby Bearing. | https://github.com/mitrenga/bobbybearing |
+| **Jetpac** | Online remake of the classic ZX Spectrum game Jetpac. | https://github.com/mitrenga/jetpac |
 
 ## Documentation
 
