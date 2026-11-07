@@ -167,7 +167,7 @@ function check(name, actual, expected) {
   check('no font on the application throws', (() => { try { AbstractVectorFont.ofApp({fonts: {}}); return false; } catch (e) { return true; } })(), true);
   check('metrics', f.metrics, {width: 8, height: 12, advance: 12, descent: 2});
   check('capitals, digits, punctuation present', ['A', 'Z', '0', '9', ' ', '.', '©', '℗', '?'].every((ch) => f.glyph(ch) !== false), true);
-  check('lower case maps to upper', f.glyph('a'), f.glyph('A'));
+  check('a lower case glyph of its own', f.glyph('a') !== f.glyph('A') && !!f.glyph('a'), true);
   check('unknown glyph is false', f.glyph('ř'), false);
   check('width of empty text', f.textWidth('', 12), 0);
   check('width of one cell: the glyph only', f.textWidth('A', 12), 8);

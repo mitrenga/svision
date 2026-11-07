@@ -120,6 +120,34 @@ export class AtariVectorFont extends AbstractVectorFont {
       // the ampersand: two diamonds as a figure of eight (one closed stroke, edges at 45 degrees)
       // and the tail at the lower right on the lines of the lower diamond's right edges
       '&': [[3,0, 0,3, 3,6, 0,9, 3,12, 6,9, 3,6, 6,3, 3,0], [8,7, 6,9, 8,11]],
+      // ---- lower case (the remakes', 2026-11-07, first draft): x-height 6 (y 6..12), ascenders to 0,
+      // descenders to 14, bowls with cut corners as the capitals; the same shapes as VectorFont4x6 at twice the grid
+      'a': [[0,6, 8,6, 8,12], [8,9, 0,9, 0,12, 8,12]],   // sharp corners (operator 2026-11-07)
+      'b': [[0,0, 0,12], [0,6, 8,6, 8,12, 0,12]],   // sharp corners
+      'c': [[8,6, 0,6, 0,12, 8,12]],   // sharp corners
+      'd': [[8,0, 8,12], [8,6, 0,6, 0,12, 8,12]],   // sharp corners
+      'e': [[0,9, 8,9, 8,6, 0,6, 0,12, 8,12]],   // sharp corners
+      'f': [[8,0, 3,0, 3,12], [0,6, 6,6]],   // sharp corners
+      'g': [[8,6, 0,6, 0,11, 8,11], [8,6, 8,14, 0,14]],   // sharp corners, the bowl 5 high, the tail 3
+      'h': [[0,0, 0,12], [0,6, 8,6, 8,12]],   // sharp corners
+      'i': [[4,6, 4,12], [4,2, 4,3]],
+      'j': [[4,6, 4,14, 0,14], [4,2, 4,3]],   // sharp corners
+      'k': [[0,0, 0,12], [8,6, 0,9, 8,12]],   // the arm and the leg alike, meeting at the stem
+      'l': [[3,0, 3,12, 7,12]],   // sharp corners
+      'm': [[0,12, 0,6, 8,6, 8,12], [4,6, 4,12]],   // sharp corners
+      'n': [[0,12, 0,6, 8,6, 8,12]],   // sharp corners
+      'o': [[0,6, 8,6, 8,12, 0,12, 0,6]],   // sharp corners
+      'p': [[0,6, 0,14], [0,6, 8,6, 8,11, 0,11]],   // sharp corners, the bowl 5 high
+      'q': [[8,6, 8,14], [8,6, 0,6, 0,11, 8,11]],   // sharp corners, the bowl 5 high
+      'r': [[0,12, 0,6, 8,6, 8,8]],   // sharp corners
+      's': [[8,6, 0,6, 0,9, 8,9, 8,12, 0,12]],   // sharp corners
+      't': [[3,2, 3,12, 7,12], [0,6, 6,6]],   // sharp corners
+      'u': [[0,6, 0,12, 8,12, 8,6]],   // sharp corners
+      'v': [[0,6, 4,12, 8,6]],
+      'w': [[0,6, 0,12, 4,9, 8,12, 8,6]],   // vertical sides as the W
+      'x': [[0,6, 8,12], [0,12, 8,6]],
+      'y': [[0,6, 0,11, 8,11], [8,6, 8,14, 0,14]],   // sharp corners, the upper part 5 high as the g's bowl
+      'z': [[0,6, 8,6, 0,12, 8,12]],
       // the dollar: the ROM's S a unit shorter at the top and the bottom, with a vertical bar
       // through it a unit above and below the capital height
       '$': [[0,11,8,11,8,6,0,6,0,1,8,1], [4,-1,4,13]],
