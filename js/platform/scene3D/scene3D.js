@@ -474,7 +474,7 @@ export class Scene3D {
    * mesh, every line and polyline — through the camera. An edge with an end
    * behind the near plane is left out. The nearer an edge, the brighter:
    * the intensity of the item at the nearest depth of the frame, half of it
-   * at the farthest (the beam of an XY monitor, as in `vectordemo`).
+   * at the farthest (the beam of an XY monitor, as in the vector demo of svision-tutorial).
    *
    * This is the bridge: a `SceneEntity` on a raster or vector layout draws
    * this list through `paintDisplayList`, and a fingerprint becomes a

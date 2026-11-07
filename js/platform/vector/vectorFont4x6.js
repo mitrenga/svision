@@ -7,7 +7,7 @@ const { AbstractVectorFont } = await import('./abstractVectorFont.js?ver='+windo
  * wide), a descender to y 7. Drawn by hand for the vector platform
  * (BZ-M2, 2026-09-15), when no ROM font was there yet — the counterpart of
  * the raster Fonts4x6, for an application on the vector platform without a
- * machine of its own (vectordemo, msi). The remakes of Atari's XY games
+ * machine of its own (the vector demo of svision-tutorial, msi). The remakes of Atari's XY games
  * use AtariVectorFont instead.
  *
  * A glyph is `{strokes: [[x, y, x, y, ...], ...], circles: [[cx, cy, r], ...]}`
