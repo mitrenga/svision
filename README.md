@@ -131,7 +131,7 @@ window listener (a game that needs `preventDefault()` on its own keys) and
   for `C64TextRAM`. See the [fonts tutorial](https://mitrenga.github.io/svision/tutorial-fonts.html).
 - Core fonts ship printable ASCII plus one normal (breaking) space — no
   application-specific graphics beyond the glyphs the library's dialogs print
-  (arrows, `█`, `Ⓥ`, `◢` `◤` in `Fonts5x5`, the cursor `‗` in `ZXFonts8x8`). Spaces are data-driven: each font holds a
+  (arrows, `█`, `Ⓥ`, `◢` `◤` in `Fonts5x5`, `‗`, `⋅`, the arrows and `█` in `ZXFonts8x8`). Spaces are data-driven: each font holds a
   `spaces` table of `{width, breaking, stretch}` entries that drive word
   wrapping and justified fill. An app registers any extra graphic glyphs and
   hard/short spaces it needs with `addGlyphs()` and `addSpace()`, choosing the

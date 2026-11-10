@@ -15,7 +15,7 @@ into a glyph table you can use.
 | {@link Fonts3x3} | 3x3 | rectangle table | always | digits and a few symbols |
 | {@link Fonts5x5} | 5x5 | rectangle table | always | printable ASCII, plus `←` `↓` `↑` `→` `█` `Ⓥ` `◢` `◤` |
 | {@link Fonts4x6} | 4x6 | rectangle table | always | printable ASCII with lower case (the Arduino font4x6) |
-| {@link ZXFonts8x8} | 8x8 | hex bitmap | optional | ASCII 32–126 with `£` in place of the backtick, plus `©` (96 glyphs) and the cursor `‗` |
+| {@link ZXFonts8x8} | 8x8 | hex bitmap | optional | ASCII 32–126 with `£` in place of the backtick, plus `©` (96 glyphs), then `‗` `⋅` `←` `→` `↑` `↓` `█` |
 | {@link VGAFonts8x16} | 8x16 | hex bitmap | optional | Uni-VGA, ~2900 Unicode code points |
 | {@link C64Fonts8x8} | 8x8 | hex bitmap | optional | C64 character ROM 901225-01: 2x256 glyphs by screen code, set 0 uppercase/graphics, set 1 lowercase/uppercase |
 | {@link Atari8Fonts8x8} | 8x8 | hex bitmap | optional | Atari XL OS ROM: 2x128 glyphs by internal code, set 0 standard, set 1 international |
@@ -30,7 +30,8 @@ each; the set a `TextEntity` prints in is chosen in the constructor).
 Core fonts deliberately ship printable ASCII plus **one** normal, breaking
 space — nothing application-specific. The exceptions are the glyphs the
 library's own dialogs print: the arrows, the block `█`, the small `Ⓥ` and the
-banner's `◢` `◤` in `Fonts5x5`, the cursor `‗` in `ZXFonts8x8`. Games add their own graphic glyphs and
+banner's `◢` `◤` in `Fonts5x5`, the cursor `‗`, the licence's narrow dot `⋅`, the arrows and the block `█`
+in `ZXFonts8x8`. Games add their own graphic glyphs and
 their own kinds of space; see [Extending a font](#extending-a-font).
 
 ## Two glyph formats
@@ -148,7 +149,7 @@ both to `fontsChars` and `fontsData` — so the two arguments must be in the sam
 order:
 
 ```js
-this.fonts.zxFonts8x8.addGlyphs('⋅▪', '0000003030000000' + '00003C3C3C3C0000');
+this.fonts.zxFonts8x8.addGlyphs('▪◆', '00003C3C3C3C0000' + '0010387C38100000');
 ```
 
 The marker characters are the application's choice. Pick ones the font does not

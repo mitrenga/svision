@@ -273,18 +273,20 @@ function pixel(rgba, width, x, y) {
 {
   const font = new ZXFonts8x8({}, false);
   check('base chars count', font.baseCharsCount, 96);
-  check('extra glyphs', font.fontsChars.substring(96), '‗');
+  check('extra glyphs', font.fontsChars.substring(96), '‗⋅←→↑↓█');
+  check('glyphBytes ←', list(font.glyphBytes('←')), [0x00, 0x10, 0x30, 0x7E, 0x30, 0x10, 0x00, 0x00]);
+  check('glyphBytes ⋅', list(font.glyphBytes('⋅')), [0, 0, 0, 0, 0x30, 0, 0, 0]);
   check('glyphBytes ‗', list(font.glyphBytes('‗')), [0, 0, 0, 0, 0, 0, 0xF8, 0xF8]);
   check('setFontsData keeps the extra glyphs', (() => {
     const other = new ZXFonts8x8({}, false);
     other.setFontsData('FF'+font.fontsData.substring(2, 96*16));
     return [other.glyphBytes(' ')[0], other.fontsData.length, list(other.glyphBytes('‗'))];
-  })(), [0xFF, 97*16, [0, 0, 0, 0, 0, 0, 0xF8, 0xF8]]);
+  })(), [0xFF, 103*16, [0, 0, 0, 0, 0, 0, 0xF8, 0xF8]]);
   check('addGlyphs replaces a glyph the font has', (() => {
     const other = new ZXFonts8x8({}, false);
-    other.addGlyphs('⋅‗', '0000000030000000'+'00000000000000FF');
-    return [other.fontsChars.substring(96), list(other.glyphBytes('‗')), list(other.glyphBytes('⋅'))];
-  })(), ['‗⋅', [0, 0, 0, 0, 0, 0, 0, 0xFF], [0, 0, 0, 0, 0x30, 0, 0, 0]]);
+    other.addGlyphs('▪‗', '00003C3C3C3C0000'+'00000000000000FF');
+    return [other.fontsChars.substring(96), list(other.glyphBytes('‗')), list(other.glyphBytes('▪'))];
+  })(), ['‗⋅←→↑↓█▪', [0, 0, 0, 0, 0, 0, 0, 0xFF], [0, 0, 0x3C, 0x3C, 0x3C, 0x3C, 0, 0]]);
   check('glyphBytes A', list(font.glyphBytes('A')), [0x00, 0x3C, 0x42, 0x42, 0x7E, 0x42, 0x42, 0x00]);
   check('glyphBytes space', list(font.glyphBytes(' ')), [0, 0, 0, 0, 0, 0, 0, 0]);
   check('glyphBytes ©', list(font.glyphBytes('©')), [0x3C, 0x42, 0x99, 0xA1, 0xA1, 0x99, 0x42, 0x3C]);
