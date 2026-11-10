@@ -13,9 +13,9 @@ into a glyph table you can use.
 | Font | Size | Glyph format | Proportional | Character set |
 |---|---|---|---|---|
 | {@link Fonts3x3} | 3x3 | rectangle table | always | digits and a few symbols |
-| {@link Fonts5x5} | 5x5 | rectangle table | always | printable ASCII |
+| {@link Fonts5x5} | 5x5 | rectangle table | always | printable ASCII, plus `←` `↓` `↑` `→` `█` `Ⓥ` `◢` `◤` |
 | {@link Fonts4x6} | 4x6 | rectangle table | always | printable ASCII with lower case (the Arduino font4x6) |
-| {@link ZXFonts8x8} | 8x8 | hex bitmap | optional | ASCII 32–126 with `£` in place of the backtick, plus `©` (96 glyphs) |
+| {@link ZXFonts8x8} | 8x8 | hex bitmap | optional | ASCII 32–126 with `£` in place of the backtick, plus `©` (96 glyphs) and the cursor `‗` |
 | {@link VGAFonts8x16} | 8x16 | hex bitmap | optional | Uni-VGA, ~2900 Unicode code points |
 | {@link C64Fonts8x8} | 8x8 | hex bitmap | optional | C64 character ROM 901225-01: 2x256 glyphs by screen code, set 0 uppercase/graphics, set 1 lowercase/uppercase |
 | {@link Atari8Fonts8x8} | 8x8 | hex bitmap | optional | Atari XL OS ROM: 2x128 glyphs by internal code, set 0 standard, set 1 international |
@@ -28,7 +28,9 @@ character set; `VGAFonts8x16` lives under the **VGA** platform;
 each; the set a `TextEntity` prints in is chosen in the constructor).
 
 Core fonts deliberately ship printable ASCII plus **one** normal, breaking
-space — nothing application-specific. Games add their own graphic glyphs and
+space — nothing application-specific. The exceptions are the glyphs the
+library's own dialogs print: the arrows, the block `█`, the small `Ⓥ` and the
+banner's `◢` `◤` in `Fonts5x5`, the cursor `‗` in `ZXFonts8x8`. Games add their own graphic glyphs and
 their own kinds of space; see [Extending a font](#extending-a-font).
 
 ## Two glyph formats
@@ -136,8 +138,7 @@ Rectangle-table fonts take a map:
 
 ```js
 this.fonts.fonts5x5.addGlyphs({
-  '↑': {width: 5, data: [[2,0,1,5], [1,1,3,1], [0,2,5,1]]},
-  '█': {width: 4, data: [[0,0,4,5]]}
+  '♥': {width: 5, data: [[0,0,2,2], [3,0,2,2], [0,2,5,1], [1,3,3,1], [2,4,1,1]]}
 });
 this.fonts.fonts5x5.addSpace('␣', {width: 2, breaking: false, stretch: true});
 ```
@@ -147,15 +148,16 @@ both to `fontsChars` and `fontsData` — so the two arguments must be in the sam
 order:
 
 ```js
-this.fonts.zxFonts8x8.addGlyphs('‗⋅', '000000000000F8F8' + '0000003030000000');
+this.fonts.zxFonts8x8.addGlyphs('⋅▪', '0000003030000000' + '00003C3C3C3C0000');
 ```
 
 The marker characters are the application's choice. Pick ones the font does not
 already print (`␣`, `‗`, `⋅` are the convention in the example games).
 
-> `setFontsData()` **replaces** the whole base table, so call it *before*
-> `addGlyphs()` — otherwise the extra glyphs are discarded while `fontsChars`
-> keeps claiming they exist.
+> `setFontsData()` replaces the base table (the first `baseCharsCount`
+> glyphs) and keeps the extra glyphs behind it, so the two can be called in
+> either order. `addGlyphs()` with a character the font already has replaces
+> its bitmap.
 
 ## ZX Spectrum 8x8 fonts
 
