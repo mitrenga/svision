@@ -1,6 +1,7 @@
 const { ZXColor } = await import('./zxColor.js?ver='+window.srcVersion);
 const { ZXDialogProperties } = await import('./zxDialogProperties.js?ver='+window.srcVersion);
 const { PlayerNameEntity } = await import('../dialogs/playerNameEntity.js?ver='+window.srcVersion);
+const { ZXFonts8x8Keys } = await import('./zxFonts8x8Keys.js?ver='+window.srcVersion);
 // begin code
 
 /**
@@ -24,6 +25,8 @@ export class ZXPlayerNameEntity extends PlayerNameEntity {
    * @param {Object} [properties] - The dialog properties, see ZXDialogProperties.
    */
   constructor(parentEntity, x, y, width, height, autoStartGame, properties = {}) {
+    // the keycap font the ZX theme names (`keyboardFont`): the library's, unless the game has its own
+    ZXFonts8x8Keys.provide(parentEntity.model.app);
     super(parentEntity, x, y, width, height, autoStartGame, ZXDialogProperties.merge(properties));
     this.id = 'ZXPlayerNameEntity';
   } // constructor

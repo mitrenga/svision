@@ -30,8 +30,8 @@ each; the set a `TextEntity` prints in is chosen in the constructor).
 Core fonts deliberately ship printable ASCII plus **one** normal, breaking
 space — nothing application-specific. The exceptions are the glyphs the
 library's own dialogs print: the arrows, the block `█`, the small `Ⓥ` and the
-banner's `◢` `◤` in `Fonts5x5`, the cursor `‗`, the licence's narrow dot `⋅`, the arrows and the block `█`
-in `ZXFonts8x8`. Games add their own graphic glyphs and
+banner's `◢` `◤` in `Fonts5x5`; the cursor `‗`, the licence's narrow dot `⋅`,
+the arrows and the block `█` in `ZXFonts8x8`. Games add their own graphic glyphs and
 their own kinds of space; see [Extending a font](#extending-a-font).
 
 ## Two glyph formats
@@ -153,7 +153,7 @@ this.fonts.zxFonts8x8.addGlyphs('▪◆', '00003C3C3C3C0000' + '0010387C38100000
 ```
 
 The marker characters are the application's choice. Pick ones the font does not
-already print (`␣`, `‗`, `⋅` are the convention in the example games).
+already print (`␣` is the convention for the hard space in the example games).
 
 > `setFontsData()` replaces the base table (the first `baseCharsCount`
 > glyphs) and keeps the extra glyphs behind it, so the two can be called in
@@ -261,8 +261,10 @@ untouched original:
 | `<name>.svision.ch8.hex.txt` | hex string of the adapted copy |
 
 Two adapted copies exist today: `caves-of-doom.svision` (redraws `©`) and
-`alcatraz-harry-2.svision` (redraws `{ | } ~ ©`). The latter is the font the
-example games use for their on-screen keyboard.
+`alcatraz-harry-2.svision` (redraws `{ | } ~ ©`). The latter is the keycap font of the ZX
+dialogs' on-screen keyboard: the library ships it as {@link ZXFonts8x8Keys}
+and `ZXPlayerNameEntity` puts it into `app.fonts.zxFonts8x8Keys` by itself,
+so a game does not declare it (one it sets under that name first is kept).
 
 **`cimmerjan`** — hand-drawn, irregular, with descenders; from *Cimmerjan*
 (1993, Sindicato del Software). The `{ | } ~` slots hold block graphics, not
@@ -309,8 +311,8 @@ tools/make-data-fonts fonts/my-font.ch8      # -> fonts/my-font.ch8.hex.txt
 Then hand the string to the font instance:
 
 ```js
-this.fonts.zxFonts8x8Keys = new ZXFonts8x8(this, false);
-this.fonts.zxFonts8x8Keys.setFontsData('0000000000000000001010101000...');
+this.fonts.zxFonts8x8Title = new ZXFonts8x8(this, true);
+this.fonts.zxFonts8x8Title.setFontsData('0000000000000000181818181800...');
 ```
 
 If the font is missing glyphs you need — the `{ | } ~ ©` tail is the usual

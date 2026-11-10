@@ -45,7 +45,9 @@ licence over them and credits each font by its original source:
 
 #### `alcatraz-harry-2`
 - **Used in:** `fonts/alcatraz-harry-2.*` (plus adapted copy
-  `alcatraz-harry-2.svision.*` — `{ | } ~ ©` redrawn)
+  `alcatraz-harry-2.svision.*` — `{ | } ~ ©` redrawn);
+  `js/platform/canvas2D/zx/zxFonts8x8Keys.js` (the adapted copy, the keycap
+  font of the ZX dialogs' on-screen keyboard)
 - **Origin:** *Alcatraz Harry 2 - The Doomsday Mission* (1984); appears under
   three more vault titles, likely a publisher house font
 - **Author:** Scorpio Gamesworld

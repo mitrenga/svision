@@ -19,6 +19,7 @@ import './nodeEnv.mjs';   // must come first: the import headers read window.src
 const { ZXVideoRAM } = await import('../js/platform/canvas2D/zx/zxVideoRAM.js');
 const { ZXColor } = await import('../js/platform/canvas2D/zx/zxColor.js');
 const { ZXFonts8x8 } = await import('../js/platform/canvas2D/zx/zxFonts8x8.js');
+const { ZXFonts8x8Keys } = await import('../js/platform/canvas2D/zx/zxFonts8x8Keys.js');
 const { ZXMachineSounds } = await import('../js/platform/canvas2D/zx/zxMachineSounds.js');
 const { ZXRomPrint } = await import('../js/platform/canvas2D/zx/zxRomPrint.js');
 import { createRequire } from 'node:module';
@@ -282,6 +283,16 @@ function pixel(rgba, width, x, y) {
     other.setFontsData('FF'+font.fontsData.substring(2, 96*16));
     return [other.glyphBytes(' ')[0], other.fontsData.length, list(other.glyphBytes('‗'))];
   })(), [0xFF, 103*16, [0, 0, 0, 0, 0, 0, 0xF8, 0xF8]]);
+  check('keys font: its own A, the extra glyphs kept', (() => {
+    const keys = new ZXFonts8x8Keys({}, false);
+    return [list(keys.glyphBytes('A')), keys.fontsChars.substring(96), list(keys.glyphBytes('‗'))];
+  })(), [[0x00, 0x3C, 0x42, 0x42, 0x7E, 0x42, 0xE7, 0x00], '‗⋅←→↑↓█', [0, 0, 0, 0, 0, 0, 0xF8, 0xF8]]);
+  check('keys font: provide() keeps the font the app has', (() => {
+    const own = new ZXFonts8x8({}, false);
+    const app = {fonts: {zxFonts8x8Keys: own}};
+    const bare = {fonts: {}};
+    return [ZXFonts8x8Keys.provide(app) === own, ZXFonts8x8Keys.provide(bare) instanceof ZXFonts8x8Keys, bare.fonts.zxFonts8x8Keys === ZXFonts8x8Keys.provide(bare)];
+  })(), [true, true, true]);
   check('addGlyphs replaces a glyph the font has', (() => {
     const other = new ZXFonts8x8({}, false);
     other.addGlyphs('▪‗', '00003C3C3C3C0000'+'00000000000000FF');
