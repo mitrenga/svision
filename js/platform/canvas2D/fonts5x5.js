@@ -97,6 +97,12 @@ export class Fonts5x5 extends AbstractFonts {
       '}': {width: 3, data: [[0,0,2,1], [1,1,1,3], [0,4,2,1], [2,2,1,1]]},
       '~': {width: 5, data: [[0,2,1,1], [1,1,1,1], [2,2,1,1], [3,3,1,1], [4,2,1,1]]},
       '©': {width: 6, data: [[1,0,4,1], [0,1,2,3], [1,4,4,1], [4,1,2,3], [3,2,1,1]]},
+      // the arrow keys (Tool.prettyKey) and the block cursor of the dialogs
+      '←': {width: 6, data: [[0,2,6,1], [1,1,1,3], [2,0,1,5]]},
+      '↓': {width: 5, data: [[2,0,1,5], [1,3,3,1], [0,2,5,1]]},
+      '↑': {width: 5, data: [[2,0,1,5], [1,1,3,1], [0,2,5,1]]},
+      '→': {width: 6, data: [[0,2,6,1], [4,1,1,3], [3,0,1,5]]},
+      '█': {width: 4, data: [[0,0,4,5]]}
     }
   } // constructor
 
@@ -148,8 +154,9 @@ export class Fonts5x5 extends AbstractFonts {
   } // validChar
 
   /**
-   * Adds extra glyphs to the font's glyph table. The core font ships ASCII only;
-   * games register their own graphic glyphs this way.
+   * Adds extra glyphs to the font's glyph table. The core font ships ASCII, the
+   * four arrows and the block '█'; games register their other graphic glyphs
+   * this way.
    * @param {Object} glyphs - Map of char -> {width, data} entries to merge in.
    */
   addGlyphs(glyphs) {
